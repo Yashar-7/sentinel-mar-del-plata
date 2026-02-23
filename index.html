@@ -13,7 +13,7 @@
         :root {
             --neon-blue: #00eaff;
             --neon-red: #ff3131;
-            --panel-bg: rgba(0, 5, 12, 0.95);
+            --panel-bg: rgba(0, 5, 12, 0.98);
             --border-glow: rgba(0, 234, 255, 0.4);
             --scan-color: rgba(0, 234, 255, 0.12);
         }
@@ -26,11 +26,14 @@
             font-family: 'Segoe UI', sans-serif;
             overflow: hidden;
             text-transform: uppercase;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* --- HEADER CON LOGO TIPO ESCUDO --- */
+        /* --- HEADER ADAPTATIVO --- */
         .main-header {
-            height: 90px;
+            height: 85px;
+            flex-shrink: 0;
             background: linear-gradient(to bottom, #001a2c, #000);
             display: flex;
             flex-direction: column;
@@ -38,82 +41,78 @@
             justify-content: center;
             border-bottom: 1px solid var(--border-glow);
             z-index: 100;
-            position: relative;
         }
 
         .shield-logo {
-            width: 50px;
-            height: 55px;
+            width: 45px;
+            height: 45px;
             margin-bottom: 2px;
-            filter: drop-shadow(0 0 10px var(--neon-blue));
-            /* Si tienes el archivo, reemplaza 'logo.png' por tu imagen */
+            filter: drop-shadow(0 0 8px var(--neon-blue));
             background: url('logo.png') no-repeat center;
             background-size: contain;
         }
 
-        /* Fallback si no hay imagen: un círculo brillante que simula el ojo */
         .shield-fallback {
-            width: 35px; height: 35px;
+            width: 30px; height: 30px;
             border: 2px solid var(--neon-blue);
             border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 15px var(--neon-blue);
-        }
-        .shield-fallback::after {
-            content: ""; width: 8px; height: 8px;
-            background: var(--neon-blue); border-radius: 50%;
             box-shadow: 0 0 10px var(--neon-blue);
         }
 
         .brand-name {
-            font-size: 0.9em;
-            letter-spacing: 5px;
+            font-size: 0.85em;
+            letter-spacing: 4px;
             font-weight: 900;
             text-shadow: 0 0 10px var(--neon-blue);
         }
 
-        /* --- ESCÁNER QUE NACE DEL ESCUDO --- */
+        /* --- CONTENEDOR CENTRAL (MAPA) --- */
+        .map-container {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* --- ESCÁNER --- */
         #scanner-light {
             position: absolute;
-            top: 45px; /* Nace del medio del escudo */
+            top: -40px; /* Alineado con el logo del header */
             left: 50%;
             width: 200%;
-            height: 100vh;
+            height: 150%;
             background: conic-gradient(from 180deg at 50% 0%, 
-                transparent 160deg, 
+                transparent 165deg, 
                 var(--scan-color) 180deg, 
-                transparent 200deg);
+                transparent 195deg);
             transform-origin: top center;
             transform: translateX(-50%);
             animation: sweep 4.5s ease-in-out infinite;
             pointer-events: none;
             z-index: 5;
-            filter: blur(8px);
+            filter: blur(5px);
         }
 
         @keyframes sweep {
-            0% { transform: translateX(-50%) rotate(-30deg); }
-            50% { transform: translateX(-50%) rotate(30deg); }
-            100% { transform: translateX(-50%) rotate(-30deg); }
+            0% { transform: translateX(-50%) rotate(-25deg); }
+            50% { transform: translateX(-50%) rotate(25deg); }
+            100% { transform: translateX(-50%) rotate(-25deg); }
         }
 
-        #map {
-            position: absolute;
-            top: 90px; bottom: 180px;
-            width: 100%;
-            background: #020202;
-            z-index: 1;
-        }
-
-        /* --- CONSOLA INFERIOR --- */
+        /* --- CONSOLA INFERIOR RESPONSIVE --- */
         .bottom-console {
-            position: absolute;
-            bottom: 0; width: 100%;
-            height: 180px;
+            height: 160px;
+            flex-shrink: 0;
             background: var(--panel-bg);
-            border-top: 2px solid var(--border-glow);
+            border-top: 1px solid var(--border-glow);
             display: grid;
-            grid-template-columns: 1.2fr 1fr;
+            grid-template-columns: 1fr 1.2fr;
             z-index: 100;
         }
 
@@ -121,19 +120,18 @@
             position: relative;
             background: #000;
             border-right: 1px solid var(--border-glow);
-            overflow: hidden;
         }
 
-        #video-feed { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+        #video-feed { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
         
         .rec-tag {
-            position: absolute; top: 10px; left: 10px;
-            font-size: 0.6em; color: #666;
-            display: flex; align-items: center; gap: 5px;
+            position: absolute; top: 5px; left: 5px;
+            font-size: 0.55em; color: #666;
+            background: rgba(0,0,0,0.5); padding: 2px 4px;
         }
 
         .controls-box {
-            padding: 15px;
+            padding: 10px;
             display: flex; flex-direction: column;
             justify-content: space-between;
         }
@@ -142,58 +140,68 @@
             background: rgba(0, 234, 255, 0.05);
             border: 1px solid var(--neon-blue);
             color: var(--neon-blue);
-            padding: 12px;
-            font-size: 0.7em;
+            padding: 10px 5px;
+            font-size: 0.65em;
             font-weight: bold;
-            cursor: pointer;
+            text-transform: uppercase;
         }
 
         .btn-critical {
             border-color: var(--neon-red);
             color: var(--neon-red);
             background: rgba(255, 49, 49, 0.05);
-            box-shadow: 0 0 10px rgba(255, 49, 49, 0.2);
         }
 
         /* MODO EMERGENCIA */
         .emergency-active #scanner-light {
-            --scan-color: rgba(255, 49, 49, 0.3);
+            --scan-color: rgba(255, 49, 49, 0.4);
             animation-duration: 1.5s;
         }
-        .emergency-active .main-header { border-color: var(--neon-red); }
+        .emergency-active .main-header { border-bottom-color: var(--neon-red); }
         .emergency-active .brand-name { color: var(--neon-red); text-shadow: 0 0 15px var(--neon-red); }
 
-        /* SELECTOR */
+        /* SELECTOR PANTALLA COMPLETA */
         #selector-container {
             position: fixed; inset: 0;
-            background: #000;
+            background: radial-gradient(circle, #001a2c, #000);
             display: flex; justify-content: center; align-items: center;
             z-index: 9999;
+            padding: 20px;
+        }
+
+        .auth-card {
+            border: 1px solid var(--neon-blue);
+            padding: 30px;
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+            background: rgba(0,0,0,0.9);
+            box-shadow: 0 0 20px rgba(0, 234, 255, 0.2);
         }
     </style>
 </head>
 <body id="sentinel-body">
 
     <div id="selector-container">
-        <div style="border: 1px solid var(--neon-blue); padding: 40px; text-align: center; background: #000810;">
-            <div class="shield-fallback" style="margin: 0 auto 20px;"></div>
+        <div class="auth-card">
+            <div class="shield-logo" style="margin: 0 auto 15px;"></div>
             <div class="brand-name">SENTINEL</div>
-            <p style="font-size: 0.5em; letter-spacing: 2px; margin-bottom: 30px;">AUTH_REQUIRED</p>
-            <button class="btn-action" style="width: 100%; margin-bottom: 10px;" onclick="iniciar('responder')">RESPUESTA TÁCTICA</button>
+            <p style="font-size: 0.5em; letter-spacing: 2px; margin-bottom: 25px; color: rgba(0, 234, 255, 0.6);">AUTH_REQUIRED</p>
+            <button class="btn-action" style="width: 100%; margin-bottom: 12px;" onclick="iniciar('responder')">RESPUESTA TÁCTICA</button>
             <button class="btn-action btn-critical" style="width: 100%;" onclick="iniciar('citizen')">ACCESO CIUDADANO</button>
         </div>
     </div>
 
     <header class="main-header">
-        <div class="shield-logo">
-            <div class="shield-fallback" id="shield-core" style="margin: 0 auto;"></div>
-        </div>
+        <div class="shield-logo"></div>
         <div class="brand-name">SENTINEL</div>
-        <div id="sys-msg" style="font-size: 0.5em; opacity: 0.7;">V1.2 | SYSTEM: STABLE</div>
+        <div id="sys-msg" style="font-size: 0.45em; opacity: 0.7;">V1.2 | SYSTEM: STABLE</div>
     </header>
 
-    <div id="scanner-light"></div>
-    <div id="map"></div>
+    <div class="map-container">
+        <div id="scanner-light"></div>
+        <div id="map"></div>
+    </div>
 
     <div class="bottom-console">
         <div class="video-box">
@@ -201,9 +209,9 @@
             <div class="rec-tag" id="rec-tag">● REC_OFF</div>
         </div>
         <div class="controls-box">
-            <div style="font-size: 0.6em;">
-                <span id="unit-label" style="color:#55aaff;">UNIT: NONE</span><br>
-                <span id="gps-label">GPS: 0.0000, 0.0000</span>
+            <div style="font-size: 0.55em; line-height: 1.4;">
+                <span id="unit-label" style="color:#55aaff; font-weight: bold;">UNIT: ---</span><br>
+                <span id="gps-label" style="font-family: monospace;">GPS: 0.0000, 0.0000</span>
             </div>
             <button class="btn-action" onclick="toggleVideo()">ENLACE VIDEO</button>
             <button class="btn-action btn-critical" onclick="activarAlerta()">ALERTA CRÍTICA</button>
@@ -220,7 +228,7 @@
 
         function iniciar(rol) {
             document.getElementById('selector-container').style.display = 'none';
-            document.getElementById('unit-label').innerText = `UNIT: ${ID} | ${rol.toUpperCase()}`;
+            document.getElementById('unit-label').innerText = `ID: ${ID} | ${rol.toUpperCase()}`;
             
             map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
@@ -231,7 +239,7 @@
                     document.getElementById('gps-label').innerText = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
                     
                     if(!userMarker) {
-                        userMarker = L.circleMarker([lat, lng], { radius: 8, color: (rol=='citizen'?'#ff3131':'#00eaff'), fillColor: '#fff', fillOpacity: 1 }).addTo(map);
+                        userMarker = L.circleMarker([lat, lng], { radius: 7, color: (rol=='citizen'?'#ff3131':'#00eaff'), fillColor: '#fff', fillOpacity: 1 }).addTo(map);
                         map.panTo([lat, lng]);
                     } else { userMarker.setLatLng([lat, lng]); }
 
@@ -244,12 +252,14 @@
             const v = document.getElementById('video-feed');
             const t = document.getElementById('rec-tag');
             if(!streamActivo) {
-                streamActivo = await navigator.mediaDevices.getUserMedia({video: {facingMode:"environment"}});
-                v.srcObject = streamActivo; v.style.opacity = "1";
-                t.innerText = "● REC_LIVE"; t.style.color = "var(--neon-red)";
+                try {
+                    streamActivo = await navigator.mediaDevices.getUserMedia({video: {facingMode:"environment"}});
+                    v.srcObject = streamActivo; v.style.opacity = "1";
+                    t.innerText = "● REC_LIVE"; t.style.color = "var(--neon-red)";
+                } catch(e) { alert("Error de cámara"); }
             } else {
                 streamActivo.getTracks().forEach(tr => tr.stop());
-                streamActivo = null; v.srcObject = null; v.style.opacity = "0.7";
+                streamActivo = null; v.srcObject = null; v.style.opacity = "0.6";
                 t.innerText = "● REC_OFF"; t.style.color = "#666";
             }
         }
@@ -258,8 +268,10 @@
             document.getElementById('sentinel-body').classList.add('emergency-active');
             document.getElementById('sys-msg').innerText = "ALERT_PROTOCOL_ACTIVE";
             document.getElementById('sys-msg').style.color = "var(--neon-red)";
-            alert("SISTEMA: ALERTA CRÍTICA ENVIADA");
+            // Vibración táctica si el celular lo permite
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            alert("SENTINEL: ALERTA CRÍTICA DISPARADA");
         }
     </script>
 </body>
-</html>
+    </html>
