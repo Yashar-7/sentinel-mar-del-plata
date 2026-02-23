@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL - SMART TECH</title>
+    <title>SENTINEL - MULTI-ROLE TACTICAL</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -11,11 +11,11 @@
 
     <style>
         :root {
-            --neon-blue: #00eaff;
-            --neon-red: #ff3131;
+            --neon-blue: #00eaff; /* Patrullas */
+            --neon-red: #ff3131;  /* Repartidores */
+            --neon-green: #39ff14; /* Emergencias */
+            --neon-white: #ffffff; /* Civiles */
             --panel-bg: rgba(0, 5, 12, 0.98);
-            --border-glow: rgba(0, 234, 255, 0.4);
-            --scan-color: rgba(0, 234, 255, 0.12);
         }
 
         body, html {
@@ -25,158 +25,89 @@
             color: var(--neon-blue);
             font-family: 'Segoe UI', sans-serif;
             overflow: hidden;
-            text-transform: uppercase;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
 
-        /* --- HEADER ADAPTATIVO --- */
+        /* --- HEADER --- */
         .main-header {
-            height: 85px;
-            flex-shrink: 0;
+            height: 90px; flex-shrink: 0;
             background: linear-gradient(to bottom, #001a2c, #000);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-bottom: 1px solid var(--border-glow);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            border-bottom: 1px solid rgba(0, 234, 255, 0.3);
             z-index: 100;
         }
 
         .shield-logo {
-            width: 45px;
-            height: 45px;
-            margin-bottom: 2px;
-            filter: drop-shadow(0 0 8px var(--neon-blue));
+            width: 42px; height: 42px; margin-bottom: 5px;
             background: url('logo.png') no-repeat center;
             background-size: contain;
+            filter: drop-shadow(0 0 8px var(--neon-blue));
         }
 
-        .shield-fallback {
-            width: 30px; height: 30px;
-            border: 2px solid var(--neon-blue);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--neon-blue);
-        }
+        .brand-name { font-size: 0.9em; letter-spacing: 5px; font-weight: 900; }
 
-        .brand-name {
-            font-size: 0.85em;
-            letter-spacing: 4px;
-            font-weight: 900;
-            text-shadow: 0 0 10px var(--neon-blue);
-        }
+        /* --- MAPA --- */
+        .map-container { flex-grow: 1; position: relative; }
+        #map { width: 100%; height: 100%; background: #000; }
 
-        /* --- CONTENEDOR CENTRAL (MAPA) --- */
-        .map-container {
-            flex-grow: 1;
-            position: relative;
-            overflow: hidden;
-            background: #000;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        /* --- ESCÁNER --- */
-        #scanner-light {
-            position: absolute;
-            top: -40px; /* Alineado con el logo del header */
-            left: 50%;
-            width: 200%;
-            height: 150%;
-            background: conic-gradient(from 180deg at 50% 0%, 
-                transparent 165deg, 
-                var(--scan-color) 180deg, 
-                transparent 195deg);
-            transform-origin: top center;
-            transform: translateX(-50%);
-            animation: sweep 4.5s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 5;
-            filter: blur(5px);
-        }
-
-        @keyframes sweep {
-            0% { transform: translateX(-50%) rotate(-25deg); }
-            50% { transform: translateX(-50%) rotate(25deg); }
-            100% { transform: translateX(-50%) rotate(-25deg); }
-        }
-
-        /* --- CONSOLA INFERIOR RESPONSIVE --- */
+        /* --- CONSOLA INFERIOR CORREGIDA --- */
         .bottom-console {
-            height: 160px;
-            flex-shrink: 0;
+            height: 170px; flex-shrink: 0;
             background: var(--panel-bg);
-            border-top: 1px solid var(--border-glow);
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
+            border-top: 2px solid rgba(0, 234, 255, 0.2);
+            display: grid; grid-template-columns: 1.1fr 1fr;
             z-index: 100;
         }
 
-        .video-box {
-            position: relative;
-            background: #000;
-            border-right: 1px solid var(--border-glow);
-        }
-
+        .video-box { position: relative; border-right: 1px solid rgba(0, 234, 255, 0.2); }
         #video-feed { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
-        
-        .rec-tag {
-            position: absolute; top: 5px; left: 5px;
-            font-size: 0.55em; color: #666;
-            background: rgba(0,0,0,0.5); padding: 2px 4px;
-        }
 
         .controls-box {
             padding: 10px;
             display: flex; flex-direction: column;
-            justify-content: space-between;
+            gap: 8px; /* Espacio uniforme entre botones */
+            justify-content: center;
         }
 
         .btn-action {
             background: rgba(0, 234, 255, 0.05);
             border: 1px solid var(--neon-blue);
             color: var(--neon-blue);
-            padding: 10px 5px;
+            padding: 12px 5px;
             font-size: 0.65em;
             font-weight: bold;
             text-transform: uppercase;
+            cursor: pointer;
         }
 
-        .btn-critical {
+        .btn-emergency {
             border-color: var(--neon-red);
             color: var(--neon-red);
-            background: rgba(255, 49, 49, 0.05);
+            background: rgba(255, 49, 49, 0.1);
+            animation: pulse-red 2s infinite;
         }
 
-        /* MODO EMERGENCIA */
-        .emergency-active #scanner-light {
-            --scan-color: rgba(255, 49, 49, 0.4);
-            animation-duration: 1.5s;
+        @keyframes pulse-red {
+            0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; }
         }
-        .emergency-active .main-header { border-bottom-color: var(--neon-red); }
-        .emergency-active .brand-name { color: var(--neon-red); text-shadow: 0 0 15px var(--neon-red); }
 
-        /* SELECTOR PANTALLA COMPLETA */
+        /* --- SELECTOR DE ROLES --- */
         #selector-container {
-            position: fixed; inset: 0;
-            background: radial-gradient(circle, #001a2c, #000);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 9999;
-            padding: 20px;
+            position: fixed; inset: 0; background: #000;
+            z-index: 9999; display: flex; align-items: center; justify-content: center;
         }
-
         .auth-card {
-            border: 1px solid var(--neon-blue);
-            padding: 30px;
-            width: 100%;
-            max-width: 300px;
-            text-align: center;
-            background: rgba(0,0,0,0.9);
-            box-shadow: 0 0 20px rgba(0, 234, 255, 0.2);
+            width: 85%; max-width: 320px; text-align: center;
+            padding: 20px; border: 1px solid var(--neon-blue);
+            background: rgba(0, 10, 20, 0.9);
+        }
+        .role-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;
+        }
+        .role-btn {
+            padding: 15px 5px; font-size: 0.6em; border: 1px solid;
+            background: transparent; color: inherit; cursor: pointer;
         }
     </style>
 </head>
@@ -184,37 +115,41 @@
 
     <div id="selector-container">
         <div class="auth-card">
-            <div class="shield-logo" style="margin: 0 auto 15px;"></div>
+            <div class="shield-logo" style="margin: 0 auto 10px;"></div>
             <div class="brand-name">SENTINEL</div>
-            <p style="font-size: 0.5em; letter-spacing: 2px; margin-bottom: 25px; color: rgba(0, 234, 255, 0.6);">AUTH_REQUIRED</p>
-            <button class="btn-action" style="width: 100%; margin-bottom: 12px;" onclick="iniciar('responder')">RESPUESTA TÁCTICA</button>
-            <button class="btn-action btn-critical" style="width: 100%;" onclick="iniciar('citizen')">ACCESO CIUDADANO</button>
+            <p style="font-size: 0.5em; opacity: 0.6;">SELECCIONE ROL DE ACCESO</p>
+            
+            <div class="role-grid">
+                <button class="role-btn" style="color: white; border-color: white;" onclick="iniciar('civil', '#ffffff')">CIVIL</button>
+                <button class="role-btn" style="color: #ff3131; border-color: #ff3131;" onclick="iniciar('repartidor', '#ff3131')">DELIVERY</button>
+                <button class="role-btn" style="color: #00eaff; border-color: #00eaff;" onclick="checkPatrulla()">PATRULLA</button>
+                <button class="role-btn" style="color: #39ff14; border-color: #39ff14;" onclick="iniciar('emergencia', '#39ff14')">MÉDICO</button>
+            </div>
         </div>
     </div>
 
     <header class="main-header">
         <div class="shield-logo"></div>
         <div class="brand-name">SENTINEL</div>
-        <div id="sys-msg" style="font-size: 0.45em; opacity: 0.7;">V1.2 | SYSTEM: STABLE</div>
+        <div id="sys-status" style="font-size: 0.45em; opacity: 0.8;">SISTEMA ACTIVO | SIN ALERTAS</div>
     </header>
 
     <div class="map-container">
-        <div id="scanner-light"></div>
         <div id="map"></div>
     </div>
 
     <div class="bottom-console">
         <div class="video-box">
             <video id="video-feed" autoplay playsinline></video>
-            <div class="rec-tag" id="rec-tag">● REC_OFF</div>
+            <div style="position:absolute; top:5px; left:5px; font-size:0.5em;" id="rec-label">● CAM_OFF</div>
         </div>
         <div class="controls-box">
-            <div style="font-size: 0.55em; line-height: 1.4;">
-                <span id="unit-label" style="color:#55aaff; font-weight: bold;">UNIT: ---</span><br>
-                <span id="gps-label" style="font-family: monospace;">GPS: 0.0000, 0.0000</span>
+            <div style="font-size: 0.5em; line-height: 1.2;">
+                <span id="label-id" style="font-weight: bold;">ID: ---</span><br>
+                <span id="label-gps">GPS: 0.00, 0.00</span>
             </div>
-            <button class="btn-action" onclick="toggleVideo()">ENLACE VIDEO</button>
-            <button class="btn-action btn-critical" onclick="activarAlerta()">ALERTA CRÍTICA</button>
+            <button class="btn-action" onclick="toggleCam()">ENLACE VIDEO</button>
+            <button class="btn-action btn-emergency" id="btn-alert" onclick="dispararAlerta()">SOLICITAR APOYO</button>
         </div>
     </div>
 
@@ -224,11 +159,22 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const ID = 'SNT-' + Math.floor(Math.random()*900+100);
-        let map, userMarker, streamActivo = null;
+        let map, userMarker, myRole, myColor, stream;
 
-        function iniciar(rol) {
+        function checkPatrulla() {
+            let pass = prompt("INGRESE CÓDIGO DE CREDENCIAL (Badge ID):", "");
+            if(pass === "911") {
+                iniciar('patrulla', '#00eaff');
+            } else {
+                alert("CREDENCIAL INVÁLIDA");
+            }
+        }
+
+        function iniciar(rol, color) {
+            myRole = rol; myColor = color;
             document.getElementById('selector-container').style.display = 'none';
-            document.getElementById('unit-label').innerText = `ID: ${ID} | ${rol.toUpperCase()}`;
+            document.getElementById('label-id').innerText = `${ID} | ${rol.toUpperCase()}`;
+            document.getElementById('label-id').style.color = color;
             
             map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
@@ -236,42 +182,59 @@
             if(navigator.geolocation) {
                 navigator.geolocation.watchPosition(async p => {
                     const {latitude: lat, longitude: lng} = p.coords;
-                    document.getElementById('gps-label').innerText = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    document.getElementById('label-gps').innerText = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
                     
                     if(!userMarker) {
-                        userMarker = L.circleMarker([lat, lng], { radius: 7, color: (rol=='citizen'?'#ff3131':'#00eaff'), fillColor: '#fff', fillOpacity: 1 }).addTo(map);
+                        userMarker = L.circleMarker([lat, lng], { radius: 8, color: '#fff', fillColor: color, fillOpacity: 1, weight: 2 }).addTo(map);
                         map.panTo([lat, lng]);
                     } else { userMarker.setLatLng([lat, lng]); }
 
                     await _supabase.from('unidades_live').upsert({ user_id: ID, latitude: lat, longitude: lng, role: rol }, {onConflict:'user_id'});
                 });
             }
+            subscribe();
         }
 
-        async function toggleVideo() {
-            const v = document.getElementById('video-feed');
-            const t = document.getElementById('rec-tag');
-            if(!streamActivo) {
-                try {
-                    streamActivo = await navigator.mediaDevices.getUserMedia({video: {facingMode:"environment"}});
-                    v.srcObject = streamActivo; v.style.opacity = "1";
-                    t.innerText = "● REC_LIVE"; t.style.color = "var(--neon-red)";
-                } catch(e) { alert("Error de cámara"); }
+        function subscribe() {
+            _supabase.channel('map-live')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'unidades_live' }, payload => {
+                    if (payload.new && payload.new.user_id !== ID) renderOther(payload.new);
+                }).subscribe();
+        }
+
+        let others = {};
+        function renderOther(data) {
+            const colors = { 'civil': '#ffffff', 'repartidor': '#ff3131', 'patrulla': '#00eaff', 'emergencia': '#39ff14' };
+            const dotColor = colors[data.role] || '#ffffff';
+            
+            if (others[data.user_id]) {
+                others[data.user_id].setLatLng([data.latitude, data.longitude]);
             } else {
-                streamActivo.getTracks().forEach(tr => tr.stop());
-                streamActivo = null; v.srcObject = null; v.style.opacity = "0.6";
-                t.innerText = "● REC_OFF"; t.style.color = "#666";
+                others[data.user_id] = L.circleMarker([data.latitude, data.longitude], {
+                    radius: 6, fillColor: dotColor, color: dotColor, fillOpacity: 0.6
+                }).addTo(map);
             }
         }
 
-        function activarAlerta() {
-            document.getElementById('sentinel-body').classList.add('emergency-active');
-            document.getElementById('sys-msg').innerText = "ALERT_PROTOCOL_ACTIVE";
-            document.getElementById('sys-msg').style.color = "var(--neon-red)";
-            // Vibración táctica si el celular lo permite
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-            alert("SENTINEL: ALERTA CRÍTICA DISPARADA");
+        async function toggleCam() {
+            const v = document.getElementById('video-feed');
+            const l = document.getElementById('rec-label');
+            if(!stream) {
+                stream = await navigator.mediaDevices.getUserMedia({video: {facingMode:"environment"}});
+                v.srcObject = stream; v.style.opacity = "1";
+                l.innerText = "● CAM_LIVE"; l.style.color = "red";
+            } else {
+                stream.getTracks().forEach(t => t.stop());
+                stream = null; v.srcObject = null; v.style.opacity = "0.6";
+                l.innerText = "● CAM_OFF"; l.style.color = "gray";
+            }
+        }
+
+        function dispararAlerta() {
+            document.getElementById('sys-status').innerText = "ALERTA ENVIADA - PROTOCOLO TÁCTICO";
+            document.getElementById('sys-status').style.color = "red";
+            alert("ALERTA CRÍTICA ENVIADA A CENTRAL SMART TECH");
         }
     </script>
-</body> 
-</html>
+</body>
+    </html>
