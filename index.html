@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMART TECH - SENTINEL V1.2.5</title>
+    <title>SENTINEL - SMART TECH</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -13,10 +13,9 @@
         :root {
             --neon-blue: #00eaff;
             --neon-red: #ff3131;
-            --panel-bg: rgba(0, 5, 10, 0.9);
+            --panel-bg: rgba(0, 5, 12, 0.95);
             --border-glow: rgba(0, 234, 255, 0.4);
-            --scan-color: rgba(0, 234, 255, 0.15);
-            --emergency-filter: none;
+            --scan-color: rgba(0, 234, 255, 0.12);
         }
 
         body, html {
@@ -24,54 +23,72 @@
             width: 100vw; height: 100vh;
             background-color: #000;
             color: var(--neon-blue);
-            font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             overflow: hidden;
             text-transform: uppercase;
         }
 
-        /* --- MEJORA VISUAL: GLOW SUPERIOR (Como en la imagen) --- */
-        .main-header::after {
-            content: '';
-            position: absolute;
-            bottom: -2px; left: 0; width: 100%; height: 2px;
-            background: var(--neon-blue);
+        /* --- HEADER CON LOGO TIPO ESCUDO --- */
+        .main-header {
+            height: 90px;
+            background: linear-gradient(to bottom, #001a2c, #000);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid var(--border-glow);
+            z-index: 100;
+            position: relative;
+        }
+
+        .shield-logo {
+            width: 50px;
+            height: 55px;
+            margin-bottom: 2px;
+            filter: drop-shadow(0 0 10px var(--neon-blue));
+            /* Si tienes el archivo, reemplaza 'logo.png' por tu imagen */
+            background: url('logo.png') no-repeat center;
+            background-size: contain;
+        }
+
+        /* Fallback si no hay imagen: un círculo brillante que simula el ojo */
+        .shield-fallback {
+            width: 35px; height: 35px;
+            border: 2px solid var(--neon-blue);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
             box-shadow: 0 0 15px var(--neon-blue);
-            z-index: 101;
+        }
+        .shield-fallback::after {
+            content: ""; width: 8px; height: 8px;
+            background: var(--neon-blue); border-radius: 50%;
+            box-shadow: 0 0 10px var(--neon-blue);
         }
 
-        .emergency-active .main-header::after {
-            background: var(--neon-red);
-            box-shadow: 0 0 15px var(--neon-red);
+        .brand-name {
+            font-size: 0.9em;
+            letter-spacing: 5px;
+            font-weight: 900;
+            text-shadow: 0 0 10px var(--neon-blue);
         }
 
-        /* --- ESCÁNER DINÁMICO --- */
-        #scanner-container {
-            position: absolute;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 5;
-            overflow: hidden;
-        }
-
+        /* --- ESCÁNER QUE NACE DEL ESCUDO --- */
         #scanner-light {
             position: absolute;
-            top: -20px;
+            top: 45px; /* Nace del medio del escudo */
             left: 50%;
-            width: 180%;
-            height: 150%;
+            width: 200%;
+            height: 100vh;
             background: conic-gradient(from 180deg at 50% 0%, 
-                transparent 165deg, 
+                transparent 160deg, 
                 var(--scan-color) 180deg, 
-                transparent 195deg);
+                transparent 200deg);
             transform-origin: top center;
-            transform: translateX(-50%) rotate(0deg);
-            animation: sweep 5s ease-in-out infinite;
-            filter: blur(10px);
-            transition: background 0.5s ease;
+            transform: translateX(-50%);
+            animation: sweep 4.5s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 5;
+            filter: blur(8px);
         }
 
         @keyframes sweep {
@@ -80,86 +97,44 @@
             100% { transform: translateX(-50%) rotate(-30deg); }
         }
 
-        /* --- ESTADO DE EMERGENCIA --- */
-        .emergency-active #scanner-light {
-            --scan-color: rgba(255, 49, 49, 0.4);
-            animation: sweep 1.5s ease-in-out infinite;
-        }
-
-        /* --- INTERFAZ --- */
-        .main-header {
-            height: 70px;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            position: relative;
-        }
-
-        .logo-placeholder {
-            font-size: 1.6em;
-            font-weight: 900;
-            letter-spacing: 8px; /* Más espaciado como la imagen */
-            color: var(--neon-blue);
-            text-shadow: 0 0 15px var(--neon-blue);
-            transition: 0.3s;
-        }
-
-        .emergency-active .logo-placeholder {
-            color: var(--neon-red);
-            text-shadow: 0 0 20px var(--neon-red);
-        }
-
         #map {
             position: absolute;
-            top: 70px; bottom: 180px;
+            top: 90px; bottom: 180px;
             width: 100%;
-            background: #050505;
+            background: #020202;
             z-index: 1;
-            /* Efecto de viñeta para oscurecer bordes */
-            box-shadow: inset 0 0 100px #000;
         }
 
+        /* --- CONSOLA INFERIOR --- */
         .bottom-console {
             position: absolute;
             bottom: 0; width: 100%;
             height: 180px;
             background: var(--panel-bg);
-            border-top: 2px solid var(--neon-blue); /* Línea sólida como la imagen */
+            border-top: 2px solid var(--border-glow);
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.2fr 1fr;
             z-index: 100;
-            backdrop-filter: blur(15px);
-        }
-
-        .emergency-active .bottom-console {
-            border-top: 2px solid var(--neon-red);
         }
 
         .video-box {
             position: relative;
+            background: #000;
             border-right: 1px solid var(--border-glow);
             overflow: hidden;
         }
 
-        /* Marco estilo HUD para el video */
-        .video-box::before {
-            content: '';
-            position: absolute;
-            top: 10px; left: 10px; width: 20px; height: 20px;
-            border-top: 2px solid var(--neon-blue);
-            border-left: 2px solid var(--neon-blue);
-            z-index: 10;
+        #video-feed { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+        
+        .rec-tag {
+            position: absolute; top: 10px; left: 10px;
+            font-size: 0.6em; color: #666;
+            display: flex; align-items: center; gap: 5px;
         }
-
-        #video-feed { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; transition: 0.5s; }
 
         .controls-box {
             padding: 15px;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             justify-content: space-between;
         }
 
@@ -168,177 +143,123 @@
             border: 1px solid var(--neon-blue);
             color: var(--neon-blue);
             padding: 12px;
-            font-size: 0.75em;
+            font-size: 0.7em;
             font-weight: bold;
             cursor: pointer;
-            letter-spacing: 1px;
-            box-shadow: inset 0 0 10px rgba(0, 234, 255, 0.1);
         }
 
         .btn-critical {
-            background: rgba(255, 49, 49, 0.1);
             border-color: var(--neon-red);
             color: var(--neon-red);
-            animation: pulse-red 2s infinite;
+            background: rgba(255, 49, 49, 0.05);
+            box-shadow: 0 0 10px rgba(255, 49, 49, 0.2);
         }
 
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 5px rgba(255, 49, 49, 0.4); }
-            50% { box-shadow: 0 0 20px rgba(255, 49, 49, 0.8); }
-            100% { box-shadow: 0 0 5px rgba(255, 49, 49, 0.4); }
+        /* MODO EMERGENCIA */
+        .emergency-active #scanner-light {
+            --scan-color: rgba(255, 49, 49, 0.3);
+            animation-duration: 1.5s;
         }
+        .emergency-active .main-header { border-color: var(--neon-red); }
+        .emergency-active .brand-name { color: var(--neon-red); text-shadow: 0 0 15px var(--neon-red); }
 
+        /* SELECTOR */
         #selector-container {
             position: fixed; inset: 0;
             background: #000;
             display: flex; justify-content: center; align-items: center;
             z-index: 9999;
         }
-
-        .auth-card {
-            border: 1px solid var(--neon-blue);
-            padding: 50px;
-            text-align: center;
-            background: #000;
-            box-shadow: 0 0 50px rgba(0, 234, 255, 0.15);
-        }
     </style>
 </head>
 <body id="sentinel-body">
 
     <div id="selector-container">
-        <div class="auth-card">
-            <div class="logo-placeholder">SENTINEL</div>
-            <p style="font-size: 0.5em; margin-bottom: 40px; letter-spacing: 3px; color: #55aaff;">OPERATIONAL INTERFACE V1.2.5</p>
-            <button class="btn-action" style="width: 100%; margin-bottom: 20px;" onclick="iniciarSistema('responder')">ST_CORE_LOGIN</button>
-            <button class="btn-action btn-critical" style="width: 100%;" onclick="iniciarSistema('citizen')">ST_EMERGENCY_LINK</button>
+        <div style="border: 1px solid var(--neon-blue); padding: 40px; text-align: center; background: #000810;">
+            <div class="shield-fallback" style="margin: 0 auto 20px;"></div>
+            <div class="brand-name">SENTINEL</div>
+            <p style="font-size: 0.5em; letter-spacing: 2px; margin-bottom: 30px;">AUTH_REQUIRED</p>
+            <button class="btn-action" style="width: 100%; margin-bottom: 10px;" onclick="iniciar('responder')">RESPUESTA TÁCTICA</button>
+            <button class="btn-action btn-critical" style="width: 100%;" onclick="iniciar('citizen')">ACCESO CIUDADANO</button>
         </div>
     </div>
 
     <header class="main-header">
-        <div class="logo-placeholder">SENTINEL</div>
-        <div id="sys-status" style="font-size: 0.5em; letter-spacing: 2px; margin-top: 5px;">● SYSTEM_READY | ENCRYPTED_STREAM</div>
+        <div class="shield-logo">
+            <div class="shield-fallback" id="shield-core" style="margin: 0 auto;"></div>
+        </div>
+        <div class="brand-name">SENTINEL</div>
+        <div id="sys-msg" style="font-size: 0.5em; opacity: 0.7;">V1.2 | SYSTEM: STABLE</div>
     </header>
 
-    <div id="scanner-container">
-        <div id="scanner-light"></div>
-    </div>
-
+    <div id="scanner-light"></div>
     <div id="map"></div>
 
     <div class="bottom-console">
         <div class="video-box">
             <video id="video-feed" autoplay playsinline></video>
-            <div style="position:absolute; bottom:10px; left:10px; font-size: 8px; background: rgba(0,0,0,0.8); padding: 3px 8px; border: 1px solid var(--border-glow);" id="cam-status">DATA_LINK: OFFLINE</div>
+            <div class="rec-tag" id="rec-tag">● REC_OFF</div>
         </div>
         <div class="controls-box">
-            <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,234,255,0.2); padding-bottom: 5px;">
-                <div id="unit-id" style="font-size: 0.6em; color: #55aaff; font-weight: bold;">NODE: ---</div>
-                <div id="gps-coords" style="font-size: 0.6em; font-family: monospace; color: #fff;">00.0000, 00.0000</div>
+            <div style="font-size: 0.6em;">
+                <span id="unit-label" style="color:#55aaff;">UNIT: NONE</span><br>
+                <span id="gps-label">GPS: 0.0000, 0.0000</span>
             </div>
-            <button class="btn-action" onclick="toggleCamara()">VIDEO_OVERLAY</button>
-            <button class="btn-action btn-critical" onclick="enviarAlerta()">CRITICAL_ALERT</button>
+            <button class="btn-action" onclick="toggleVideo()">ENLACE VIDEO</button>
+            <button class="btn-action btn-critical" onclick="activarAlerta()">ALERTA CRÍTICA</button>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN SUPABASE
         const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const UNIT_ID = 'SNT-' + Math.floor(Math.random() * 899 + 100);
-        let map, userMarker, myRole = "";
-        let stream = null;
+        const ID = 'SNT-' + Math.floor(Math.random()*900+100);
+        let map, userMarker, streamActivo = null;
 
-        function iniciarSistema(rol) {
-            myRole = rol;
+        function iniciar(rol) {
             document.getElementById('selector-container').style.display = 'none';
-            document.getElementById('unit-id').innerText = "NODE: " + UNIT_ID;
-
+            document.getElementById('unit-label').innerText = `UNIT: ${ID} | ${rol.toUpperCase()}`;
+            
             map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-            startGPS();
-            subscribeToUpdates();
-        }
-
-        function startGPS() {
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(async pos => {
-                    const { latitude: lat, longitude: lng } = pos.coords;
-                    document.getElementById('gps-coords').innerText = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-
-                    if (!userMarker) {
-                        userMarker = L.circleMarker([lat, lng], {
-                            radius: 10, fillColor: (myRole === 'citizen' ? '#ff3131' : '#00eaff'),
-                            color: '#fff', weight: 2, fillOpacity: 1
-                        }).addTo(map);
+            if(navigator.geolocation) {
+                navigator.geolocation.watchPosition(async p => {
+                    const {latitude: lat, longitude: lng} = p.coords;
+                    document.getElementById('gps-label').innerText = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    
+                    if(!userMarker) {
+                        userMarker = L.circleMarker([lat, lng], { radius: 8, color: (rol=='citizen'?'#ff3131':'#00eaff'), fillColor: '#fff', fillOpacity: 1 }).addTo(map);
                         map.panTo([lat, lng]);
-                    } else {
-                        userMarker.setLatLng([lat, lng]);
-                    }
+                    } else { userMarker.setLatLng([lat, lng]); }
 
-                    await _supabase.from('unidades_live').upsert({
-                        user_id: UNIT_ID, latitude: lat, longitude: lng, role: myRole
-                    }, { onConflict: 'user_id' });
-
-                }, null, { enableHighAccuracy: true });
+                    await _supabase.from('unidades_live').upsert({ user_id: ID, latitude: lat, longitude: lng, role: rol }, {onConflict:'user_id'});
+                });
             }
         }
 
-        function subscribeToUpdates() {
-            _supabase.channel('global-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'unidades_live' }, payload => {
-                    if (payload.new && payload.new.user_id !== UNIT_ID) {
-                        renderOther(payload.new);
-                    }
-                }).subscribe();
-        }
-
-        let others = {};
-        function renderOther(data) {
-            const color = (data.role === 'citizen' ? '#ff3131' : '#00eaff');
-            if (others[data.user_id]) {
-                others[data.user_id].setLatLng([data.latitude, data.longitude]);
-            } else {
-                others[data.user_id] = L.circleMarker([data.latitude, data.longitude], {
-                    radius: 7, fillColor: color, color: color, fillOpacity: 0.6
-                }).addTo(map);
-                others[data.user_id].bindTooltip(data.user_id, { permanent: false, className: 'leaflet-tooltip' });
-            }
-        }
-
-        async function toggleCamara() {
+        async function toggleVideo() {
             const v = document.getElementById('video-feed');
-            const s = document.getElementById('cam-status');
-            if (!stream) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                    v.srcObject = stream;
-                    v.style.opacity = "1";
-                    s.innerText = "DATA_LINK: ACTIVE"; s.style.color = "var(--neon-blue)";
-                } catch(e) { alert("ERR_ACCESS_DENIED"); }
+            const t = document.getElementById('rec-tag');
+            if(!streamActivo) {
+                streamActivo = await navigator.mediaDevices.getUserMedia({video: {facingMode:"environment"}});
+                v.srcObject = streamActivo; v.style.opacity = "1";
+                t.innerText = "● REC_LIVE"; t.style.color = "var(--neon-red)";
             } else {
-                stream.getTracks().forEach(t => t.stop());
-                stream = null; v.srcObject = null;
-                v.style.opacity = "0.5";
-                s.innerText = "DATA_LINK: OFFLINE"; s.style.color = "gray";
+                streamActivo.getTracks().forEach(tr => tr.stop());
+                streamActivo = null; v.srcObject = null; v.style.opacity = "0.7";
+                t.innerText = "● REC_OFF"; t.style.color = "#666";
             }
         }
 
-        function enviarAlerta() {
-            const body = document.getElementById('sentinel-body');
-            const status = document.getElementById('sys-status');
-            
-            body.classList.add('emergency-active');
-            status.innerText = "● ALERT_SENT | EMERGENCY_PROTOCOL_ON";
-            status.style.color = "var(--neon-red)";
-
-            setTimeout(() => {
-                alert("ST_SIGNAL_SENT: REINFORCEMENTS DISPATCHED");
-            }, 500);
+        function activarAlerta() {
+            document.getElementById('sentinel-body').classList.add('emergency-active');
+            document.getElementById('sys-msg').innerText = "ALERT_PROTOCOL_ACTIVE";
+            document.getElementById('sys-msg').style.color = "var(--neon-red)";
+            alert("SISTEMA: ALERTA CRÍTICA ENVIADA");
         }
     </script>
 </body>
-        </html>
+</html>
