@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Smart Tech - Sentinel War Room</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -29,22 +29,37 @@
             overflow: hidden;
         }
 
+        /* --- LAYOUT DINÁMICO (WAR ROOM) --- */
         .war-room-container {
             display: none;
             grid-template-columns: 300px 1fr 320px;
-            grid-template-rows: 60px 1fr 180px;
+            grid-template-rows: 60px 1fr 150px;
             height: 100vh; width: 100vw;
             gap: 10px; padding: 10px;
             box-sizing: border-box;
-            position: relative;
         }
 
-        .war-room-container::before {
-            content: " "; display: block; position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            z-index: 5000; background-size: 100% 4px;
-            pointer-events: none; opacity: 0.3;
+        /* --- RESPONSIVE: MÓVIL --- */
+        @media (max-width: 850px) {
+            .war-room-container {
+                display: none;
+                grid-template-columns: 1fr;
+                grid-template-rows: 50px 200px 1fr auto;
+                overflow-y: auto;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            #top-bar { grid-column: 1; grid-row: 1; }
+            #camera-panel { grid-column: 1; grid-row: 2; height: 200px; }
+            #map-panel { grid-column: 1; grid-row: 3; height: 450px; z-index: 10; }
+            #status-panel { grid-column: 1; grid-row: 4; height: auto; }
+            #incident-panel { display: none; } /* Oculto en móvil para limpiar */
+            #command-bar { 
+                grid-column: 1; grid-row: 5; 
+                flex-wrap: wrap; padding: 10px; gap: 10px;
+            }
+            .btn-command { width: 45%; font-size: 0.6em; padding: 10px 5px; }
         }
 
         .panel {
@@ -57,73 +72,50 @@
 
         .panel-header {
             background: rgba(0, 234, 255, 0.1);
-            padding: 10px 15px; font-size: 0.75em;
+            padding: 8px 12px; font-size: 0.7em;
             font-weight: bold; color: var(--neon-blue);
             border-bottom: 1px solid var(--border-glow);
             display: flex; justify-content: space-between;
-            letter-spacing: 1px;
         }
 
         #map-panel { grid-column: 2; grid-row: 1 / 3; }
-        #map { width: 100%; height: 100%; filter: contrast(1.1) brightness(0.85); }
+        #map { width: 100%; height: 100%; filter: contrast(1.1) brightness(0.9); background: #050505; }
 
-        #incident-panel { grid-column: 3; grid-row: 1 / 4; }
-        #log-container { padding: 12px; font-size: 0.7em; overflow-y: auto; flex-grow: 1; scrollbar-width: thin; }
-        .log-entry { margin-bottom: 8px; border-bottom: 1px solid rgba(0, 234, 255, 0.05); color: var(--neon-blue); padding-bottom: 4px; }
-
-        #camera-panel { grid-column: 1; grid-row: 2; }
+        #camera-panel { position: relative; }
         #video-feed { width: 100%; height: 100%; object-fit: cover; background: #000; }
-        .hud-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; box-sizing: border-box;
-        }
-        .hud-corner { position: absolute; width: 15px; height: 15px; border: 2px solid var(--neon-blue); opacity: 0.7; }
-        .tl { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
-        .br { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
-        .hud-text { position: absolute; bottom: 15px; left: 15px; font-size: 9px; color: var(--neon-blue); text-shadow: 0 0 5px #000; line-height: 1.4; }
 
-        #status-panel { grid-column: 1; grid-row: 3; }
-        #unit-info { padding: 15px; font-size: 0.8em; }
+        #status-panel { padding-bottom: 10px; }
+        #unit-info { padding: 10px; font-size: 0.75em; }
 
-        #top-bar { grid-column: 1 / 2; grid-row: 1; display: flex; align-items: center; padding-left: 15px; font-size: 0.85em; letter-spacing: 2px; }
-
-        #command-bar { grid-column: 2; grid-row: 3; display: flex; justify-content: center; align-items: center; gap: 25px; }
+        #command-bar { display: flex; justify-content: center; align-items: center; gap: 15px; }
 
         .btn-command {
             background: rgba(0,0,0,0.7); border: 1px solid var(--neon-blue);
-            color: var(--neon-blue); padding: 12px 24px; cursor: pointer;
-            font-family: 'Courier New', monospace; font-weight: bold; transition: all 0.2s ease;
-            text-transform: uppercase; letter-spacing: 1px;
+            color: var(--neon-blue); padding: 10px 15px; cursor: pointer;
+            font-family: 'Courier New', monospace; font-weight: bold;
+            text-transform: uppercase; font-size: 0.7em;
         }
-        .btn-command:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
 
+        /* --- SELECTOR INICIAL --- */
         #selector-container {
             position: fixed; width: 100%; height: 100%; z-index: 10000;
             background: radial-gradient(circle at center, #0a1420 0%, #000 100%);
             display: flex; justify-content: center; align-items: center;
         }
         .auth-box {
-            border: 1px solid var(--neon-blue); padding: 40px; text-align: center;
-            background: var(--panel-bg); width: 400px; border-radius: 4px;
-            box-shadow: 0 0 30px rgba(0, 234, 255, 0.1);
+            border: 1px solid var(--neon-blue); padding: 25px; text-align: center;
+            background: var(--panel-bg); width: 85%; max-width: 350px;
         }
 
+        .hud-text { font-size: 9px; color: var(--neon-blue); }
         .critical-incident { animation: flash-red 0.8s infinite alternate; }
-        @keyframes flash-red { from { opacity: 0.3; transform: scale(0.9); } to { opacity: 0.8; transform: scale(1.1); fill: #ff3131; } }
+        @keyframes flash-red { from { opacity: 0.4; } to { opacity: 0.9; } }
         
-        .predictive-path { stroke-dasharray: 8; animation: movePath 1s linear infinite; }
-        @keyframes movePath { to { stroke-dashoffset: -16; } }
-
-        .block-pulse { animation: pulse-orange 1.5s infinite; }
-        @keyframes pulse-orange { 0% { opacity: 0.4; } 50% { opacity: 0.8; stroke-width: 5; } 100% { opacity: 0.4; } }
-
         .health-tooltip {
             background: rgba(0, 10, 20, 0.9) !important;
             border: 1px solid var(--neon-blue) !important;
             color: var(--neon-blue) !important;
-            font-family: 'Courier New', monospace !important;
-            font-size: 10px !important;
-            box-shadow: 0 0 10px var(--border-glow) !important;
+            font-size: 9px !important;
             border-radius: 0 !important;
         }
     </style>
@@ -132,38 +124,32 @@
 
     <div id="selector-container">
         <div class="auth-box">
-            <h2 style="color: var(--neon-blue); text-shadow: 0 0 15px var(--neon-blue); margin-top:0;">SENTINEL AUTH</h2>
-            <p style="font-size: 0.65em; letter-spacing: 3px; color: #556677; margin-bottom: 30px;">PROTOCOLO: PROTECCIÓN URBANA</p>
+            <h2 style="color: var(--neon-blue); margin:0; font-size: 1.2em;">SENTINEL AUTH</h2>
+            <p style="font-size: 0.5em; letter-spacing: 2px; color: #556677; margin-bottom: 20px;">PROTOCOLO: MAR DEL PLATA VIVA</p>
             
-            <button class="btn-command" style="display:block; width:100%; margin-bottom:15px; border-color: var(--neon-blue); color: var(--neon-blue);" onclick="iniciarSistema('patrulla')">🔵 UNIDAD DE RESPUESTA</button>
-            <button class="btn-command" style="display:block; width:100%; margin-bottom:15px; border-color: var(--neon-red); color: var(--neon-red);" onclick="iniciarSistema('delivery')">🔴 LOGÍSTICA / REPARTO</button>
-            <button class="btn-command" style="display:block; width:100%; margin-bottom:15px; border-color: var(--neon-green); color: var(--neon-green);" onclick="iniciarSistema('medico')">🟢 ASISTENCIA MÉDICA</button>
-            <button class="btn-command" style="display:block; width:100%; border-color: var(--neon-white); color: var(--neon-white);" onclick="iniciarSistema('civil')">⚪ CIUDADANO LOCAL</button>
+            <button class="btn-command" style="display:block; width:100%; margin-bottom:10px;" onclick="iniciarSistema('patrulla')">🔵 RESPUESTA</button>
+            <button class="btn-command" style="display:block; width:100%; margin-bottom:10px; border-color: var(--neon-red); color: var(--neon-red);" onclick="iniciarSistema('delivery')">🔴 LOGÍSTICA</button>
+            <button class="btn-command" style="display:block; width:100%; border-color: var(--neon-white); color: var(--neon-white);" onclick="iniciarSistema('civil')">⚪ CIUDADANO</button>
         </div>
     </div>
 
     <div class="war-room-container" id="main-ui">
         <div id="top-bar" class="panel">
-            <span style="font-weight: bold; color: var(--neon-blue);">SENTINEL_MDQ_v1.0</span>
+            <div style="padding: 15px; font-weight: bold; color: var(--neon-blue); font-size: 0.8em;">SENTINEL_MDQ_v1.1</div>
         </div>
 
         <div id="camera-panel" class="panel">
-            <div class="panel-header"><span>VISOR_CAMARA_01</span><span style="color: var(--neon-red);">● EN VIVO</span></div>
+            <div class="panel-header"><span>VISOR_CAMARA</span><span id="cam-live-tag" style="color: #444;">● OFF</span></div>
             <video id="video-feed" autoplay playsinline></video>
-            <div class="hud-overlay">
-                <div class="hud-corner tl"></div><div class="hud-corner br"></div>
-                <div class="hud-text">ENLACE_DATOS: ACTIVO<br>ESCANEO_BIOMÉTRICO: OK<br>LATENCIA: 24ms</div>
-            </div>
         </div>
 
         <div id="status-panel" class="panel">
             <div class="panel-header"><span>DIAGNÓSTICO_UNIDAD</span></div>
             <div id="unit-info">
-                <div id="display-rol" style="font-size: 1.1em; margin-bottom: 8px; font-weight: bold;"></div>
-                <div id="gps-status" style="color: #666; font-size: 0.9em;">GPS: SINCRONIZANDO...</div>
-                <div id="coords" style="margin-top: 15px; color: var(--neon-blue); font-family: monospace; letter-spacing: 1px;">00.0000 , 00.0000</div>
-                <button id="btn-cam" class="btn-command" style="font-size: 0.7em; padding: 8px; margin-top:20px; width:100%;" onclick="toggleCamara()">ENLACE DE VIDEO</button>
-                <button class="btn-command" style="font-size: 0.6em; padding: 5px; margin-top:10px; width:100%; border-color: #555; color: #555;" onclick="exportarCajaNegra()">EXPORTAR CAJA NEGRA</button>
+                <div id="display-rol" style="font-weight: bold;"></div>
+                <div id="gps-status" style="font-size: 0.8em; color: #666;">GPS: WAIT...</div>
+                <div id="coords" style="color: var(--neon-blue); margin: 5px 0;">00.00, 00.00</div>
+                <button id="btn-cam" class="btn-command" style="width:100%; margin-top:5px;" onclick="toggleCamara()">ENLACE VIDEO</button>
             </div>
         </div>
 
@@ -172,314 +158,122 @@
         </div>
 
         <div id="incident-panel" class="panel">
-            <div class="panel-header"><span>FEED_INCIDENTES</span><span id="global-safety-status" style="color: var(--neon-green);">SEGURO</span></div>
-            <div id="log-container"></div>
+            <div class="panel-header"><span>FEED_INCIDENTES</span></div>
+            <div id="log-container" style="padding: 10px; font-size: 0.65em; overflow-y: auto;"></div>
         </div>
 
         <div id="command-bar" class="panel">
-            <button class="btn-command" onclick="ejecutarSimulacro('robo')">SIMULAR ROBO</button>
-            <button class="btn-command" style="border-color: var(--neon-green); color: var(--neon-green);" onclick="ejecutarSimulacro('medico')">SIMULAR ACCIDENTE</button>
+            <button class="btn-command" onclick="ejecutarSimulacro('robo')">SIM ROBO</button>
+            <button class="btn-command" style="border-color: var(--neon-orange); color: var(--neon-orange);" onclick="ejecutarSimulacro('alerta')">ALERTA 360</button>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN SUPABASE (Reemplaza con tus datos)
         const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let map;
-        let marcadorUsuario;
-        let radarCircle;
-        let alertaActiva = null;
+        const SESSION_ID = 'UNIT-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+        let map, marcadorUsuario, radarCircle, miRol = "";
+        let flotaSimulada = [];
         let streamActivo = null;
-        let flotaSimulada = []; // Ahora contendrá unidades reales de Supabase
-        let rutaPredictiva = null;
-        let miRol = "";
-        
-        let incidentesRecientes = [];
-        let geocercasActivas = [];
-        let geocercasBloqueo = [];
-        let expansionInterval = null;
-
-        function registrarEnCajaNegra(evento, data) {
-            let registros = JSON.parse(localStorage.getItem('sentinel_blackbox')) || [];
-            const snapshot = {
-                timestamp: new Date().toISOString(),
-                evento: evento,
-                posicion_usuario: marcadorUsuario ? marcadorUsuario.getLatLng() : "No GPS",
-                rol: miRol,
-                detalles: data
-            };
-            registros.push(snapshot);
-            if (registros.length > 50) registros.shift();
-            localStorage.setItem('sentinel_blackbox', JSON.stringify(registros));
-        }
-
-        function exportarCajaNegra() {
-            const data = localStorage.getItem('sentinel_blackbox');
-            console.log("=== EXPORTANDO CAJA NEGRA SENTINEL ===");
-            console.log(data ? JSON.parse(data) : "No hay registros.");
-            addLog("SISTEMA: DATOS DE CAJA NEGRA ENVIADOS A CONSOLA");
-        }
 
         function addLog(msg) {
             const container = document.getElementById('log-container');
+            if(!container) return;
             const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerText = `> ${new Date().toLocaleTimeString()} | ${msg}`;
+            entry.style.color = "var(--neon-blue)";
+            entry.style.marginBottom = "5px";
+            entry.innerText = `> ${msg}`;
             container.prepend(entry);
-            if (container.children.length > 25) container.lastChild.remove();
-        }
-
-        function reportarIncidente(e) {
-            const { lat, lng } = e.latlng;
-            let pulso = L.circle([lat, lng], {
-                radius: 150, className: 'critical-incident', color: 'var(--neon-red)', fillOpacity: 0.5, interactive: false
-            }).addTo(map);
-            addLog(`INCIDENTE DETECTADO EN: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-            registrarEnCajaNegra("INCIDENTE_MANUAL", { lat, lng });
-            incidentesRecientes.push({ lat, lng, time: Date.now() });
-            analizarZonasDePeligro();
-            setTimeout(() => { if(map.hasLayer(pulso)) map.removeLayer(pulso); }, 10000);
-        }
-
-        function analizarZonasDePeligro() {
-            const ahora = Date.now();
-            incidentesRecientes = incidentesRecientes.filter(i => ahora - i.time < 120000);
-            if (incidentesRecientes.length >= 3) {
-                let avgLat = incidentesRecientes.reduce((sum, i) => sum + i.lat, 0) / incidentesRecientes.length;
-                let avgLng = incidentesRecientes.reduce((sum, i) => sum + i.lng, 0) / incidentesRecientes.length;
-                crearGeocerca(avgLat, avgLng);
-            }
-        }
-
-        function crearGeocerca(lat, lng) {
-            const existe = geocercasActivas.some(g => map.distance([lat, lng], g.getLatLng()) < 400);
-            if (!existe) {
-                const geocerca = L.circle([lat, lng], {
-                    radius: 500, color: 'var(--neon-red)', weight: 2, dashArray: '10, 10', fillColor: '#ff3131', fillOpacity: 0.1, className: 'predictive-path'
-                }).addTo(map);
-                geocerca.bindTooltip("ZONA DE PELIGRO DINÁMICA", { permanent: true, className: 'hud-text', direction: 'center' });
-                geocercasActivas.push(geocerca);
-                addLog("ALERTA: GEOCERCA DE PELIGRO GENERADA");
-                setTimeout(() => {
-                    map.removeLayer(geocerca);
-                    geocercasActivas = geocercasActivas.filter(g => g !== geocerca);
-                    addLog("SISTEMA: GEOCERCA DISIPADA");
-                }, 40000);
-            }
-        }
-
-        function getNeonColor(rol) {
-            const colors = { 'patrulla': '#00eaff', 'delivery': '#ff3131', 'medico': '#39ff14', 'civil': '#ffffff' };
-            return colors[rol] || '#ffffff';
         }
 
         function iniciarSistema(rol) {
             miRol = rol;
             document.getElementById('selector-container').style.display = 'none';
             document.getElementById('main-ui').style.display = 'grid';
-            const display = document.getElementById('display-rol');
-            const color = getNeonColor(rol);
-            display.innerText = "ID: " + rol.toUpperCase();
-            display.style.color = color;
+            
+            const color = (rol === 'patrulla') ? '#00eaff' : (rol === 'delivery' ? '#ff3131' : '#ffffff');
+            document.getElementById('display-rol').innerText = "ID: " + SESSION_ID;
+            document.getElementById('display-rol').style.color = color;
+
             map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 14);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-            map.on('click', reportarIncidente);
-            addLog("SECUENCIA_INICIO_WAR_ROOM_COMPLETA");
-            
-            // CONEXIÓN A SUPABASE
-            conectarSupabaseRealtime();
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
             activarGPS(rol, color);
+            conectarSupabaseRealtime();
+            addLog("SENTINEL ONLINE");
         }
 
-        // --- NUEVA LÓGICA DE ORDEN: SUPABASE REALTIME ---
-        async function conectarSupabaseRealtime() {
-            addLog("SISTEMA: ENLAZANDO CON SUPABASE REALTIME...");
-            
-            // Suscribirse a cambios en la tabla unidades_live
-            _supabase
-                .channel('map-updates')
-                .on('postgres_changes', 
-                    { event: '*', schema: 'public', table: 'unidades_live' }, 
-                    payload => {
-                        gestionarActualizacionUnidad(payload);
+        async function activarGPS(rol, color) {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.watchPosition(async pos => {
+                    const { latitude: lat, longitude: lng } = pos.coords;
+                    document.getElementById('gps-status').innerText = "GPS: SEÑAL ESTABLE";
+                    document.getElementById('coords').innerText = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+                    
+                    if (!marcadorUsuario) {
+                        marcadorUsuario = L.circleMarker([lat, lng], { radius: 7, fillColor: color, color: color, weight: 2, fillOpacity: 0.9 }).addTo(map);
+                        radarCircle = L.circle([lat, lng], { radius: 200, color: color, weight: 1, fillOpacity: 0.05 }).addTo(map);
+                        map.setView([lat, lng], 15);
+                    } else {
+                        marcadorUsuario.setLatLng([lat, lng]);
+                        radarCircle.setLatLng([lat, lng]);
                     }
-                )
-                .subscribe();
+
+                    await _supabase.from('unidades_live').upsert({ 
+                        user_id: SESSION_ID, latitude: lat, longitude: lng, role: rol
+                    }, { onConflict: 'user_id' });
+
+                }, null, { enableHighAccuracy: true });
+            }
         }
 
-        function gestionarActualizacionUnidad(payload) {
-            const data = payload.new;
-            const eventType = payload.eventType;
+        function conectarSupabaseRealtime() {
+            _supabase.channel('map-updates')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'unidades_live' }, payload => {
+                    if (payload.new && payload.new.user_id !== SESSION_ID) {
+                        actualizarOtraUnidad(payload.new);
+                    }
+                }).subscribe();
+        }
 
-            if (eventType === 'DELETE') {
-                removerUnidadDelMapa(payload.old.id);
-                return;
-            }
-
-            let unidad = flotaSimulada.find(u => u.id === data.user_id || u.id === data.id);
-            const color = getNeonColor(data.role || 'civil');
+        function actualizarOtraUnidad(data) {
+            let unidad = flotaSimulada.find(u => u.id === data.user_id);
+            const color = (data.role === 'patrulla') ? '#00eaff' : (data.role === 'delivery' ? '#ff3131' : '#ffffff');
 
             if (unidad) {
-                // Actualizar posición existente suavemente
                 unidad.marker.setLatLng([data.latitude, data.longitude]);
-                unidad.battery = data.battery || 100;
             } else {
-                // Crear nueva unidad en el mapa
-                let nuevoMarker = L.circleMarker([data.latitude, data.longitude], { 
-                    radius: 4, color: color, fillColor: color, fillOpacity: 0.7, weight: 1 
+                let m = L.circleMarker([data.latitude, data.longitude], { 
+                    radius: 5, color: color, fillColor: color, fillOpacity: 0.8 
                 }).addTo(map);
-                
-                nuevoMarker.bindTooltip(`${data.role || 'UNIT'}_${(data.user_id || data.id).toString().slice(0,4)}`, { 
-                    className: 'health-tooltip' 
-                });
-
-                flotaSimulada.push({ 
-                    marker: nuevoMarker, 
-                    tipo: data.role || 'civil', 
-                    battery: data.battery || 100, 
-                    id: data.user_id || data.id 
-                });
+                m.bindTooltip(data.role.toUpperCase(), { className: 'health-tooltip', permanent: false });
+                flotaSimulada.push({ id: data.user_id, marker: m });
+                addLog(`NUEVA CONEXIÓN: ${data.role}`);
             }
         }
-
-        function removerUnidadDelMapa(id) {
-            const index = flotaSimulada.findIndex(u => u.id === id);
-            if (index !== -1) {
-                map.removeLayer(flotaSimulada[index].marker);
-                flotaSimulada.splice(index, 1);
-            }
-        }
-
-        // --- LÓGICA DE GEOCERCAS DE BLOQUEO ---
-        function generarBloqueosTacticos(lat, lng) {
-            geocercasBloqueo.forEach(g => map.removeLayer(g));
-            geocercasBloqueo = [];
-            const offset = 0.008;
-            const puntos = [
-                { n: "NORTE", pos: [lat + offset, lng] },
-                { n: "SUR", pos: [lat - offset, lng] },
-                { n: "ESTE", pos: [lat, lng + offset] },
-                { n: "OESTE", pos: [lat, lng - offset] }
-            ];
-            puntos.forEach(p => {
-                let bloqueo = L.circle(p.pos, {
-                    radius: 120, color: 'var(--neon-orange)', weight: 2, dashArray: '5, 5', fillColor: '#ffaa00', fillOpacity: 0.2, className: 'block-pulse'
-                }).addTo(map);
-                bloqueo.bindTooltip(`BLOQUEO_${p.n}`, { permanent: false, className: 'hud-text' });
-                bloqueo.activo = false;
-                geocercasBloqueo.push(bloqueo);
-            });
-            addLog("IA: PUNTOS DE BLOQUEO ESTRATÉGICO DESPLEGADOS");
-        }
-
-        function ejecutarSimulacro(escenario) {
-            const center = map.getCenter();
-            const lat = center.lat + (Math.random() - 0.5) * 0.01;
-            const lng = center.lng + (Math.random() - 0.5) * 0.01;
-            
-            if(alertaActiva) map.removeLayer(alertaActiva);
-            alertaActiva = L.circle([lat, lng], { radius: 250, className: 'critical-incident', color: 'red', fillOpacity: 0.4 }).addTo(map);
-            
-            addLog(`SISTEMA: ${escenario.toUpperCase()} DETECTADO.`);
-            if (escenario === 'robo') {
-                iniciarModoPersecucion(lat, lng);
-                generarBloqueosTacticos(lat, lng);
-            }
-        }
-
-        function iniciarModoPersecucion(lat, lng) {
-            if (expansionInterval) clearInterval(expansionInterval);
-            let radioActual = 200;
-            const conoEscape = L.circle([lat, lng], {
-                radius: radioActual, color: 'var(--neon-red)', weight: 1, dashArray: '5, 10', fillColor: '#ff3131', fillOpacity: 0.1, className: 'predictive-path'
-            }).addTo(map);
-
-            expansionInterval = setInterval(() => {
-                radioActual += 50; 
-                conoEscape.setRadius(radioActual);
-                flotaSimulada.forEach(u => {
-                    let distCentro = map.distance([lat, lng], u.marker.getLatLng());
-                    geocercasBloqueo.forEach(bloqueo => {
-                        let distBloqueo = map.distance(bloqueo.getLatLng(), u.marker.getLatLng());
-                        if (distBloqueo < 120 && u.tipo === 'patrulla' && !bloqueo.activo) {
-                            bloqueo.setStyle({ color: 'var(--neon-green)', fillColor: '#39ff14', fillOpacity: 0.5 });
-                            bloqueo.activo = true;
-                            addLog("ESTRATEGIA: PUNTO DE BLOQUEO ASEGURADO");
-                        }
-                    });
-                });
-                if (radioActual > 1500) { 
-                    clearInterval(expansionInterval);
-                    map.removeLayer(conoEscape);
-                    geocercasBloqueo.forEach(g => map.removeLayer(g));
-                    addLog("SISTEMA: OPERATIVO FINALIZADO");
-                }
-            }, 1000);
-        }
-
-        // Generamos un ID único para esta sesión de navegador
-const SESSION_ID = 'UNIT-' + Math.random().toString(36).substr(2, 9);
-
-async function activarGPS(rol, color) {
-    if ("geolocation" in navigator) {
-        navigator.geolocation.watchPosition(async pos => {
-            const { latitude: lat, longitude: lng } = pos.coords;
-            document.getElementById('gps-status').innerText = "GPS: SEÑAL ESTABLE";
-            document.getElementById('coords').innerText = `${lat.toFixed(5)} , ${lng.toFixed(5)}`;
-            
-            if (marcadorUsuario) {
-                marcadorUsuario.setLatLng([lat, lng]);
-                radarCircle.setLatLng([lat, lng]);
-            } else {
-                marcadorUsuario = L.circleMarker([lat, lng], { radius: 8, fillColor: color, color: color, weight: 2, fillOpacity: 0.8 }).addTo(map);
-                radarCircle = L.circle([lat, lng], { radius: 300, color: color, weight: 1, fillOpacity: 0.05, interactive: false }).addTo(map);
-                map.setView([lat, lng], 16);
-            }
-
-            // --- ORDEN TÁCTICO: SINCRONIZACIÓN MULTI-DISPOSITIVO ---
-            // Usamos SESSION_ID para que cada pestaña/celular sea un punto distinto
-            try {
-                const { error } = await _supabase
-                    .from('unidades_live')
-                    .upsert({ 
-                        user_id: SESSION_ID, 
-                        latitude: lat, 
-                        longitude: lng, 
-                        role: rol,
-                        battery: 100 // Aquí podrías usar la API de batería si quisieras
-                    }, { onConflict: 'user_id' }); // Si el ID existe, actualiza. Si no, crea.
-                
-                if (error) console.error("Error Supabase:", error.message);
-            } catch (err) {
-                console.error("Error crítico de red:", err);
-            }
-
-        }, (err) => {
-            addLog("ERROR GPS: " + err.message);
-        }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
-    }
-}
 
         async function toggleCamara() {
             const video = document.getElementById('video-feed');
-            const btn = document.getElementById('btn-cam');
+            const tag = document.getElementById('cam-live-tag');
             if (!streamActivo) {
                 try {
                     streamActivo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                     video.srcObject = streamActivo;
-                    btn.innerText = "TERMINAR ENLACE";
-                    btn.style.borderColor = "var(--neon-red)";
-                } catch (err) { addLog("ERROR: CÁMARA NO DISPONIBLE"); }
+                    tag.innerText = "● EN VIVO"; tag.style.color = "var(--neon-red)";
+                } catch (e) { addLog("CAM ERROR"); }
             } else {
                 streamActivo.getTracks().forEach(t => t.stop());
-                streamActivo = null;
-                video.srcObject = null;
-                btn.innerText = "ENLACE DE VIDEO";
-                btn.style.borderColor = "var(--neon-blue)";
+                streamActivo = null; video.srcObject = null;
+                tag.innerText = "● OFF"; tag.style.color = "#444";
             }
+        }
+
+        function ejecutarSimulacro(tipo) {
+            const c = map.getCenter();
+            L.circle([c.lat, c.lng], { radius: 300, color: 'red', className: 'critical-incident' }).addTo(map);
+            addLog(`ALERTA: ${tipo.toUpperCase()} EN POSICIÓN`);
         }
     </script>
 </body>
