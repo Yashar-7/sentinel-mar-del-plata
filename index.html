@@ -24,9 +24,24 @@
             width: 100vw; height: 100vh;
             background-color: #000;
             color: var(--neon-blue);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             text-transform: uppercase;
+        }
+
+        /* --- MEJORA VISUAL: GLOW SUPERIOR (Como en la imagen) --- */
+        .main-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; left: 0; width: 100%; height: 2px;
+            background: var(--neon-blue);
+            box-shadow: 0 0 15px var(--neon-blue);
+            z-index: 101;
+        }
+
+        .emergency-active .main-header::after {
+            background: var(--neon-red);
+            box-shadow: 0 0 15px var(--neon-red);
         }
 
         /* --- ESCÁNER DINÁMICO --- */
@@ -68,12 +83,7 @@
         /* --- ESTADO DE EMERGENCIA --- */
         .emergency-active #scanner-light {
             --scan-color: rgba(255, 49, 49, 0.4);
-            animation: sweep 1.5s ease-in-out infinite; /* Escaneo más rápido */
-        }
-
-        .emergency-active .main-header {
-            border-bottom: 2px solid var(--neon-red);
-            box-shadow: 0 0 20px rgba(255, 49, 49, 0.4);
+            animation: sweep 1.5s ease-in-out infinite;
         }
 
         /* --- INTERFAZ --- */
@@ -84,15 +94,14 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-bottom: 1px solid var(--border-glow);
             z-index: 100;
             position: relative;
         }
 
         .logo-placeholder {
-            font-size: 1.4em;
+            font-size: 1.6em;
             font-weight: 900;
-            letter-spacing: 5px;
+            letter-spacing: 8px; /* Más espaciado como la imagen */
             color: var(--neon-blue);
             text-shadow: 0 0 15px var(--neon-blue);
             transition: 0.3s;
@@ -100,7 +109,7 @@
 
         .emergency-active .logo-placeholder {
             color: var(--neon-red);
-            text-shadow: 0 0 15px var(--neon-red);
+            text-shadow: 0 0 20px var(--neon-red);
         }
 
         #map {
@@ -109,6 +118,8 @@
             width: 100%;
             background: #050505;
             z-index: 1;
+            /* Efecto de viñeta para oscurecer bordes */
+            box-shadow: inset 0 0 100px #000;
         }
 
         .bottom-console {
@@ -116,16 +127,31 @@
             bottom: 0; width: 100%;
             height: 180px;
             background: var(--panel-bg);
-            border-top: 1px solid var(--border-glow);
+            border-top: 2px solid var(--neon-blue); /* Línea sólida como la imagen */
             display: grid;
             grid-template-columns: 1fr 1fr;
             z-index: 100;
             backdrop-filter: blur(15px);
         }
 
+        .emergency-active .bottom-console {
+            border-top: 2px solid var(--neon-red);
+        }
+
         .video-box {
             position: relative;
             border-right: 1px solid var(--border-glow);
+            overflow: hidden;
+        }
+
+        /* Marco estilo HUD para el video */
+        .video-box::before {
+            content: '';
+            position: absolute;
+            top: 10px; left: 10px; width: 20px; height: 20px;
+            border-top: 2px solid var(--neon-blue);
+            border-left: 2px solid var(--neon-blue);
+            z-index: 10;
         }
 
         #video-feed { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; transition: 0.5s; }
@@ -138,14 +164,15 @@
         }
 
         .btn-action {
-            background: rgba(0, 234, 255, 0.1);
+            background: rgba(0, 234, 255, 0.05);
             border: 1px solid var(--neon-blue);
             color: var(--neon-blue);
             padding: 12px;
-            font-size: 0.7em;
+            font-size: 0.75em;
             font-weight: bold;
             cursor: pointer;
-            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: inset 0 0 10px rgba(0, 234, 255, 0.1);
         }
 
         .btn-critical {
@@ -156,24 +183,24 @@
         }
 
         @keyframes pulse-red {
-            0% { box-shadow: 0 0 0px rgba(255, 49, 49, 0.4); }
-            50% { box-shadow: 0 0 15px rgba(255, 49, 49, 0.7); }
-            100% { box-shadow: 0 0 0px rgba(255, 49, 49, 0.4); }
+            0% { box-shadow: 0 0 5px rgba(255, 49, 49, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(255, 49, 49, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(255, 49, 49, 0.4); }
         }
 
         #selector-container {
             position: fixed; inset: 0;
-            background: radial-gradient(circle, #001529 0%, #000 100%);
+            background: #000;
             display: flex; justify-content: center; align-items: center;
             z-index: 9999;
         }
 
         .auth-card {
             border: 1px solid var(--neon-blue);
-            padding: 40px;
+            padding: 50px;
             text-align: center;
-            background: rgba(0, 5, 15, 0.95);
-            box-shadow: 0 0 40px rgba(0, 234, 255, 0.2);
+            background: #000;
+            box-shadow: 0 0 50px rgba(0, 234, 255, 0.15);
         }
     </style>
 </head>
@@ -182,15 +209,15 @@
     <div id="selector-container">
         <div class="auth-card">
             <div class="logo-placeholder">SENTINEL</div>
-            <p style="font-size: 0.6em; margin-bottom: 30px; letter-spacing: 2px;">SMART TECH | SECURITY OVERRIDE</p>
-            <button class="btn-action" style="width: 100%; margin-bottom: 15px;" onclick="iniciarSistema('responder')">ACCESO RESPUESTA</button>
-            <button class="btn-action btn-critical" style="width: 100%;" onclick="iniciarSistema('citizen')">ACCESO CIUDADANO</button>
+            <p style="font-size: 0.5em; margin-bottom: 40px; letter-spacing: 3px; color: #55aaff;">OPERATIONAL INTERFACE V1.2.5</p>
+            <button class="btn-action" style="width: 100%; margin-bottom: 20px;" onclick="iniciarSistema('responder')">ST_CORE_LOGIN</button>
+            <button class="btn-action btn-critical" style="width: 100%;" onclick="iniciarSistema('citizen')">ST_EMERGENCY_LINK</button>
         </div>
     </div>
 
     <header class="main-header">
         <div class="logo-placeholder">SENTINEL</div>
-        <div id="sys-status" style="font-size: 0.5em; letter-spacing: 1px;">● SYSTEM_READY | NO_THREATS</div>
+        <div id="sys-status" style="font-size: 0.5em; letter-spacing: 2px; margin-top: 5px;">● SYSTEM_READY | ENCRYPTED_STREAM</div>
     </header>
 
     <div id="scanner-container">
@@ -202,15 +229,15 @@
     <div class="bottom-console">
         <div class="video-box">
             <video id="video-feed" autoplay playsinline></video>
-            <div style="position:absolute; bottom:10px; left:10px; font-size: 9px; background: rgba(0,0,0,0.7); padding: 2px 5px;" id="cam-status">CAM_FEED: OFFLINE</div>
+            <div style="position:absolute; bottom:10px; left:10px; font-size: 8px; background: rgba(0,0,0,0.8); padding: 3px 8px; border: 1px solid var(--border-glow);" id="cam-status">DATA_LINK: OFFLINE</div>
         </div>
         <div class="controls-box">
-            <div style="display:flex; justify-content: space-between; align-items: center;">
-                <div id="unit-id" style="font-size: 0.6em; color: #55aaff;">ID: ---</div>
-                <div id="gps-coords" style="font-size: 0.6em; font-family: monospace;">0.00, 0.00</div>
+            <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,234,255,0.2); padding-bottom: 5px;">
+                <div id="unit-id" style="font-size: 0.6em; color: #55aaff; font-weight: bold;">NODE: ---</div>
+                <div id="gps-coords" style="font-size: 0.6em; font-family: monospace; color: #fff;">00.0000, 00.0000</div>
             </div>
-            <button class="btn-action" onclick="toggleCamara()">ENLACE DE VIDEO</button>
-            <button class="btn-action btn-critical" onclick="enviarAlerta()">ALERTA CRÍTICA</button>
+            <button class="btn-action" onclick="toggleCamara()">VIDEO_OVERLAY</button>
+            <button class="btn-action btn-critical" onclick="enviarAlerta()">CRITICAL_ALERT</button>
         </div>
     </div>
 
@@ -227,7 +254,7 @@
         function iniciarSistema(rol) {
             myRole = rol;
             document.getElementById('selector-container').style.display = 'none';
-            document.getElementById('unit-id').innerText = UNIT_ID + " [" + rol + "]";
+            document.getElementById('unit-id').innerText = "NODE: " + UNIT_ID;
 
             map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
@@ -244,7 +271,7 @@
 
                     if (!userMarker) {
                         userMarker = L.circleMarker([lat, lng], {
-                            radius: 9, fillColor: (myRole === 'citizen' ? '#ff3131' : '#00eaff'),
+                            radius: 10, fillColor: (myRole === 'citizen' ? '#ff3131' : '#00eaff'),
                             color: '#fff', weight: 2, fillOpacity: 1
                         }).addTo(map);
                         map.panTo([lat, lng]);
@@ -290,13 +317,13 @@
                     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                     v.srcObject = stream;
                     v.style.opacity = "1";
-                    s.innerText = "CAM_FEED: ACTIVE"; s.style.color = "var(--neon-blue)";
-                } catch(e) { alert("ERROR_CAM: NO_PERMISSION"); }
+                    s.innerText = "DATA_LINK: ACTIVE"; s.style.color = "var(--neon-blue)";
+                } catch(e) { alert("ERR_ACCESS_DENIED"); }
             } else {
                 stream.getTracks().forEach(t => t.stop());
                 stream = null; v.srcObject = null;
                 v.style.opacity = "0.5";
-                s.innerText = "CAM_FEED: OFFLINE"; s.style.color = "gray";
+                s.innerText = "DATA_LINK: OFFLINE"; s.style.color = "gray";
             }
         }
 
@@ -305,14 +332,13 @@
             const status = document.getElementById('sys-status');
             
             body.classList.add('emergency-active');
-            status.innerText = "● ALERT_SENT | EMERGENCY_PROTOCOL_ACTIVE";
+            status.innerText = "● ALERT_SENT | EMERGENCY_PROTOCOL_ON";
             status.style.color = "var(--neon-red)";
 
-            // Simulación de envío
             setTimeout(() => {
-                alert("CENTRAL DE MONITOREO NOTIFICADA - UNIDADES EN CAMINO");
+                alert("ST_SIGNAL_SENT: REINFORCEMENTS DISPATCHED");
             }, 500);
         }
     </script>
 </body>
-</html>
+        </html>
