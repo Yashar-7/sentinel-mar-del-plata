@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL ARGENTO | SISTEMA DE ALERTA CIUDADANA</title>
+    <title>SENTINEL ARGENTO | REGISTRO</title>
     
     <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Supabase para datos en tiempo real -->
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -22,516 +22,184 @@
         }
 
         :root {
-            --primary: #00ffaa;        /* Verde neón principal */
-            --secondary: #0066ff;       /* Azul neón secundario */
-            --alert: #ff3300;           /* Rojo alerta */
-            --bg: #0a0c10;              /* Fondo principal */
-            --bg-terminal: #0f1219;      /* Fondo terminal */
-            --border-glow: 0 0 10px rgba(0, 255, 170, 0.3);
-            --text-glow: 0 0 5px rgba(0, 255, 170, 0.5);
+            --primary: #00ffaa;
+            --secondary: #0066ff;
+            --alert: #ff3300;
+            --bg: #0a0c10;
         }
 
         body {
             background: var(--bg);
             color: var(--primary);
             font-family: 'Share Tech Mono', monospace;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            position: relative;
+            padding: 15px;
         }
 
-        /* EFECTO MATRIZ (código cayendo) - SUTIL */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
+        /* Pantalla de registro */
+        #pantalla-registro {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-width: 400px;
+            margin: 0 auto;
             width: 100%;
-            height: 100%;
-            background: linear-gradient(180deg, 
-                transparent 0%,
-                rgba(0, 255, 170, 0.03) 50%,
-                transparent 100%);
-            pointer-events: none;
-            animation: matrix 8s linear infinite;
-            z-index: 0;
         }
 
-        @keyframes matrix {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
         }
 
-        /* HEADER ESTILO TERMINAL */
-        header {
-            background: rgba(10, 12, 16, 0.95);
-            border-bottom: 2px solid var(--primary);
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            z-index: 10;
-            box-shadow: var(--border-glow);
-            backdrop-filter: blur(5px);
+        .logo h1 {
+            font-size: 2.5rem;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px var(--primary);
         }
 
-        .header-left {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .system-title {
-            font-size: 1.2rem;
-            letter-spacing: 3px;
-            font-weight: bold;
-            text-shadow: var(--text-glow);
-        }
-
-        .system-subtitle {
-            font-size: 0.7rem;
+        .logo p {
             color: var(--secondary);
             letter-spacing: 2px;
-        }
-
-        .header-right {
-            text-align: right;
-        }
-
-        .system-status {
-            font-size: 0.8rem;
-            color: var(--primary);
-            animation: blink 2s step-end infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .unit-id {
-            font-size: 0.7rem;
-            color: var(--secondary);
-        }
-
-        /* CONTENEDOR PRINCIPAL */
-        main {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 15px;
-            padding: 15px;
-            position: relative;
-            z-index: 5;
-            overflow: hidden;
-        }
-
-        /* SECCIÓN IZQUIERDA - MAPA */
-        .map-section {
-            background: var(--bg-terminal);
-            border: 1px solid var(--primary);
-            box-shadow: var(--border-glow);
-            position: relative;
-            overflow: hidden;
-            border-radius: 4px;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-            background: #0a0c10;
-        }
-
-        .map-overlay {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(10, 12, 16, 0.9);
-            border: 1px solid var(--primary);
-            padding: 5px 10px;
-            font-size: 0.7rem;
-            z-index: 10;
-        }
-
-        /* SECCIÓN DERECHA - PANEL DE CONTROL */
-        .control-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        /* TERMINAL */
-        .terminal {
-            background: var(--bg-terminal);
-            border: 1px solid var(--primary);
-            box-shadow: var(--border-glow);
-            padding: 15px;
-            border-radius: 4px;
-        }
-
-        .terminal-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 0.8rem;
-            color: var(--secondary);
-            border-bottom: 1px solid rgba(0, 255, 170, 0.3);
-            padding-bottom: 5px;
-        }
-
-        .terminal-content {
-            font-size: 0.75rem;
-            line-height: 1.6;
-            min-height: 120px;
-        }
-
-        .terminal-line {
-            color: var(--primary);
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .terminal-line span {
-            color: var(--secondary);
-            margin-right: 8px;
-        }
-
-        .terminal-blink {
-            animation: terminalBlink 1s step-end infinite;
-        }
-
-        @keyframes terminalBlink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-
-        /* DATOS EN VIVO */
-        .live-data {
-            background: var(--bg-terminal);
-            border: 1px solid var(--primary);
-            box-shadow: var(--border-glow);
-            padding: 15px;
-            border-radius: 4px;
-        }
-
-        .data-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 10px;
-        }
-
-        .data-item {
-            text-align: center;
-        }
-
-        .data-label {
-            font-size: 0.65rem;
-            color: var(--secondary);
-            letter-spacing: 1px;
-        }
-
-        .data-value {
-            font-size: 1.1rem;
-            font-weight: bold;
-            text-shadow: var(--text-glow);
-            margin-top: 4px;
-        }
-
-        .data-value.small {
             font-size: 0.9rem;
         }
 
-        /* BOTÓN DE ALERTA */
-        .alert-button-container {
-            background: var(--bg-terminal);
-            border: 1px solid var(--primary);
-            box-shadow: var(--border-glow);
-            padding: 20px;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        .alert-button {
-            width: 100%;
-            padding: 20px;
-            background: rgba(255, 51, 0, 0.1);
-            border: 2px solid var(--alert);
-            color: var(--alert);
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1.5rem;
-            font-weight: bold;
-            letter-spacing: 4px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            box-shadow: 0 0 15px rgba(255, 51, 0, 0.3);
-            border-radius: 4px;
-        }
-
-        .alert-button:hover {
-            background: rgba(255, 51, 0, 0.2);
-            box-shadow: 0 0 25px rgba(255, 51, 0, 0.5);
-        }
-
-        .alert-button:active {
-            transform: scale(0.98);
-        }
-
-        .alert-warning {
-            font-size: 0.7rem;
-            margin-top: 10px;
-            color: var(--secondary);
-        }
-
-        /* CÁMARA */
-        .camera-section {
-            background: var(--bg-terminal);
-            border: 1px solid var(--primary);
-            box-shadow: var(--border-glow);
-            padding: 15px;
-            border-radius: 4px;
-        }
-
-        .camera-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 0.8rem;
-            color: var(--secondary);
-        }
-
-        .camera-preview {
-            width: 100%;
-            height: 100px;
-            background: #000;
-            border: 1px solid var(--primary);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #video-feed {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: contrast(1.2) hue-rotate(100deg);
-        }
-
-        .camera-status {
-            font-size: 0.7rem;
-            margin-top: 8px;
-            color: var(--secondary);
-        }
-
-        /* MODAL DE ALERTA */
-        #alert-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 10000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: var(--bg-terminal);
-            border: 2px solid var(--alert);
-            box-shadow: 0 0 30px rgba(255, 51, 0, 0.5);
-            padding: 30px;
-            max-width: 400px;
-            text-align: center;
-            animation: modalPulse 2s infinite;
-        }
-
-        @keyframes modalPulse {
-            0% { border-color: var(--alert); }
-            50% { border-color: #ff8800; }
-            100% { border-color: var(--alert); }
-        }
-
-        .modal-icon {
-            font-size: 4rem;
+        .form-group {
             margin-bottom: 20px;
         }
 
-        .modal-title {
-            font-size: 2rem;
-            color: var(--alert);
-            margin-bottom: 15px;
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--secondary);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
         }
 
-        .modal-text {
-            font-size: 1rem;
-            margin-bottom: 25px;
-            line-height: 1.6;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 15px;
-        }
-
-        .modal-button {
-            flex: 1;
-            padding: 15px;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .modal-button.primary {
-            background: transparent;
-            border: 1px solid var(--alert);
-            color: var(--alert);
-        }
-
-        .modal-button.primary:hover {
-            background: rgba(255, 51, 0, 0.2);
-        }
-
-        .modal-button.secondary {
+        input {
+            width: 100%;
             background: transparent;
             border: 1px solid var(--primary);
+            padding: 15px;
             color: var(--primary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            outline: none;
         }
 
-        .modal-button.secondary:hover {
+        input:focus {
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
             background: rgba(0, 255, 170, 0.1);
+            box-shadow: 0 0 20px var(--primary);
         }
 
-        /* UTILIDADES */
-        .glow-text {
-            text-shadow: var(--text-glow);
+        .terminos {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            color: #666;
+            text-align: center;
         }
 
-        .hidden {
-            display: none !important;
+        /* Pantalla principal (después del registro) */
+        #pantalla-principal {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        /* Modal de confirmación */
+        #modal-exito {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg);
+            border: 2px solid var(--primary);
+            padding: 30px;
+            text-align: center;
+            z-index: 10000;
+            display: none;
+            max-width: 300px;
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        .modal-exito-titulo {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-left">
-            <div class="system-title">SENTINEL ARGENTO</div>
-            <div class="system-subtitle">SISTEMA DE ALERTA CIUDADANA</div>
-        </div>
-        <div class="header-right">
-            <div class="system-status">● ONLINE</div>
-            <div class="unit-id" id="unit-id">UNIDAD: CARGANDO...</div>
-        </div>
-    </header>
-
-    <main>
-        <!-- MAPA -->
-        <div class="map-section">
-            <div id="map"></div>
-            <div class="map-overlay" id="map-coordinates">
-                LAT: -38.0055 | LNG: -57.5426
-            </div>
+    <!-- PANTALLA DE REGISTRO -->
+    <div id="pantalla-registro">
+        <div class="logo">
+            <h1>SENTINEL</h1>
+            <p>ARGENTO</p>
         </div>
 
-        <!-- PANEL DE CONTROL -->
-        <div class="control-panel">
-            <!-- TERMINAL -->
-            <div class="terminal">
-                <div class="terminal-header">
-                    <span>TERMINAL V.2.0.1</span>
-                    <span>>_</span>
-                </div>
-                <div class="terminal-content" id="terminal">
-                    <div class="terminal-line"><span>></span> SISTEMA INICIALIZADO</div>
-                    <div class="terminal-line"><span>></span> GPS: BUSCANDO SEÑAL...</div>
-                    <div class="terminal-line"><span>></span> CÁMARA: EN STANDBY</div>
-                    <div class="terminal-line terminal-blink"><span>></span> ESPERANDO COMANDO</div>
-                </div>
-            </div>
-
-            <!-- DATOS EN VIVO -->
-            <div class="live-data">
-                <div class="terminal-header">
-                    <span>TELEMETRÍA</span>
-                    <span>⏤⏤⏤⏤</span>
-                </div>
-                <div class="data-grid">
-                    <div class="data-item">
-                        <div class="data-label">BATERÍA</div>
-                        <div class="data-value" id="battery">92%</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">SATÉLITES</div>
-                        <div class="data-value" id="satellites">0</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">PRECISIÓN</div>
-                        <div class="data-value small" id="precision">±0m</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">VIDEO</div>
-                        <div class="data-value small" id="video-status">OFF</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CÁMARA -->
-            <div class="camera-section">
-                <div class="camera-header">
-                    <span>FEED CÁMARA</span>
-                    <span id="rec-indicator" class="hidden">● REC</span>
-                </div>
-                <div class="camera-preview" id="camera-preview">
-                    <video id="video-feed" autoplay playsinline style="display: none;"></video>
-                    <span style="color: var(--secondary); font-size: 0.8rem;" id="camera-placeholder">[CÁMARA INACTIVA]</span>
-                </div>
-                <div class="camera-status" id="camera-status">
-                    ACTIVAR AL ENVIAR ALERTA
-                </div>
-            </div>
-
-            <!-- BOTÓN DE ALERTA -->
-            <div class="alert-button-container">
-                <button class="alert-button" id="alert-button">
-                    ALERTA
-                </button>
-                <div class="alert-warning">
-                    TOQUE PARA ACTIVAR PROTOCOLO DE EMERGENCIA
-                </div>
-            </div>
+        <div class="form-group">
+            <label>NOMBRE COMPLETO</label>
+            <input type="text" id="nombre" placeholder="Ej: Juan Pérez">
         </div>
-    </main>
 
-    <!-- MODAL DE CONFIRMACIÓN -->
-    <div id="alert-modal">
-        <div class="modal-content">
-            <div class="modal-icon">🚨</div>
-            <div class="modal-title">ALERTA ENVIADA</div>
-            <div class="modal-text" id="modal-text">
-                UNIDADES NOTIFICADAS<br>
-                TRANSMITIENDO VIDEO<br>
-                UBICACIÓN ENVIADA
-            </div>
-            <div class="modal-buttons">
-                <button class="modal-button primary" onclick="cerrarModal()">ENTENDIDO</button>
-                <button class="modal-button secondary" onclick="cancelarAlerta()">CANCELAR</button>
-            </div>
+        <div class="form-group">
+            <label>DNI</label>
+            <input type="text" id="dni" placeholder="Ej: 12345678">
         </div>
+
+        <div class="form-group">
+            <label>TELÉFONO</label>
+            <input type="text" id="telefono" placeholder="Ej: 223 555-1234">
+        </div>
+
+        <div class="form-group">
+            <label>DOMICILIO</label>
+            <input type="text" id="domicilio" placeholder="Ej: Av. Luro 1234">
+        </div>
+
+        <button onclick="registrar()">REGISTRARME</button>
+
+        <div class="terminos">
+            AL REGISTRARME ACEPTO QUE LAS FALSAS ALERTAS<br>
+            SERÁN DENUNCIADAS A LA AUTORIDAD
+        </div>
+    </div>
+
+    <!-- MODAL DE ÉXITO -->
+    <div id="modal-exito">
+        <div class="modal-exito-titulo">✓</div>
+        <p style="margin-bottom: 20px;">REGISTRO EXITOSO</p>
+        <button onclick="cerrarModalRegistro()" style="margin:0">CONTINUAR</button>
+    </div>
+
+    <!-- PANTALLA PRINCIPAL (la que ya tenemos) -->
+    <div id="pantalla-principal">
+        <!-- Acá va el código de la app principal -->
     </div>
 
     <script>
         // ==============================================
-        // CONFIGURACIÓN
+        // CONFIGURACIÓN SUPABASE
         // ==============================================
         const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
@@ -540,345 +208,107 @@
         // ==============================================
         // VARIABLES GLOBALES
         // ==============================================
-        const UNIDAD_ID = 'UA-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        let mapa;
-        let marcador;
-        let ubicacionActual = null;
-        let watchId = null;
-        let streamCamara = null;
-        let mediaRecorder = null;
-        let fragmentosVideo = [];
-        let alertaActiva = false;
-        let grabacionActiva = false;
-        let tiempoInicioGrabacion = null;
+        let usuarioActual = null;
 
         // ==============================================
-        // INICIALIZACIÓN
+        // FUNCIÓN DE REGISTRO (LO NUEVO)
         // ==============================================
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('unit-id').textContent = `UNIDAD: ${UNIDAD_ID}`;
-            
-            // Inicializar mapa
-            mapa = L.map('map', {
-                zoomControl: false,
-                attributionControl: false
-            }).setView([-38.0055, -57.5426], 15);
+        async function registrar() {
+            // 1. OBTENER VALORES
+            const nombre = document.getElementById('nombre').value.trim();
+            const dni = document.getElementById('dni').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const domicilio = document.getElementById('domicilio').value.trim();
 
-            // Capa de mapa estilo oscuro
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(mapa);
-
-            // Iniciar GPS
-            iniciarGPS();
-
-            // Obtener batería
-            obtenerBateria();
-
-            // Evento del botón de alerta
-            document.getElementById('alert-button').addEventListener('click', activarAlerta);
-        });
-
-        // ==============================================
-        // GPS
-        // ==============================================
-        function iniciarGPS() {
-            if (!navigator.geolocation) {
-                agregarTerminal('ERROR: GPS NO SOPORTADO', 'error');
+            // 2. VALIDAR
+            if (!nombre || !dni || !telefono || !domicilio) {
+                alert("COMPLETE TODOS LOS CAMPOS");
                 return;
             }
 
-            watchId = navigator.geolocation.watchPosition(
-                (pos) => {
-                    const { latitude, longitude, accuracy } = pos.coords;
-                    
-                    ubicacionActual = { lat: latitude, lng: longitude };
-                    
-                    // Actualizar interfaz
-                    document.getElementById('map-coordinates').textContent = 
-                        `LAT: ${latitude.toFixed(5)} | LNG: ${longitude.toFixed(5)}`;
-                    
-                    document.getElementById('precision').textContent = `±${accuracy.toFixed(1)}m`;
-                    
-                    // Actualizar contador de satélites (simulado)
-                    const satelites = Math.floor(Math.random() * 4) + 8;
-                    document.getElementById('satellites').textContent = satelites;
-                    
-                    // Actualizar mapa
-                    if (!marcador) {
-                        marcador = L.circleMarker([latitude, longitude], {
-                            radius: 8,
-                            color: '#00ffaa',
-                            fillColor: '#00ffaa',
-                            fillOpacity: 0.5,
-                            weight: 2
-                        }).addTo(mapa);
-                        
-                        mapa.setView([latitude, longitude], 16);
-                    } else {
-                        marcador.setLatLng([latitude, longitude]);
-                    }
-                    
-                    agregarTerminal(`GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`, 'info');
-                },
-                (error) => {
-                    let mensaje = 'ERROR GPS';
-                    switch(error.code) {
-                        case 1: mensaje = 'PERMISO DENEGADO'; break;
-                        case 2: mensaje = 'SEÑAL NO DISPONIBLE'; break;
-                        case 3: mensaje = 'TIMEOUT'; break;
-                    }
-                    agregarTerminal(`GPS: ${mensaje}`, 'error');
-                },
-                {
-                    enableHighAccuracy: true,
-                    maximumAge: 0,
-                    timeout: 10000
-                }
-            );
-        }
-
-        // ==============================================
-        // BATERÍA
-        // ==============================================
-        function obtenerBateria() {
-            if ('getBattery' in navigator) {
-                navigator.getBattery().then(bateria => {
-                    actualizarBateria(bateria.level * 100);
-                    
-                    bateria.addEventListener('levelchange', () => {
-                        actualizarBateria(bateria.level * 100);
-                    });
-                });
-            } else {
-                // Simular batería
-                setInterval(() => {
-                    const nivel = Math.floor(Math.random() * 20) + 75;
-                    actualizarBateria(nivel);
-                }, 30000);
-            }
-        }
-
-        function actualizarBateria(nivel) {
-            document.getElementById('battery').textContent = `${Math.floor(nivel)}%`;
-        }
-
-        // ==============================================
-        // TERMINAL
-        // ==============================================
-        function agregarTerminal(mensaje, tipo = 'info') {
-            const terminal = document.getElementById('terminal');
-            const linea = document.createElement('div');
-            linea.className = 'terminal-line';
-            
-            let color = '#00ffaa';
-            if (tipo === 'error') color = '#ff3300';
-            if (tipo === 'alerta') color = '#ffaa00';
-            
-            linea.innerHTML = `<span>></span> <span style="color: ${color};">${mensaje}</span>`;
-            terminal.appendChild(linea);
-            
-            // Mantener solo últimas 8 líneas
-            while (terminal.children.length > 8) {
-                terminal.removeChild(terminal.firstChild);
-            }
-            
-            terminal.scrollTop = terminal.scrollHeight;
-        }
-
-        // ==============================================
-        // CÁMARA (SISTEMA HÍBRIDO)
-        // ==============================================
-        async function activarCamara() {
-            try {
-                streamCamara = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: "environment",
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    },
-                    audio: true
-                });
-                
-                const video = document.getElementById('video-feed');
-                video.srcObject = streamCamara;
-                video.style.display = 'block';
-                
-                document.getElementById('camera-placeholder').style.display = 'none';
-                document.getElementById('video-status').textContent = 'ON';
-                document.getElementById('camera-status').textContent = 'GRABANDO...';
-                
-                grabacionActiva = true;
-                fragmentosVideo = [];
-                
-                // Iniciar grabación
-                mediaRecorder = new MediaRecorder(streamCamara, {
-                    mimeType: 'video/webm'
-                });
-                
-                mediaRecorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) {
-                        fragmentosVideo.push(e.data);
-                    }
-                };
-                
-                mediaRecorder.onstop = () => {
-                    subirVideo();
-                };
-                
-                mediaRecorder.start();
-                tiempoInicioGrabacion = Date.now();
-                
-                // Mostrar indicador de grabación
-                document.getElementById('rec-indicator').classList.remove('hidden');
-                
-                agregarTerminal('CÁMARA: GRABANDO', 'info');
-                
-                // Auto-detener después de 2 minutos
-                setTimeout(() => {
-                    if (grabacionActiva) {
-                        detenerCamara();
-                    }
-                }, 120000);
-                
-            } catch (error) {
-                agregarTerminal('ERROR: NO SE PUDO ACTIVAR CÁMARA', 'error');
-                console.error(error);
-            }
-        }
-
-        function detenerCamara() {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
-            
-            if (streamCamara) {
-                streamCamara.getTracks().forEach(t => t.stop());
-                streamCamara = null;
-            }
-            
-            document.getElementById('video-feed').style.display = 'none';
-            document.getElementById('camera-placeholder').style.display = 'inline';
-            document.getElementById('rec-indicator').classList.add('hidden');
-            document.getElementById('video-status').textContent = 'OFF';
-            document.getElementById('camera-status').textContent = 'TRANSMISIÓN FINALIZADA';
-            
-            grabacionActiva = false;
-        }
-
-        async function subirVideo() {
-            if (fragmentosVideo.length === 0 || !ubicacionActual) return;
-            
-            try {
-                agregarTerminal('SUBIR VIDEO...', 'info');
-                
-                const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
-                const nombreArchivo = `alerta_${UNIDAD_ID}_${Date.now()}.webm`;
-                
-                // Subir a Supabase Storage
-                const { error } = await _supabase.storage
-                    .from('videos-alertas')
-                    .upload(nombreArchivo, blob);
-                
-                if (error) throw error;
-                
-                // Obtener URL pública
-                const { data } = _supabase.storage
-                    .from('videos-alertas')
-                    .getPublicUrl(nombreArchivo);
-                
-                // Actualizar alerta con URL del video
-                if (alertaActiva) {
-                    await _supabase
-                        .from('alertas')
-                        .update({ video_url: data.publicUrl })
-                        .eq('unidad_id', UNIDAD_ID)
-                        .eq('activa', true);
-                }
-                
-                agregarTerminal('VIDEO SUBIDO', 'info');
-                
-            } catch (error) {
-                agregarTerminal('ERROR AL SUBIR VIDEO', 'error');
-                console.error(error);
-            }
-        }
-
-        // ==============================================
-        // ALERTA (SISTEMA PRINCIPAL)
-        // ==============================================
-        async function activarAlerta() {
-            if (alertaActiva) {
-                agregarTerminal('ALERTA YA ACTIVA', 'error');
+            if (dni.length < 7 || dni.length > 8) {
+                alert("DNI INVÁLIDO");
                 return;
             }
-            
-            if (!ubicacionActual) {
-                agregarTerminal('ERROR: SIN UBICACIÓN GPS', 'error');
-                return;
-            }
-            
-            agregarTerminal('🚨 ACTIVANDO PROTOCOLO DE EMERGENCIA', 'alerta');
-            
-            // Activar cámara
-            await activarCamara();
-            
-            // Preparar datos de alerta
-            const alerta = {
-                unidad_id: UNIDAD_ID,
-                lat: ubicacionActual.lat,
-                lng: ubicacionActual.lng,
-                timestamp: new Date().toISOString(),
-                bateria: document.getElementById('battery').textContent,
-                activa: true,
-                video_url: null
+
+            // 3. CREAR OBJETO USUARIO
+            const usuario = {
+                nombre: nombre,
+                dni: dni,
+                telefono: telefono,
+                domicilio: domicilio,
+                fecha_registro: new Date().toISOString(),
+                id_unico: 'USR-' + dni + '-' + Date.now().toString().slice(-4)
             };
-            
+
             try {
-                // Enviar a Supabase (ESTE ES EL DATO QUE LLEGA A POLICÍA Y COMANDO)
+                // 4. GUARDAR EN SUPABASE
                 const { error } = await _supabase
-                    .from('alertas')
-                    .insert(alerta);
-                
+                    .from('ciudadanos')
+                    .insert(usuario);
+
                 if (error) throw error;
-                
-                alertaActiva = true;
-                
-                // Mostrar modal
-                document.getElementById('modal-text').innerHTML = 
-                    `UNIDADES NOTIFICADAS<br>` +
-                    `UBICACIÓN ENVIADA<br>` +
-                    `GRABANDO VIDEO`;
-                document.getElementById('alert-modal').style.display = 'flex';
-                
-                agregarTerminal('🚨 ALERTA ENVIADA A AUTORIDADES', 'alerta');
-                
+
+                // 5. GUARDAR LOCALMENTE (para usar después)
+                localStorage.setItem('usuario_activo', JSON.stringify(usuario));
+                usuarioActual = usuario;
+
+                // 6. MOSTRAR ÉXITO
+                document.getElementById('modal-exito').style.display = 'block';
+
             } catch (error) {
-                agregarTerminal('ERROR AL ENVIAR ALERTA', 'error');
                 console.error(error);
+                alert("ERROR EN EL REGISTRO. ¿YA EXISTE ESE DNI?");
             }
         }
 
-        function cerrarModal() {
-            document.getElementById('alert-modal').style.display = 'none';
+        function cerrarModalRegistro() {
+            document.getElementById('modal-exito').style.display = 'none';
+            
+            // 7. CAMBIAR A PANTALLA PRINCIPAL
+            document.getElementById('pantalla-registro').style.display = 'none';
+            document.getElementById('pantalla-principal').style.display = 'flex';
+            
+            // 8. INICIAR LA APP PRINCIPAL
+            iniciarAppPrincipal();
         }
 
-        function cancelarAlerta() {
-            if (confirm('¿CANCELAR ALERTA? ESTO DETENDRÁ LA TRANSMISIÓN')) {
-                alertaActiva = false;
-                detenerCamara();
-                cerrarModal();
-                agregarTerminal('ALERTA CANCELADA', 'info');
+        // ==============================================
+        // VERIFICAR SI YA ESTÁ REGISTRADO
+        // ==============================================
+        function verificarRegistro() {
+            const guardado = localStorage.getItem('usuario_activo');
+            if (guardado) {
+                // Ya estaba registrado, vamos directo a la app
+                usuarioActual = JSON.parse(guardado);
+                document.getElementById('pantalla-registro').style.display = 'none';
+                document.getElementById('pantalla-principal').style.display = 'flex';
+                iniciarAppPrincipal();
             }
         }
 
         // ==============================================
-        // LIMPIEZA
+        // ACÁ VA LA APP PRINCIPAL (la que ya teníamos)
         // ==============================================
-        window.addEventListener('beforeunload', () => {
-            if (watchId) navigator.geolocation.clearWatch(watchId);
-            if (streamCamara) {
-                streamCamara.getTracks().forEach(t => t.stop());
-            }
-        });
+        function iniciarAppPrincipal() {
+            // Copiar y pegar la app principal completa acá
+            console.log("App iniciada para:", usuarioActual.nombre);
+            
+            // Por ahora solo mostramos mensaje
+            document.getElementById('pantalla-principal').innerHTML = `
+                <div style="padding:20px; text-align:center;">
+                    <h1 style="color:var(--primary);">BIENVENIDO</h1>
+                    <p style="color:var(--secondary);">${usuarioActual.nombre}</p>
+                    <p style="margin-top:20px;">APP PRINCIPAL CARGADA</p>
+                    <p style="font-size:0.8rem;">ID: ${usuarioActual.id_unico}</p>
+                </div>
+            `;
+        }
+
+        // ==============================================
+        // AL INICIAR
+        // ==============================================
+        verificarRegistro();
     </script>
 </body>
 </html>
