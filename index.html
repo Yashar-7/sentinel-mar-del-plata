@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL v2.0</title>
+    <title>SENTINEL v2.0 | SMART TECH</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -11,86 +11,116 @@
 
     <style>
         :root {
-            --neon-blue: #00eaff; --neon-red: #ff3131; --neon-green: #39ff14;
+            --neon-blue: #00eaff; 
+            --neon-red: #ff3131; 
+            --neon-green: #39ff14;
             --bg-dark: #00050a;
+            --glass: rgba(0, 20, 40, 0.85);
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; font-family: 'JetBrains Mono', 'Segoe UI', monospace; }
+        
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             background: var(--bg-dark); color: var(--neon-blue);
-            font-family: 'Segoe UI', sans-serif; overflow: hidden;
-            display: flex; flex-direction: column;
+            overflow: hidden; display: flex; flex-direction: column;
         }
 
-        /* --- HEADER (Altura fija 10%) --- */
+        /* --- HEADER TÁCTICO --- */
         header {
-            height: 10%; background: #000; border-bottom: 1px solid var(--neon-blue);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 8%; background: #000; border-bottom: 1px solid var(--neon-blue);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 15px;
+            box-shadow: 0 0 15px rgba(0, 234, 255, 0.2);
         }
 
-        /* --- CONTENEDOR PRINCIPAL (Altura fija 60%) --- */
+        .system-title { letter-spacing: 4px; font-weight: 900; font-size: 0.8em; }
+        .blink { animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        /* --- MAP DISPLAY --- */
         #main-display {
-            height: 60%; width: 100%; position: relative;
+            height: 62%; width: 100%; position: relative;
             background: #000; overflow: hidden;
         }
-        #map { width: 100%; height: 100%; }
+        #map { width: 100%; height: 100%; background: #000; }
         
-        /* Miniatura de cámara flotante (para no robar espacio) */
+        /* Efecto de línea de escaneo */
+        #main-display::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: rgba(0, 234, 255, 0.15); z-index: 1000; pointer-events: none;
+            animation: scan 4s linear infinite;
+        }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+
+        /* --- CÁMARA PIP (Picture-in-Picture) --- */
         #camera-container {
-            position: absolute; top: 10px; right: 10px;
-            width: 120px; height: 160px; border: 1px solid var(--neon-blue);
-            z-index: 1000; background: #000; display: none;
+            position: absolute; bottom: 10px; left: 10px;
+            width: 130px; height: 90px; border: 1px solid var(--neon-blue);
+            z-index: 1001; background: #000; display: none; overflow: hidden;
+            box-shadow: 0 0 10px var(--neon-blue);
         }
-        #video-feed { width: 100%; height: 100%; object-fit: cover; }
+        #video-feed { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.2) sepia(0.2) hue-rotate(140deg); }
 
-        /* --- CONSOLA DE CONTROL (Altura fija 30%) --- */
+        /* --- CONSOLA DE CONTROL --- */
         footer {
-            height: 30%; background: rgba(0, 10, 20, 0.95);
+            height: 30%; background: var(--glass);
             border-top: 2px solid var(--neon-blue);
-            display: flex; flex-direction: column; padding: 10px;
+            display: flex; flex-direction: column; padding: 12px;
+            backdrop-filter: blur(5px);
         }
 
-        .status-bar { font-size: 0.7em; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .status-bar { font-size: 0.65em; margin-bottom: 8px; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(0, 234, 255, 0.2); padding-bottom: 5px; }
         
-        .btn-group {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-grow: 1;
+        #console-output {
+            flex-grow: 1; font-size: 0.6em; color: var(--neon-blue); 
+            overflow-y: auto; margin-bottom: 10px; line-height: 1.4;
         }
+
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 
         .btn {
-            background: rgba(0, 234, 255, 0.1); border: 1px solid var(--neon-blue);
-            color: var(--neon-blue); font-weight: bold; font-size: 0.8em;
-            text-transform: uppercase; display: flex; align-items: center; justify-content: center;
+            background: rgba(0, 234, 255, 0.05); border: 1px solid var(--neon-blue);
+            color: var(--neon-blue); font-weight: bold; font-size: 0.7em; height: 45px;
+            text-transform: uppercase; cursor: pointer; transition: 0.3s;
         }
-        .btn-alert { border-color: var(--neon-red); color: var(--neon-red); background: rgba(255, 0, 0, 0.1); }
+        .btn:active { background: var(--neon-blue); color: #000; }
+        .btn-alert { border-color: var(--neon-red); color: var(--neon-red); }
+        .btn-active { background: var(--neon-blue); color: #000; box-shadow: 0 0 10px var(--neon-blue); }
 
-        /* Estilo del Mapa Táctico */
-        .leaflet-tile { filter: brightness(0.6) invert(100%) hue-rotate(180deg) contrast(1.2); }
+        /* Estilo del Mapa Dark Matter */
+        .leaflet-tile { filter: brightness(0.4) invert(1) hue-rotate(170deg) contrast(1.5) saturate(0.5); }
 
-        /* Selector de rol */
+        /* Overlay Inicial */
         #overlay {
             position: fixed; inset: 0; background: #000; z-index: 9999;
             display: flex; align-items: center; justify-content: center;
+        }
+        .role-card {
+            border: 1px solid var(--neon-blue); padding: 40px; background: rgba(0, 10, 20, 1);
+            text-align: center; box-shadow: 0 0 30px rgba(0, 234, 255, 0.2);
         }
     </style>
 </head>
 <body>
 
     <div id="overlay">
-        <div style="text-align:center; border: 1px solid var(--neon-blue); padding: 30px;">
-            <h2 style="letter-spacing:5px;">SENTINEL</h2>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button onclick="init('civil', '#ffffff')" style="color:#fff; padding:15px;">CIVIL</button>
-                <button onclick="init('repartidor', '#ff3131')" style="color:#ff3131; padding:15px;">DELIVERY</button>
-                <button onclick="init('patrulla', '#00eaff')" style="color:#00eaff; padding:15px;">PATRULLA</button>
-                <button onclick="init('emergencia', '#39ff14')" style="color:#39ff14; padding:15px;">MÉDICO</button>
+        <div class="role-card">
+            <h2 style="letter-spacing:8px; margin-bottom: 30px;">SENTINEL</h2>
+            <p style="font-size: 0.7em; margin-bottom: 20px;">SELECCIONAR ROL OPERATIVO</p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <button onclick="init('civil', '#ffffff')" style="color:#fff; background:none; border:1px solid #fff; padding:15px;">CIVIL</button>
+                <button onclick="init('repartidor', '#ff3131')" style="color:#ff3131; background:none; border:1px solid #ff3131; padding:15px;">DELIVERY</button>
+                <button onclick="init('patrulla', '#00eaff')" style="color:#00eaff; background:none; border:1px solid #00eaff; padding:15px;">PATRULLA</button>
+                <button onclick="init('emergencia', '#39ff14')" style="color:#39ff14; background:none; border:1px solid #39ff14; padding:15px;">MÉDICO</button>
             </div>
         </div>
     </div>
 
     <header>
-        <div style="font-size: 0.9em; font-weight: 900; letter-spacing: 3px;">SENTINEL SYSTEM</div>
-        <div id="global-status" style="font-size: 0.5em; color: var(--neon-green);">● SISTEMA ESTABLE</div>
+        <div class="system-title">SENTINEL_SYS <span style="font-size:0.6em; opacity:0.5;">v2.0</span></div>
+        <div id="global-status" style="font-size: 0.6em; color: var(--neon-green);">
+            <span class="blink">●</span> SISTEMA OPERATIVO
+        </div>
     </header>
 
     <div id="main-display">
@@ -102,12 +132,17 @@
 
     <footer>
         <div class="status-bar">
-            <div id="display-id">ID: ---</div>
-            <div id="display-gps">GPS: BUSCANDO...</div>
+            <div id="display-id">ID: AGENT_OFFLINE</div>
+            <div id="display-gps">GPS: NO_SIGNAL</div>
+        </div>
+        <div id="console-output">
+            > INICIALIZANDO NÚCLEO...<br>
+            > PROTOCOLOS DE ENCRIPTACIÓN ACTIVOS...
         </div>
         <div class="btn-group">
-            <button class="btn" onclick="toggleCamera()">CÁMARA</button>
-            <button class="btn btn-alert" onclick="triggerAlert()">ALERTA</button>
+            <button class="btn" id="btn-cam" onclick="toggleCamera()">CÁMARA</button>
+            <button class="btn" id="btn-persecucion" onclick="togglePersecucion()">MODO PERS.</button>
+            <button class="btn btn-alert" onclick="triggerAlert()">ALERTA CRÍTICA</button>
         </div>
     </footer>
 
@@ -119,41 +154,55 @@
         const MY_ID = 'SNT-' + Math.floor(Math.random()*900+100);
         let map, myMarker, myRole, stream;
         let units = {};
+        let modoPersecucion = false;
+        let predictionLines = [];
 
         async function init(role, color) {
             myRole = role;
             document.getElementById('overlay').style.display = 'none';
-            document.getElementById('display-id').innerText = MY_ID + " | " + role.toUpperCase();
+            document.getElementById('display-id').innerText = `${MY_ID} | ${role.toUpperCase()}`;
             document.getElementById('display-id').style.color = color;
+            logToConsole(`SESIÓN INICIADA COMO ${role.toUpperCase()}`);
 
-            // Mapa con zoom optimizado y tiles que permiten ver letras
-            map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 15);
+            map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 16);
+            
+            // Capa de mapa estilo Dark
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
             if(navigator.geolocation) {
                 navigator.geolocation.watchPosition(pos => {
-                    const { latitude: lat, longitude: lng } = pos.coords;
-                    document.getElementById('display-gps').innerText = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    const { latitude: lat, longitude: lng, heading, speed } = pos.coords;
+                    document.getElementById('display-gps').innerText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
                     
                     if(!myMarker) {
-                        myMarker = L.circleMarker([lat, lng], { radius: 8, color: '#fff', fillColor: color, fillOpacity: 1 }).addTo(map);
+                        myMarker = L.circleMarker([lat, lng], { 
+                            radius: 10, color: '#fff', fillColor: color, fillOpacity: 1, weight: 2 
+                        }).addTo(map);
                         map.panTo([lat, lng]);
                     } else {
                         myMarker.setLatLng([lat, lng]);
                     }
 
-                    // Sincronizar con tus columnas reales
+                    // Sincronizar con Supabase
                     _supabase.from('unidades_live').upsert({
                         id: MY_ID,
                         name: `UNIT_${MY_ID}`,
                         lat: lat,
-                        ing: lng, // Tu columna 'ing'
+                        ing: lng,
                         status: myRole,
                         updated_at: new Date().toISOString()
                     });
-                });
+
+                    if(modoPersecucion) updatePrediction(lat, lng, heading, speed);
+                }, null, { enableHighAccuracy: true });
             }
             subscribeToRealtime();
+        }
+
+        function logToConsole(msg) {
+            const out = document.getElementById('console-output');
+            out.innerHTML += `> ${msg}<br>`;
+            out.scrollTop = out.scrollHeight;
         }
 
         function subscribeToRealtime() {
@@ -173,43 +222,81 @@
                 units[data.id].setLatLng([data.lat, data.ing]);
             } else {
                 units[data.id] = L.circleMarker([data.lat, data.ing], { 
-                    radius: 6, color: unitColor, fillColor: unitColor, fillOpacity: 0.8 
+                    radius: 7, color: unitColor, fillColor: unitColor, fillOpacity: 0.7 
                 }).addTo(map);
+                logToConsole(`NUEVA UNIDAD DETECTADA: ${data.id}`);
             }
-            checkProximityAlerts();
         }
 
-        // LÓGICA DE LOS 3 PUNTOS (Fatibilidad 100%)
-        function checkProximityAlerts() {
-            const allUnits = Object.values(units);
-            if (allUnits.length < 2) return; // Necesitamos al menos otros 2
-
-            // Aquí el sistema calculará distancias. 
-            // Si detecta 3 civiles en radio < 50m, cambiará el status global.
-            // Para la demo, si hay más de 2 unidades, lanzamos aviso visual.
-            if(allUnits.length >= 2) {
-                document.getElementById('global-status').innerText = "⚠️ DETECTADA CONCENTRACIÓN ANÓMALA";
-                document.getElementById('global-status').style.color = "red";
+        // MODO PERSECUCIÓN (PREDICTIVE AI)
+        function togglePersecucion() {
+            modoPersecucion = !modoPersecucion;
+            const btn = document.getElementById('btn-persecucion');
+            if(modoPersecucion) {
+                btn.classList.add('btn-active');
+                logToConsole("MODO PERSECUCIÓN: ACTIVADO (PREDICTING TRAJECTORY)");
+            } else {
+                btn.classList.remove('btn-active');
+                predictionLines.forEach(l => map.removeLayer(l));
+                logToConsole("MODO PERSECUCIÓN: DESACTIVADO");
             }
+        }
+
+        function updatePrediction(lat, lng, heading, speed) {
+            predictionLines.forEach(l => map.removeLayer(l));
+            predictionLines = [];
+
+            // Si no hay rumbo real, simulamos una dirección basada en movimiento
+            const vectorScale = 0.002; 
+            const futureLat = lat + (vectorScale * Math.cos(heading || 0));
+            const futureLng = lng + (vectorScale * Math.sin(heading || 0));
+
+            const line = L.polyline([[lat, lng], [futureLat, futureLng]], {
+                color: 'var(--neon-red)',
+                weight: 2,
+                dashArray: '5, 10',
+                opacity: 0.7
+            }).addTo(map);
+            
+            predictionLines.push(line);
         }
 
         async function toggleCamera() {
             const container = document.getElementById('camera-container');
             const video = document.getElementById('video-feed');
+            const btn = document.getElementById('btn-cam');
+
             if(!stream) {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = stream;
-                container.style.display = 'block';
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    video.srcObject = stream;
+                    container.style.display = 'block';
+                    btn.classList.add('btn-active');
+                    logToConsole("FEED DE CÁMARA TÁCTICA: ONLINE");
+                } catch(e) {
+                    logToConsole("ERROR: CÁMARA NO DISPONIBLE");
+                }
             } else {
                 stream.getTracks().forEach(t => t.stop());
                 stream = null;
                 container.style.display = 'none';
+                btn.classList.remove('btn-active');
+                logToConsole("FEED DE CÁMARA: OFFLINE");
             }
         }
 
         function triggerAlert() {
-            alert("ALERTA TÁCTICA ENVIADA A CENTRAL");
+            document.body.style.animation = "flash 0.2s 3";
+            logToConsole("!!! ALERTA CRÍTICA ENVIADA A TODAS LAS UNIDADES !!!");
+            alert("SISTEMA SENTINEL: ALERTA CRÍTICA ENVIADA");
         }
     </script>
+
+    <style>
+        @keyframes flash {
+            0% { background: var(--neon-red); }
+            100% { background: var(--bg-dark); }
+        }
+    </style>
 </body>
 </html>
