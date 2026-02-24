@@ -3,307 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL v3.0 | SEGURIDAD CIUDADANA</title>
+    <title>ALERTA MDP | SEGURIDAD CIUDADANA</title>
     
+    <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.heat/dist/leaflet-heat.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    
+    <!-- Supabase para datos en tiempo real -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        :root {
-            --neon-blue: #00eaff; 
-            --neon-red: #ff3131; 
-            --neon-green: #39ff14;
-            --neon-yellow: #ffff00;
-            --bg-dark: #00050a;
-            --glass: rgba(0, 20, 40, 0.95);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        * { box-sizing: border-box; font-family: 'JetBrains Mono', 'Segoe UI', monospace; }
-        
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: var(--bg-dark); color: var(--neon-blue);
-            overflow: hidden; display: flex; flex-direction: column;
-        }
-
-        /* --- HEADER TÁCTICO --- */
-        header {
-            height: 8%; background: #000; border-bottom: 1px solid var(--neon-blue);
-            display: flex; justify-content: space-between; align-items: center; padding: 0 15px;
-            box-shadow: 0 0 15px rgba(0, 234, 255, 0.2);
-            z-index: 10;
-        }
-
-        .system-title { letter-spacing: 4px; font-weight: 900; font-size: 0.8em; }
-        .blink { animation: blinker 1.5s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
-
-        /* --- MAP DISPLAY --- */
-        #main-display {
-            height: 62%; width: 100%; position: relative;
-            background: #000; overflow: hidden;
-        }
-        #map { width: 100%; height: 100%; background: #000; z-index: 1; }
-        
-        /* Efecto de línea de escaneo */
-        #main-display::after {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
-            background: rgba(0, 234, 255, 0.15); z-index: 1000; pointer-events: none;
-            animation: scan 4s linear infinite;
-        }
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
-
-        /* --- CÁMARA PIP (Picture-in-Picture) --- */
-        #camera-container {
-            position: absolute; bottom: 10px; left: 10px;
-            width: 130px; height: 90px; border: 1px solid var(--neon-blue);
-            z-index: 1001; background: #000; display: none; overflow: hidden;
-            box-shadow: 0 0 10px var(--neon-blue);
-        }
-        #video-feed { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.2) sepia(0.2) hue-rotate(140deg); }
-
-        /* --- CONSOLA DE CONTROL --- */
-        footer {
-            height: 30%; background: var(--glass);
-            border-top: 2px solid var(--neon-blue);
-            display: flex; flex-direction: column; padding: 12px;
-            backdrop-filter: blur(5px);
-            z-index: 5;
-        }
-
-        .status-bar { 
-            font-size: 0.65em; margin-bottom: 8px; display: flex; 
-            justify-content: space-between; border-bottom: 1px solid rgba(0, 234, 255, 0.2); 
-            padding-bottom: 5px; 
-        }
-        
-        #console-output {
-            flex-grow: 1; font-size: 0.6em; color: var(--neon-blue); 
-            overflow-y: auto; margin-bottom: 10px; line-height: 1.4;
-            max-height: 80px;
-        }
-
-        .btn-group { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 5px; 
-            margin-bottom: 5px;
-        }
-
-        .btn {
-            background: rgba(0, 234, 255, 0.05); border: 1px solid var(--neon-blue);
-            color: var(--neon-blue); font-weight: bold; font-size: 0.65em; height: 40px;
-            text-transform: uppercase; cursor: pointer; transition: 0.3s;
-            padding: 0 5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .btn:active { background: var(--neon-blue); color: #000; }
-        .btn-alert { border-color: var(--neon-red); color: var(--neon-red); }
-        .btn-success { border-color: var(--neon-green); color: var(--neon-green); }
-        .btn-active { background: var(--neon-blue); color: #000; box-shadow: 0 0 10px var(--neon-blue); }
-        .btn-panic { 
-            border-color: var(--neon-red); 
-            color: var(--neon-red); 
-            animation: pulse 1s infinite;
-            font-weight: 900;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; background: rgba(255, 49, 49, 0.2); }
-            100% { opacity: 1; }
-        }
-
-        /* Estilo del Mapa */
-        .leaflet-tile { filter: brightness(0.4) invert(1) hue-rotate(170deg) contrast(1.5) saturate(0.5); }
-
-        /* Overlay Inicial */
-        #overlay {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .role-card {
-            border: 1px solid var(--neon-blue); padding: 40px; background: rgba(0, 10, 20, 1);
-            text-align: center; box-shadow: 0 0 30px rgba(0, 234, 255, 0.2);
-            max-width: 90%;
-        }
-
-        /* Modal de Reportes */
-        #report-modal, #route-modal {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; max-width: 400px; background: #000; 
-            border: 2px solid var(--neon-blue); padding: 20px; z-index: 10000;
-            box-shadow: 0 0 30px var(--neon-blue);
-            display: none;
-        }
-        
-        #report-modal h3, #route-modal h3 {
-            margin-top: 0; color: var(--neon-blue); text-align: center;
-        }
-        
-        #report-modal select, #report-modal textarea, #route-modal input {
-            width: 100%; margin: 10px 0; background: #111; 
-            border: 1px solid var(--neon-blue); color: var(--neon-blue); 
-            padding: 10px; font-family: monospace;
-        }
-        
-        #report-modal button, #route-modal button {
-            width: 48%; padding: 10px; margin: 5px 1%; 
-            background: transparent; border: 1px solid var(--neon-blue);
-            color: var(--neon-blue); cursor: pointer;
-        }
-        
-        .modal-close {
-            float: right; cursor: pointer; font-size: 20px;
-        }
-
-        /* Marcadores especiales */
-        .safe-zone-marker {
-            filter: drop-shadow(0 0 10px var(--neon-green));
-        }
-        
-        .emergency-popup .leaflet-popup-content-wrapper {
+        body {
             background: #000;
-            color: var(--neon-red);
-            border: 2px solid var(--neon-red);
-            border-radius: 0;
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        /* Chat modal */
-        #chat-modal {
-            position: fixed; bottom: 32%; right: 10px; width: 250px; height: 200px;
-            background: #000; border: 1px solid var(--neon-blue); z-index: 2000;
-            display: none; flex-direction: column;
-        }
-        
-        #chat-header {
-            background: var(--neon-blue); color: #000; padding: 5px;
-            font-weight: bold; display: flex; justify-content: space-between;
-        }
-        
-        #chat-messages {
-            flex-grow: 1; overflow-y: auto; padding: 5px; font-size: 0.7em;
-        }
-        
-        #chat-input {
-            display: flex; border-top: 1px solid var(--neon-blue);
-        }
-        
-        #chat-input input {
-            flex-grow: 1; background: #111; border: none; color: var(--neon-blue);
-            padding: 5px; outline: none;
-        }
-        
-        #chat-input button {
-            background: var(--neon-blue); color: #000; border: none; padding: 5px 10px;
+        /* Header simplificado */
+        header {
+            background: #1a1a1a;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #ff3131;
         }
 
-        @keyframes panicFlash {
-            0% { background: var(--neon-red); }
-            100% { background: var(--bg-dark); }
+        .titulo {
+            font-weight: bold;
+            font-size: 1.2rem;
         }
-        
-        @keyframes flash {
-            0% { background: var(--neon-red); }
-            100% { background: var(--bg-dark); }
+
+        .subtitulo {
+            color: #ff3131;
+            font-size: 0.9rem;
+        }
+
+        /* Mapa ocupando espacio */
+        #mapa-container {
+            flex: 1;
+            position: relative;
+            background: #111;
+        }
+
+        #mapa {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* BOTÓN DE PÁNICO - LO MÁS IMPORTANTE */
+        #boton-panico {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: #ff3131;
+            border: 5px solid #fff;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 0 30px rgba(255, 49, 49, 0.8);
+            z-index: 1000;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.3;
+            animation: pulso 2s infinite;
+        }
+
+        @keyframes pulso {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        #boton-panico:active {
+            transform: translateX(-50%) scale(0.95);
+            background: #cc0000;
+        }
+
+        /* Estado del sistema */
+        #estado {
+            position: fixed;
+            top: 80px;
+            right: 15px;
+            background: rgba(0,0,0,0.8);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border-left: 3px solid #ff3131;
+            font-size: 0.8rem;
+            z-index: 1000;
+        }
+
+        .gps-activo { color: #00ff00; }
+        .gps-inactivo { color: #ff3131; }
+
+        /* Modal de confirmación (simple) */
+        #modal-confirmacion {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .modal-contenido {
+            max-width: 400px;
+        }
+
+        .modal-titulo {
+            font-size: 2rem;
+            color: #ff3131;
+            margin-bottom: 20px;
+        }
+
+        .modal-mensaje {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .modal-boton {
+            background: #ff3131;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .modal-boton-secundario {
+            background: transparent;
+            border: 2px solid #ff3131;
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Preview de cámara */
+        #camara-preview {
+            position: fixed;
+            top: 100px;
+            left: 15px;
+            width: 100px;
+            height: 150px;
+            border: 2px solid #ff3131;
+            background: #000;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+
+        #video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Contador regresivo */
+        #contador {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5rem;
+            color: #ff3131;
+            z-index: 1500;
+            display: none;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255,49,49,0.8);
         }
     </style>
 </head>
 <body>
 
-    <div id="overlay">
-        <div class="role-card">
-            <h2 style="letter-spacing:8px; margin-bottom: 30px;">SENTINEL v3.0</h2>
-            <p style="font-size: 0.7em; margin-bottom: 20px;">SELECCIONAR ROL OPERATIVO</p>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <button onclick="init('civil', '#ffffff')" style="color:#fff; background:none; border:1px solid #fff; padding:15px; cursor:pointer;">👤 CIVIL</button>
-                <button onclick="init('repartidor', '#ff3131')" style="color:#ff3131; background:none; border:1px solid #ff3131; padding:15px; cursor:pointer;">📦 DELIVERY</button>
-                <button onclick="init('patrulla', '#00eaff')" style="color:#00eaff; background:none; border:1px solid #00eaff; padding:15px; cursor:pointer;">🚓 PATRULLA</button>
-                <button onclick="init('emergencia', '#39ff14')" style="color:#39ff14; background:none; border:1px solid #39ff14; padding:15px; cursor:pointer;">🚑 MÉDICO</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Reportes -->
-    <div id="report-modal">
-        <span class="modal-close" onclick="closeModal('report-modal')">✖</span>
-        <h3>🚨 REPORTAR INCIDENTE</h3>
-        <select id="report-type">
-            <option value="sospechoso">Persona/Vehiculo Sospechoso</option>
-            <option value="robo">Robo/Hurto</option>
-            <option value="accidente">Accidente de Tránsito</option>
-            <option value="incendio">Incendio</option>
-            <option value="desastre">Desastre Natural</option>
-            <option value="violencia">Violencia/Pelea</option>
-            <option value="salud">Emergencia Médica</option>
-        </select>
-        <textarea id="report-desc" placeholder="Descripción detallada..." rows="3"></textarea>
-        <div style="text-align:center;">
-            <button onclick="submitReport()">📤 ENVIAR</button>
-            <button onclick="closeModal('report-modal')">✖ CANCELAR</button>
-        </div>
-    </div>
-
-    <!-- Modal de Ruta Segura -->
-    <div id="route-modal">
-        <span class="modal-close" onclick="closeModal('route-modal')">✖</span>
-        <h3>🛣️ RUTA SEGURA</h3>
-        <input type="text" id="route-destino" placeholder="Dirección destino...">
-        <div style="text-align:center;">
-            <button onclick="findSafeRoute()">🔍 BUSCAR RUTA</button>
-            <button onclick="closeModal('route-modal')">✖ CANCELAR</button>
-        </div>
-    </div>
-
-    <!-- Chat modal -->
-    <div id="chat-modal">
-        <div id="chat-header">
-            <span>💬 CHAT COMUNITARIO</span>
-            <span onclick="toggleProximityChat()">✖</span>
-        </div>
-        <div id="chat-messages"></div>
-        <div id="chat-input">
-            <input type="text" id="chat-msg" placeholder="Mensaje..." onkeypress="if(event.key==='Enter') sendChatMessage()">
-            <button onclick="sendChatMessage()">▶</button>
-        </div>
-    </div>
-
     <header>
-        <div class="system-title">SENTINEL_COM <span style="font-size:0.6em; opacity:0.5;">v3.0</span></div>
-        <div id="global-status" style="font-size: 0.6em; color: var(--neon-green);">
-            <span class="blink">●</span> RED CIUDADANA
-        </div>
+        <div class="titulo">🚨 ALERTA MDP</div>
+        <div class="subtitulo">Seguridad Ciudadana</div>
     </header>
 
-    <div id="main-display">
-        <div id="map"></div>
-        <div id="camera-container">
-            <video id="video-feed" autoplay playsinline></video>
-        </div>
+    <div id="mapa-container">
+        <div id="mapa"></div>
     </div>
 
-    <footer>
-        <div class="status-bar">
-            <div id="display-id">ID: AGENT_OFFLINE</div>
-            <div id="display-gps">GPS: NO_SIGNAL</div>
-            <div id="display-role">ROL: --</div>
+    <!-- Preview de cámara (se activa al presionar pánico) -->
+    <div id="camara-preview">
+        <video id="video-feed" autoplay playsinline></video>
+    </div>
+
+    <!-- Estado GPS -->
+    <div id="estado">
+        <span id="gps-status" class="gps-inactivo">⏳ GPS: Buscando señal...</span>
+    </div>
+
+    <!-- BOTÓN DE PÁNICO - EL CORAZÓN DEL SISTEMA -->
+    <button id="boton-panico">
+        <span>🚨</span>
+        PÁNICO
+    </button>
+
+    <!-- Contador regresivo (feedback visual) -->
+    <div id="contador">3</div>
+
+    <!-- Modal de confirmación -->
+    <div id="modal-confirmacion">
+        <div class="modal-contenido">
+            <div class="modal-titulo">🚨 ALERTA ENVIADA</div>
+            <div class="modal-mensaje" id="modal-mensaje">
+                Unidades policiales notificadas.<br>
+                Video siendo transmitido.
+            </div>
+            <button class="modal-boton" onclick="cerrarAlerta()">ENTENDIDO</button>
+            <button class="modal-boton-secundario" onclick="cancelarAlerta()">CANCELAR (solo si es error)</button>
         </div>
-        <div id="console-output">
-            > SISTEMA SENTINEL v3.0 INICIALIZADO<br>
-            > PROTOCOLOS DE SEGURIDAD CIUDADANA ACTIVOS<br>
-        </div>
-        <div class="btn-group" id="btn-group">
-            <!-- Los botones se generarán dinámicamente según el rol -->
-        </div>
-    </footer>
+    </div>
 
     <script>
         // ==============================================
-        // CONFIGURACIÓN SUPABASE
+        // CONFIGURACIÓN SUPABASE (TU BACKEND)
         // ==============================================
         const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
@@ -312,817 +262,324 @@
         // ==============================================
         // VARIABLES GLOBALES
         // ==============================================
-        const MY_ID = 'SNT-' + Math.floor(Math.random() * 9000 + 1000);
-        let map, myMarker, myRole, myColor, stream;
-        let units = {};
-        let modoPersecucion = false;
-        let modoIncognito = false;
-        let predictionLines = [];
-        let heatLayer = null;
-        let safeZones = [];
-        let reportModalActive = false;
-        let grabacionEmergencia = false;
+        const CIUDADANO_ID = 'MDP-' + Math.floor(Math.random() * 10000);
+        let miUbicacion = null;
+        let mapa = null;
+        miMarker = null;
+        let camaraActiva = false;
+        let streamCamara = null;
         let mediaRecorder = null;
-        let recordedChunks = [];
+        let fragmentosVideo = [];
+        let alertaActiva = false;
+        let tiempoRestante = 5;
+        let intervaloEspera = null;
 
         // ==============================================
-        // FUNCIONES DE INTERFAZ
+        // INICIALIZACIÓN
         // ==============================================
-        function logToConsole(msg, tipo = 'info') {
-            const out = document.getElementById('console-output');
-            const colores = {
-                'info': 'var(--neon-blue)',
-                'alerta': 'var(--neon-red)',
-                'exito': 'var(--neon-green)',
-                'aviso': 'var(--neon-yellow)'
-            };
-            out.innerHTML += `<span style="color:${colores[tipo] || colores.info}">> ${msg}</span><br>`;
-            out.scrollTop = out.scrollHeight;
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // ==============================================
-        // INICIALIZACIÓN PRINCIPAL
-        // ==============================================
-        async function init(role, color) {
-            myRole = role;
-            myColor = color;
+        function iniciar() {
+            console.log("🚀 Sistema ALERTA MDP iniciado - ID:", CIUDADANO_ID);
             
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('display-id').innerText = `${MY_ID} | ${role.toUpperCase()}`;
-            document.getElementById('display-id').style.color = color;
-            document.getElementById('display-role').innerHTML = `ROL: ${role.toUpperCase()}`;
-            document.getElementById('display-role').style.color = color;
-            
-            logToConsole(`🚀 SESIÓN INICIADA COMO ${role.toUpperCase()}`, 'exito');
-
             // Inicializar mapa
-            map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 15);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+            mapa = L.map('mapa', {
+                zoomControl: false,
+                attributionControl: false
+            }).setView([-38.0055, -57.5426], 15);
 
-            // Configurar botones según rol
-            setupButtonsByRole();
+            // Capa del mapa (oscura para no distraer)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(mapa);
 
-            // Iniciar geolocalización
-            if(navigator.geolocation) {
+            // Iniciar GPS
+            iniciarGPS();
+
+            // Configurar botón de pánico
+            document.getElementById('boton-panico').addEventListener('click', activarPanico);
+            
+            // Verificar permisos de cámara al inicio (solo para saber si está disponible)
+            verificarCamara();
+        }
+
+        // ==============================================
+        // GPS - OBTENER UBICACIÓN
+        // ==============================================
+        function iniciarGPS() {
+            if (navigator.geolocation) {
                 navigator.geolocation.watchPosition(
-                    pos => updatePosition(pos),
-                    err => logToConsole(`❌ ERROR GPS: ${err.message}`, 'alerta'),
-                    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+                    function(pos) {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        
+                        miUbicacion = { lat, lng };
+                        
+                        // Actualizar UI
+                        document.getElementById('gps-status').innerHTML = '🟢 GPS: Señal estable';
+                        document.getElementById('gps-status').className = 'gps-activo';
+                        
+                        // Mostrar ubicación en mapa
+                        if (!miMarker) {
+                            miMarker = L.circleMarker([lat, lng], {
+                                radius: 10,
+                                color: '#ff3131',
+                                fillColor: '#ff3131',
+                                fillOpacity: 1,
+                                weight: 2
+                            }).addTo(mapa).bindPopup('TU UBICACIÓN');
+                            
+                            mapa.setView([lat, lng], 16);
+                        } else {
+                            miMarker.setLatLng([lat, lng]);
+                        }
+                        
+                        // Enviar ubicación a Supabase (actualización constante)
+                        _supabase.from('ciudadanos_activos').upsert({
+                            id: CIUDADANO_ID,
+                            lat: lat,
+                            lng: lng,
+                            ultima_actualizacion: new Date().toISOString()
+                        });
+                    },
+                    function(error) {
+                        document.getElementById('gps-status').innerHTML = '🔴 GPS: Error - ' + error.message;
+                        document.getElementById('gps-status').className = 'gps-inactivo';
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        maximumAge: 0,
+                        timeout: 5000
+                    }
                 );
             } else {
-                logToConsole('❌ GPS NO SOPORTADO', 'alerta');
-            }
-
-            // Suscribirse a cambios en tiempo real
-            subscribeToRealtime();
-
-            // Cargar zonas seguras
-            loadSafeZones();
-
-            // Inicializar mapa de calor
-            updateHeatMap();
-
-            // Configuración específica por rol
-            if(role === 'civil') {
-                logToConsole('🛡️ MODO CIVIL: BOTÓN DE PÁNICO ACTIVADO', 'aviso');
-            }
-            
-            if(role === 'patrulla') {
-                logToConsole('🚓 MODO PATRULLA: MAPA DE CALOR ACTIVADO', 'info');
-                setInterval(updateHeatMap, 60000); // Actualizar cada minuto
-            }
-            
-            if(role === 'emergencia') {
-                logToConsole('🚑 MODO EMERGENCIA: PRIORIDAD EN RESPUESTA', 'exito');
+                document.getElementById('gps-status').innerHTML = '🔴 GPS: No soportado';
             }
         }
 
         // ==============================================
-        // CONFIGURACIÓN DE BOTONES POR ROL
+        // VERIFICAR CÁMARA
         // ==============================================
-        function setupButtonsByRole() {
-            const btnGroup = document.getElementById('btn-group');
-            btnGroup.innerHTML = '';
-
-            // Botones comunes para todos
-            const commonButtons = [
-                { id: 'btn-cam', text: '📷 CÁMARA', action: toggleCamera },
-                { id: 'btn-report', text: '📝 REPORTAR', action: openReportModal, class: '' },
-                { id: 'btn-chat', text: '💬 CHAT', action: toggleProximityChat, class: '' }
-            ];
-
-            // Botones específicos por rol
-            const roleButtons = {
-                civil: [
-                    { id: 'btn-panic', text: '🚨 PÁNICO', action: triggerPanicAlert, class: 'btn-panic' },
-                    { id: 'btn-safezone', text: '🏛️ ZONAS SEGURAS', action: toggleSafeZones, class: 'btn-success' },
-                    { id: 'btn-route', text: '🛣️ RUTA SEGURA', action: openRouteModal, class: '' }
-                ],
-                repartidor: [
-                    { id: 'btn-panic', text: '🚨 PÁNICO', action: triggerPanicAlert, class: 'btn-panic' },
-                    { id: 'btn-route', text: '🛣️ RUTA ÓPTIMA', action: openRouteModal, class: '' },
-                    { id: 'btn-heat', text: '🔥 MAPA CALOR', action: toggleHeatMap, class: '' }
-                ],
-                patrulla: [
-                    { id: 'btn-persecucion', text: '🎯 MODO PERS.', action: togglePersecucion, class: '' },
-                    { id: 'btn-heat', text: '🔥 MAPA CALOR', action: toggleHeatMap, class: 'btn-active' },
-                    { id: 'btn-placa', text: '🚗 VERIF. PLACA', action: checkPlatePrompt, class: '' },
-                    { id: 'btn-incognito', text: '🕵️ INCÓGNITO', action: toggleIncognito, class: '' }
-                ],
-                emergencia: [
-                    { id: 'btn-persecucion', text: '🎯 MODO PERS.', action: togglePersecucion, class: '' },
-                    { id: 'btn-heat', text: '🔥 MAPA CALOR', action: toggleHeatMap, class: '' },
-                    { id: 'btn-rutas', text: '🚑 RUTAS RÁPIDAS', action: openRouteModal, class: 'btn-success' }
-                ]
-            };
-
-            // Agregar botones comunes
-            commonButtons.forEach(btn => {
-                const button = document.createElement('button');
-                button.className = `btn ${btn.class || ''}`;
-                button.id = btn.id;
-                button.innerHTML = btn.text;
-                button.onclick = btn.action;
-                btnGroup.appendChild(button);
-            });
-
-            // Agregar botones específicos del rol
-            if(roleButtons[myRole]) {
-                roleButtons[myRole].forEach(btn => {
-                    const button = document.createElement('button');
-                    button.className = `btn ${btn.class || ''}`;
-                    button.id = btn.id;
-                    button.innerHTML = btn.text;
-                    button.onclick = btn.action;
-                    btnGroup.appendChild(button);
-                });
-            }
-        }
-
-        // ==============================================
-        // ACTUALIZACIÓN DE POSICIÓN
-        // ==============================================
-        function updatePosition(pos) {
-            const { latitude: lat, longitude: lng, heading, speed } = pos.coords;
-            
-            // Ofuscar ubicación para civiles si está activado
-            let displayLat = lat, displayLng = lng;
-            if(myRole === 'civil' && !modoIncognito) {
-                const obfuscated = obfuscateLocation(lat, lng);
-                displayLat = obfuscated.lat;
-                displayLng = obfuscated.lng;
-            }
-            
-            document.getElementById('display-gps').innerText = `${displayLat.toFixed(5)}, ${displayLng.toFixed(5)}`;
-            
-            // Actualizar marcador propio
-            if(!myMarker) {
-                myMarker = L.circleMarker([lat, lng], { 
-                    radius: 12, 
-                    color: '#fff', 
-                    fillColor: myColor, 
-                    fillOpacity: 1, 
-                    weight: 3,
-                    pulsating: true
-                }).addTo(map).bindPopup(`
-                    <b>${MY_ID}</b><br>
-                    ROL: ${myRole.toUpperCase()}<br>
-                    ${new Date().toLocaleTimeString()}
-                `);
+        async function verificarCamara() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const tieneCamara = devices.some(d => d.kind === 'videoinput');
                 
-                // Centrar mapa en primera ubicación
-                map.panTo([lat, lng]);
-            } else {
-                myMarker.setLatLng([lat, lng]);
+                if (!tieneCamara) {
+                    console.warn("📷 No se detectó cámara");
+                }
+            } catch(e) {
+                console.warn("📷 Error al verificar cámara:", e);
             }
+        }
 
-            // Sincronizar con Supabase (solo si no está en modo incógnito)
-            if(!modoIncognito) {
-                _supabase.from('unidades_live').upsert({
-                    id: MY_ID,
-                    name: `UNIT_${MY_ID}`,
-                    lat: lat,
-                    lng: lng,
-                    status: myRole,
-                    heading: heading || 0,
-                    speed: speed || 0,
-                    updated_at: new Date().toISOString()
-                }).then(() => {
-                    logToConsole(`📍 POSICIÓN ACTUALIZADA`, 'exito');
-                }).catch(err => {
-                    logToConsole(`❌ ERROR SYNC: ${err.message}`, 'alerta');
+        // ==============================================
+        // ACTIVAR CÁMARA (se llama al presionar pánico)
+        // ==============================================
+        async function activarCamara() {
+            try {
+                streamCamara = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: "environment", // Cámara trasera
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: true // IMPORTANTE: grabar audio también
                 });
-            }
-
-            // Actualizar predicción si modo persecución activo
-            if(modoPersecucion && heading) {
-                updatePrediction(lat, lng, heading, speed);
+                
+                const video = document.getElementById('video-feed');
+                video.srcObject = streamCamara;
+                
+                // Mostrar preview
+                document.getElementById('camara-preview').style.display = 'block';
+                camaraActiva = true;
+                
+                // Preparar grabación
+                fragmentosVideo = [];
+                mediaRecorder = new MediaRecorder(streamCamara, {
+                    mimeType: 'video/webm'
+                });
+                
+                mediaRecorder.ondataavailable = function(e) {
+                    if (e.data.size > 0) {
+                        fragmentosVideo.push(e.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = function() {
+                    // Cuando se detiene la grabación, subir el video
+                    subirVideo();
+                };
+                
+                // Iniciar grabación
+                mediaRecorder.start();
+                console.log("📹 Grabación iniciada");
+                
+            } catch(e) {
+                console.error("❌ Error al activar cámara:", e);
+                // Continuar sin video pero enviar alerta igual
             }
         }
 
         // ==============================================
-        // OFUSCACIÓN DE UBICACIÓN (PRIVACIDAD)
+        // SUBIR VIDEO A SUPABASE
         // ==============================================
-        function obfuscateLocation(lat, lng, precision = 0.002) {
-            return {
-                lat: lat + (Math.random() - 0.5) * precision,
-                lng: lng + (Math.random() - 0.5) * precision
-            };
-        }
-
-        // ==============================================
-        // MODO INCÓGNITO
-        // ==============================================
-        function toggleIncognito() {
-            modoIncognito = !modoIncognito;
-            const btn = document.getElementById('btn-incognito');
+        async function subirVideo() {
+            if (fragmentosVideo.length === 0) return;
             
-            if(modoIncognito) {
-                _supabase.channel('public:unidades_live').unsubscribe();
-                logToConsole("🕵️ MODO INCÓGNITO ACTIVADO - UBICACIÓN OCULTA", 'aviso');
-                if(btn) btn.classList.add('btn-active');
-            } else {
-                subscribeToRealtime();
-                logToConsole("🕵️ MODO INCÓGNITO DESACTIVADO", 'info');
-                if(btn) btn.classList.remove('btn-active');
+            try {
+                const blobVideo = new Blob(fragmentosVideo, { type: 'video/webm' });
+                const nombreArchivo = `alerta_${CIUDADANO_ID}_${Date.now()}.webm`;
+                
+                // Subir a Supabase Storage
+                const { data, error } = await _supabase.storage
+                    .from('videos-alertas')
+                    .upload(nombreArchivo, blobVideo, {
+                        contentType: 'video/webm'
+                    });
+                
+                if (error) throw error;
+                
+                // Obtener URL pública
+                const { data: urlData } = _supabase.storage
+                    .from('videos-alertas')
+                    .getPublicUrl(nombreArchivo);
+                
+                // Actualizar la alerta con el URL del video
+                await _supabase
+                    .from('alertas_activas')
+                    .update({ video_url: urlData.publicUrl })
+                    .eq('id_ciudadano', CIUDADANO_ID)
+                    .eq('activa', true);
+                
+                console.log("✅ Video subido:", urlData.publicUrl);
+                
+            } catch(e) {
+                console.error("❌ Error subiendo video:", e);
             }
         }
 
         // ==============================================
-        // SUSCRIPCIÓN EN TIEMPO REAL
+        // ACTIVAR PÁNICO - FUNCIÓN PRINCIPAL
         // ==============================================
-        function subscribeToRealtime() {
-            _supabase.channel('public:unidades_live')
-                .on('postgres_changes', 
-                    { event: '*', schema: 'public', table: 'unidades_live' }, 
-                    payload => {
-                        if(payload.new && payload.new.id !== MY_ID && !modoIncognito) {
-                            updateExternalUnit(payload.new);
+        async function activarPanico() {
+            if (!miUbicacion) {
+                alert("⏳ Esperando señal GPS... Intenta en unos segundos");
+                return;
+            }
+
+            if (alertaActiva) {
+                alert("⚠️ Ya tienes una alerta activa");
+                return;
+            }
+
+            // 1. INICIAR CONTADOR REGRESIVO (para evitar falsos positivos)
+            tiempoRestante = 3;
+            document.getElementById('contador').style.display = 'block';
+            
+            intervaloEspera = setInterval(() => {
+                tiempoRestante--;
+                document.getElementById('contador').textContent = tiempoRestante;
+                
+                if (tiempoRestante === 0) {
+                    clearInterval(intervaloEspera);
+                    document.getElementById('contador').style.display = 'none';
+                    ENVIAR_ALERTA();
+                }
+            }, 1000);
+
+            // 2. ACTIVAR CÁMARA INMEDIATAMENTE (mientras cuenta regresiva)
+            activarCamara();
+        }
+
+        // ==============================================
+        // ENVIAR ALERTA A POLICÍA Y COMANDO
+        // ==============================================
+        async function ENVIAR_ALERTA() {
+            alertaActiva = true;
+            
+            // Datos de la alerta
+            const alerta = {
+                id_ciudadano: CIUDADANO_ID,
+                lat: miUbicacion.lat,
+                lng: miUbicacion.lng,
+                timestamp: new Date().toISOString(),
+                activa: true,
+                atendida: false,
+                video_url: null // Se actualizará cuando termine la grabación
+            };
+
+            try {
+                // 1. Guardar en Supabase (ESTA ES LA CLAVE - LLEGA A TODOS)
+                const { data, error } = await _supabase
+                    .from('alertas_activas')
+                    .insert(alerta);
+                
+                if (error) throw error;
+                
+                // 2. Mostrar confirmación al ciudadano
+                document.getElementById('modal-mensaje').innerHTML = 
+                    `✅ ALERTA ENVIADA<br><br>` +
+                    `📍 Ubicación: ${miUbicacion.lat.toFixed(5)}, ${miUbicacion.lng.toFixed(5)}<br>` +
+                    `📹 Video: Transmitiendo a policía<br>` +
+                    `🚔 Unidades notificadas`;
+                
+                document.getElementById('modal-confirmacion').style.display = 'flex';
+                
+                // 3. La policía y comando RECIBEN ESTO AUTOMÁTICAMENTE por Supabase
+                //    (ellos tienen sus propias apps escuchando)
+                
+                console.log("🚨 ALERTA ENVIADA A POLICÍA MDP", alerta);
+                
+                // 4. La grabación continúa por 2 minutos
+                setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                        // Detener cámara después de subir video
+                        if (streamCamara) {
+                            streamCamara.getTracks().forEach(t => t.stop());
+                            document.getElementById('camara-preview').style.display = 'none';
                         }
                     }
-                ).subscribe();
-        }
-
-        // ==============================================
-        // ACTUALIZAR UNIDADES EXTERNAS
-        // ==============================================
-        function updateExternalUnit(data) {
-            const colors = { 
-                'civil': '#ffffff', 
-                'repartidor': '#ff3131', 
-                'patrulla': '#00eaff', 
-                'emergencia': '#39ff14' 
-            };
-            const unitColor = colors[data.status] || '#fff';
-
-            if(units[data.id]) {
-                units[data.id].setLatLng([data.lat, data.lng]);
-            } else {
-                units[data.id] = L.circleMarker([data.lat, data.lng], { 
-                    radius: 7, 
-                    color: unitColor, 
-                    fillColor: unitColor, 
-                    fillOpacity: 0.7,
-                    weight: 2
-                }).addTo(map).bindPopup(`
-                    <b>${data.id}</b><br>
-                    ROL: ${data.status}<br>
-                    Última actualización: ${new Date(data.updated_at).toLocaleTimeString()}
-                `);
-                
-                logToConsole(`🆕 NUEVA UNIDAD: ${data.id} (${data.status})`, 'exito');
-            }
-        }
-
-        // ==============================================
-        // CARGAR ZONAS SEGURAS
-        // ==============================================
-        async function loadSafeZones() {
-            // Zonas seguras simuladas (en producción vendrían de Supabase)
-            const zonas = [
-                { nombre: 'Comisaría 1ra', tipo: 'POLICÍA', lat: -38.0055, lng: -57.5426, tel: '911' },
-                { nombre: 'Hospital Interzonal', tipo: 'HOSPITAL', lat: -38.0080, lng: -57.5450, tel: '107' },
-                { nombre: 'Bomberos Voluntarios', tipo: 'BOMBEROS', lat: -38.0030, lng: -57.5400, tel: '100' },
-                { nombre: 'Defensa Civil', tipo: 'DEFENSA CIVIL', lat: -38.0070, lng: -57.5440, tel: '103' }
-            ];
-            
-            safeZones = zonas;
-            
-            zonas.forEach(zona => {
-                const icon = L.divIcon({
-                    className: 'safe-zone-marker',
-                    html: zona.tipo === 'POLICÍA' ? '🚓' : (zona.tipo === 'HOSPITAL' ? '🏥' : '🚒'),
-                    iconSize: [30, 30]
-                });
-                
-                L.marker([zona.lat, zona.lng], { icon })
-                    .addTo(map)
-                    .bindPopup(`
-                        <b>${zona.nombre}</b><br>
-                        ${zona.tipo}<br>
-                        📞 ${zona.tel}<br>
-                        24/7
-                    `);
-            });
-            
-            logToConsole(`🏛️ ${zonas.length} ZONAS SEGURAS CARGADAS`, 'exito');
-        }
-
-        // ==============================================
-        // TOGGLE ZONAS SEGURAS
-        // ==============================================
-        function toggleSafeZones() {
-            // Implementar si necesitas ocultar/mostrar
-            logToConsole('🏛️ ZONAS SEGURAS VISIBLES EN MAPA', 'info');
-        }
-
-        // ==============================================
-        // MAPA DE CALOR
-        // ==============================================
-        async function updateHeatMap() {
-            try {
-                // Incidentes simulados (en producción vendrían de Supabase)
-                const incidentes = [
-                    { lat: -38.0055, lng: -57.5426, peso: 3 },
-                    { lat: -38.0070, lng: -57.5440, peso: 2 },
-                    { lat: -38.0040, lng: -57.5400, peso: 1 },
-                    { lat: -38.0060, lng: -57.5430, peso: 4 },
-                    { lat: -38.0080, lng: -57.5450, peso: 2 }
-                ];
-                
-                const heatData = incidentes.map(i => [i.lat, i.lng, i.peso]);
-                
-                if(heatLayer) map.removeLayer(heatLayer);
-                
-                heatLayer = L.heatLayer(heatData, {
-                    radius: 30,
-                    blur: 20,
-                    maxZoom: 17,
-                    gradient: {
-                        0.2: '#00eaff',
-                        0.4: '#ffff00',
-                        0.6: '#ff9900',
-                        0.8: '#ff3131'
-                    }
-                }).addTo(map);
-                
-                logToConsole('🔥 MAPA DE CALOR ACTUALIZADO', 'info');
-            } catch(e) {
-                logToConsole(`❌ ERROR MAPA CALOR: ${e.message}`, 'alerta');
-            }
-        }
-
-        function toggleHeatMap() {
-            if(heatLayer) {
-                map.removeLayer(heatLayer);
-                heatLayer = null;
-                logToConsole('🔥 MAPA DE CALOR DESACTIVADO', 'info');
-            } else {
-                updateHeatMap();
-            }
-        }
-
-        // ==============================================
-        // ALERTA DE PÁNICO
-        // ==============================================
-        async function triggerPanicAlert() {
-            if(!myMarker) {
-                logToConsole('❌ ERROR: UBICACIÓN NO DISPONIBLE', 'alerta');
-                return;
-            }
-            
-            const pos = myMarker.getLatLng();
-            
-            logToConsole("🚨 ¡ALERTA DE PÁNICO ACTIVADA! NOTIFICANDO UNIDADES...", 'alerta');
-            
-            // Efecto visual
-            document.body.style.animation = "panicFlash 0.1s 10";
-            
-            // Enviar alerta a Supabase
-            try {
-                await _supabase.from('alertas').insert({
-                    tipo: 'PANICO',
-                    lat: pos.lat,
-                    lng: pos.lng,
-                    usuario: MY_ID,
-                    rol: myRole,
-                    timestamp: new Date().toISOString(),
-                    status: 'ACTIVA'
-                });
-                
-                logToConsole("✅ ALERTA ENVIADA A AUTORIDADES", 'exito');
-                
-                // Iniciar grabación de emergencia
-                startEmergencyRecording();
-                
-                // Mostrar mensaje en mapa
-                L.popup({ className: 'emergency-popup' })
-                    .setLatLng([pos.lat, pos.lng])
-                    .setContent(`
-                        <div style="color:#ff3131; text-align:center;">
-                            <h3>🚨 ALERTA DE PÁNICO</h3>
-                            <p>${MY_ID}</p>
-                            <p>${new Date().toLocaleTimeString()}</p>
-                        </div>
-                    `)
-                    .openOn(map);
-                    
-            } catch(e) {
-                logToConsole(`❌ ERROR AL ENVIAR ALERTA: ${e.message}`, 'alerta');
-            }
-        }
-
-        // ==============================================
-        // GRABACIÓN DE EMERGENCIA
-        // ==============================================
-        async function startEmergencyRecording() {
-            if(!stream) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: "environment" },
-                        audio: true 
-                    });
-                } catch(e) {
-                    logToConsole('❌ NO SE PUDO ACTIVAR CÁMARA', 'alerta');
-                    return;
-                }
-            }
-            
-            grabacionEmergencia = true;
-            recordedChunks = [];
-            
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = e => {
-                if(e.data.size > 0) recordedChunks.push(e.data);
-            };
-            
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                // Aquí se subiría a Supabase Storage
-                logToConsole('📹 GRABACIÓN DE EMERGENCIA GUARDADA', 'exito');
-            };
-            
-            mediaRecorder.start();
-            logToConsole('📹 GRABANDO EVIDENCIA DE EMERGENCIA...', 'aviso');
-            
-            // Detener después de 5 minutos
-            setTimeout(() => {
-                if(mediaRecorder && mediaRecorder.state === 'recording') {
-                    mediaRecorder.stop();
-                    grabacionEmergencia = false;
-                }
-            }, 300000);
-        }
-
-        // ==============================================
-        // MODAL DE REPORTES
-        // ==============================================
-        function openReportModal() {
-            document.getElementById('report-modal').style.display = 'block';
-        }
-
-        async function submitReport() {
-            if(!myMarker) {
-                logToConsole('❌ ERROR: UBICACIÓN NO DISPONIBLE', 'alerta');
-                return;
-            }
-            
-            const pos = myMarker.getLatLng();
-            const tipo = document.getElementById('report-type').value;
-            const desc = document.getElementById('report-desc').value;
-            
-            if(!desc) {
-                logToConsole('❌ DESCRIPCIÓN REQUERIDA', 'alerta');
-                return;
-            }
-            
-            try {
-                await _supabase.from('incidentes').insert({
-                    lat: pos.lat,
-                    lng: pos.lng,
-                    tipo: tipo,
-                    descripcion: desc,
-                    reportado_por: MY_ID,
-                    rol: myRole,
-                    timestamp: new Date().toISOString(),
-                    verificado: false
-                });
-                
-                logToConsole(`✅ REPORTE ENVIADO: ${tipo}`, 'exito');
-                closeModal('report-modal');
-                document.getElementById('report-desc').value = '';
-                
-                // Actualizar mapa de calor
-                updateHeatMap();
+                }, 120000); // 2 minutos de grabación
                 
             } catch(e) {
-                logToConsole(`❌ ERROR AL ENVIAR REPORTE: ${e.message}`, 'alerta');
+                console.error("❌ Error enviando alerta:", e);
+                alert("Error al enviar alerta. Intenta de nuevo.");
+                alertaActiva = false;
             }
         }
 
         // ==============================================
-        // MODAL DE RUTA
+        // CERRAR ALERTA
         // ==============================================
-        function openRouteModal() {
-            document.getElementById('route-modal').style.display = 'block';
+        function cerrarAlerta() {
+            document.getElementById('modal-confirmacion').style.display = 'none';
         }
 
-        function findSafeRoute() {
-            const destino = document.getElementById('route-destino').value;
-            if(!destino) {
-                logToConsole('❌ INGRESE UN DESTINO', 'alerta');
-                return;
+        // ==============================================
+        // CANCELAR ALERTA (si fue error)
+        // ==============================================
+        async function cancelarAlerta() {
+            // Detener grabación
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
             }
             
-            logToConsole(`🛣️ BUSCANDO RUTA SEGURA A: ${destino}`, 'info');
-            
-            // Simulación de ruta segura
-            if(myMarker) {
-                const origen = myMarker.getLatLng();
-                const destinoLat = origen.lat + 0.005;
-                const destinoLng = origen.lng + 0.005;
-                
-                // Dibujar línea de ruta
-                L.polyline([
-                    [origen.lat, origen.lng],
-                    [destinoLat, destinoLng]
-                ], {
-                    color: 'var(--neon-green)',
-                    weight: 4,
-                    opacity: 0.8,
-                    dashArray: '5, 10'
-                }).addTo(map);
-                
-                logToConsole('✅ RUTA SEGURA ENCONTRADA (SIMULADA)', 'exito');
+            if (streamCamara) {
+                streamCamara.getTracks().forEach(t => t.stop());
+                document.getElementById('camara-preview').style.display = 'none';
             }
             
-            closeModal('route-modal');
+            // Marcar alerta como cancelada en Supabase
+            await _supabase
+                .from('alertas_activas')
+                .update({ activa: false, cancelada: true })
+                .eq('id_ciudadano', CIUDADANO_ID)
+                .eq('activa', true);
+            
+            alertaActiva = false;
+            document.getElementById('modal-confirmacion').style.display = 'none';
         }
 
-        // ==============================================
-        // VERIFICACIÓN DE PLACAS (SOLO POLICÍA)
-        // ==============================================
-        function checkPlatePrompt() {
-            if(myRole !== 'patrulla') {
-                logToConsole('❌ FUNCIÓN SOLO PARA PATRULLA', 'alerta');
-                return;
-            }
-            
-            const placa = prompt("INGRESE PLACA DEL VEHÍCULO:");
-            if(placa && placa.length >= 6) {
-                checkLicensePlate(placa.toUpperCase());
-            }
-        }
-
-        async function checkLicensePlate(plate) {
-            logToConsole(`🔍 VERIFICANDO PLACA: ${plate}...`, 'info');
-            
-            // Simulación de verificación
-            setTimeout(() => {
-                const reportado = Math.random() > 0.7;
-                
-                if(reportado) {
-                    logToConsole(`🚨 VEHÍCULO REPORTADO: ${plate} - ALERTA ROBADA`, 'alerta');
-                    
-                    // Simular ubicación del vehículo
-                    if(myMarker) {
-                        const pos = myMarker.getLatLng();
-                        const vehLat = pos.lat + 0.002;
-                        const vehLng = pos.lng + 0.002;
-                        
-                        L.marker([vehLat, vehLng], {
-                            icon: L.divIcon({
-                                html: '🚗⚠️',
-                                className: 'vehicle-marker',
-                                iconSize: [30, 30]
-                            })
-                        }).addTo(map).bindPopup(`
-                            <b>VEHÍCULO REPORTADO</b><br>
-                            PLACA: ${plate}<br>
-                            STATUS: ROBADO<br>
-                            ÚLTIMA VISTA: AHORA
-                        `);
-                        
-                        map.panTo([vehLat, vehLng]);
-                    }
-                } else {
-                    logToConsole(`✅ VEHÍCULO ${plate}: SIN NOVEDADES`, 'exito');
-                }
-            }, 1500);
-        }
-
-        // ==============================================
-        // CHAT COMUNITARIO
-        // ==============================================
-        function toggleProximityChat() {
-            const chat = document.getElementById('chat-modal');
-            chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
-            
-            if(chat.style.display === 'flex') {
-                loadChatMessages();
-            }
-        }
-
-        async function loadChatMessages() {
-            // Simular mensajes
-            const messages = [
-                { usuario: 'SNT-1234', msg: 'Todo tranquilo en zona norte', tiempo: '10:30' },
-                { usuario: 'SNT-5678', msg: 'Movimiento sospechoso en Av. Luro', tiempo: '10:32' },
-                { usuario: 'SNT-9012', msg: 'Unidad en camino a verificar', tiempo: '10:33' }
-            ];
-            
-            const container = document.getElementById('chat-messages');
-            container.innerHTML = '';
-            
-            messages.forEach(m => {
-                container.innerHTML += `
-                    <div style="margin-bottom:5px; border-bottom:1px solid #333; padding:3px;">
-                        <b style="color:${myColor}">${m.usuario}</b> 
-                        <span style="float:right; opacity:0.5;">${m.tiempo}</span><br>
-                        ${m.msg}
-                    </div>
-                `;
-            });
-        }
-
-        function sendChatMessage() {
-            const input = document.getElementById('chat-msg');
-            const msg = input.value.trim();
-            
-            if(msg) {
-                const container = document.getElementById('chat-messages');
-                const tiempo = new Date().toLocaleTimeString().substring(0,5);
-                
-                container.innerHTML += `
-                    <div style="margin-bottom:5px; border-bottom:1px solid #333; padding:3px; color:var(--neon-green);">
-                        <b style="color:${myColor}">${MY_ID}</b> 
-                        <span style="float:right; opacity:0.5;">${tiempo}</span><br>
-                        ${msg}
-                    </div>
-                `;
-                
-                input.value = '';
-                container.scrollTop = container.scrollHeight;
-                
-                // Aquí se enviaría a Supabase
-                logToConsole(`💬 MENSAJE ENVIADO`, 'exito');
-            }
-        }
-
-        // ==============================================
-        // MODO PERSECUCIÓN
-        // ==============================================
-        function togglePersecucion() {
-            modoPersecucion = !modoPersecucion;
-            const btn = document.getElementById('btn-persecucion');
-            
-            if(modoPersecucion) {
-                btn.classList.add('btn-active');
-                logToConsole("🎯 MODO PERSECUCIÓN ACTIVADO", 'info');
-            } else {
-                btn.classList.remove('btn-active');
-                predictionLines.forEach(l => map.removeLayer(l));
-                predictionLines = [];
-                logToConsole("🎯 MODO PERSECUCIÓN DESACTIVADO", 'info');
-            }
-        }
-
-        function updatePrediction(lat, lng, heading, speed) {
-            predictionLines.forEach(l => map.removeLayer(l));
-            predictionLines = [];
-
-            // Calcular punto futuro (simplificado)
-            const vectorScale = 0.003;
-            const futureLat = lat + (vectorScale * Math.cos(heading * Math.PI / 180));
-            const futureLng = lng + (vectorScale * Math.sin(heading * Math.PI / 180));
-
-            // Línea de predicción
-            const line = L.polyline([[lat, lng], [futureLat, futureLng]], {
-                color: 'var(--neon-red)',
-                weight: 3,
-                dashArray: '5, 10',
-                opacity: 0.8
-            }).addTo(map);
-            
-            // Círculo de predicción
-            const circle = L.circle([futureLat, futureLng], {
-                radius: 10,
-                color: 'var(--neon-red)',
-                fillColor: 'var(--neon-red)',
-                fillOpacity: 0.3,
-                weight: 1
-            }).addTo(map);
-            
-            predictionLines.push(line, circle);
-        }
-
-        // ==============================================
-        // CÁMARA
-        // ==============================================
-        async function toggleCamera() {
-            const container = document.getElementById('camera-container');
-            const video = document.getElementById('video-feed');
-            const btn = document.getElementById('btn-cam');
-
-            if(!stream) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: "environment" },
-                        audio: false
-                    });
-                    video.srcObject = stream;
-                    container.style.display = 'block';
-                    btn.classList.add('btn-active');
-                    logToConsole("📷 CÁMARA ACTIVADA", 'exito');
-                } catch(e) {
-                    logToConsole("❌ ERROR: CÁMARA NO DISPONIBLE", 'alerta');
-                }
-            } else {
-                stream.getTracks().forEach(t => t.stop());
-                stream = null;
-                container.style.display = 'none';
-                btn.classList.remove('btn-active');
-                logToConsole("📷 CÁMARA DESACTIVADA", 'info');
-            }
-        }
-
-        // ==============================================
-        // ALERTA CRÍTICA (GLOBAL)
-        // ==============================================
-        function triggerAlert() {
-            document.body.style.animation = "flash 0.2s 3";
-            logToConsole("🚨 ¡ALERTA CRÍTICA ENVIADA A TODAS LAS UNIDADES!", 'alerta');
-            
-            // Enviar alerta global a Supabase
-            _supabase.from('alertas').insert({
-                tipo: 'CRITICA',
-                lat: myMarker ? myMarker.getLatLng().lat : null,
-                lng: myMarker ? myMarker.getLatLng().lng : null,
-                usuario: MY_ID,
-                timestamp: new Date().toISOString(),
-                status: 'ACTIVA'
-            });
-        }
-
-        // ==============================================
-        // INICIALIZACIÓN ADICIONAL
-        // ==============================================
-        // Agregar botón de alerta crítica al grupo
-        window.onload = function() {
-            // El botón de alerta se agregará en setupButtonsByRole
-        };
+        // Iniciar todo
+        window.onload = iniciar;
     </script>
-
-    <style>
-        /* Estilos adicionales para marcadores */
-        .safe-zone-marker {
-            filter: drop-shadow(0 0 10px var(--neon-green));
-            font-size: 24px;
-            text-align: center;
-        }
-        
-        .vehicle-marker {
-            font-size: 24px;
-            filter: drop-shadow(0 0 10px var(--neon-red));
-            animation: pulse 1s infinite;
-        }
-        
-        .leaflet-popup-content-wrapper {
-            background: #000;
-            color: var(--neon-blue);
-            border: 1px solid var(--neon-blue);
-            border-radius: 0;
-        }
-        
-        .leaflet-popup-tip {
-            background: #000;
-            border: 1px solid var(--neon-blue);
-        }
-        
-        /* Scroll personalizado */
-        ::-webkit-scrollbar {
-            width: 5px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #000;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--neon-blue);
-            border-radius: 0;
-        }
-        
-        /* Animaciones */
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-    </style>
 </body>
 </html>
