@@ -62,7 +62,7 @@
             100% { transform: translateY(100%); }
         }
 
-        /* HEADER REDUCIDO */
+        /* HEADER CON LOGO */
         header {
             position: fixed;
             top: 0;
@@ -80,9 +80,41 @@
             font-size: 0.8rem;
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-mini {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .logo-mini img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .system-title {
             font-weight: bold;
             letter-spacing: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .system-status {
@@ -93,6 +125,30 @@
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.3; }
+        }
+
+        /* BOTÓN DE SALIR */
+        .logout-button {
+            background: transparent;
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 0 5px rgba(0, 102, 255, 0.3);
+        }
+
+        .logout-button:hover {
+            background: rgba(0, 102, 255, 0.2);
+            box-shadow: 0 0 15px var(--secondary);
+            transform: scale(1.05);
         }
 
         /* MAPA (PROTAGONISTA ABSOLUTO) */
@@ -116,7 +172,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            pointer-events: none; /* Permite tocar el mapa a través de espacios vacíos */
+            pointer-events: none;
         }
 
         /* TARJETAS FLOTANTES */
@@ -125,9 +181,9 @@
             backdrop-filter: blur(5px);
             border: 1px solid var(--primary);
             border-radius: 8px;
-            padding: 12px 15px;
+            padding: 8px 12px;
             box-shadow: var(--border-glow);
-            pointer-events: auto; /* La tarjeta sí se puede tocar */
+            pointer-events: auto;
             width: 100%;
         }
 
@@ -145,26 +201,26 @@
         }
 
         .telemetry-label {
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             color: var(--secondary);
             letter-spacing: 1px;
             text-transform: uppercase;
         }
 
         .telemetry-value {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             text-shadow: var(--text-glow);
             line-height: 1.3;
         }
 
         .telemetry-value.small {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
 
         /* TERMINAL (UNA LÍNEA) */
         .terminal-card {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -184,8 +240,8 @@
         }
 
         .camera-preview-mini {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: #000;
             border: 1px solid var(--primary);
             overflow: hidden;
@@ -204,13 +260,21 @@
 
         .camera-info {
             flex: 1;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
+        }
+
+        #camera-placeholder {
+            color: var(--secondary);
+            font-size: 0.55rem;
+            opacity: 0.7;
+            letter-spacing: 0.5px;
         }
 
         .rec-indicator {
             color: var(--alert);
             animation: blink 1s infinite;
             font-weight: bold;
+            font-size: 0.65rem;
         }
 
         .hidden {
@@ -224,12 +288,12 @@
 
         .alert-button {
             width: 100%;
-            padding: 18px;
+            padding: 16px;
             background: rgba(255, 51, 0, 0.15);
             border: 2px solid var(--alert);
             color: var(--alert);
             font-family: 'Share Tech Mono', monospace;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: bold;
             letter-spacing: 4px;
             cursor: pointer;
@@ -258,7 +322,7 @@
             opacity: 0.7;
         }
 
-        /* MODAL (igual que antes) */
+        /* MODAL DE ALERTA */
         #alert-modal {
             position: fixed;
             top: 0;
@@ -331,7 +395,7 @@
             background: rgba(0, 255, 170, 0.1);
         }
 
-        /* PANTALLA DE REGISTRO (igual) */
+        /* PANTALLA DE REGISTRO */
         #pantalla-registro {
             position: fixed;
             top: 0;
@@ -494,15 +558,24 @@
         <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
     </div>
 
-    <!-- PANTALLA PRINCIPAL (NUEVO DISEÑO) -->
+    <!-- PANTALLA PRINCIPAL -->
     <div id="pantalla-principal" style="display: none;">
-        <!-- HEADER -->
+        <!-- HEADER CON LOGO -->
         <header>
-            <div class="system-title">SENTINEL</div>
-            <div class="system-status">● ONLINE</div>
+            <div class="header-left">
+                <div class="logo-mini">
+                    <!-- AQUÍ VA SU LOGO - Reemplace esto por: <img src="logo.png" alt="SMART TECH"> -->
+                    <img src="logo.png" alt="SMART TECH">
+                </div>
+                <div class="system-title">SENTINEL</div>
+            </div>
+            <div class="header-right">
+                <div class="system-status">● ONLINE</div>
+                <button class="logout-button" onclick="cerrarSesion()" title="CERRAR SESIÓN">⏻</button>
+            </div>
         </header>
 
-        <!-- MAPA (PROTAGONISTA) -->
+        <!-- MAPA (ESTILO IRON MAN) -->
         <div id="map"></div>
 
         <!-- CAPA DE INFORMACIÓN FLOTANTE -->
@@ -525,16 +598,16 @@
                 </div>
             </div>
 
-            <!-- TARJETA DE TERMINAL (UNA LÍNEA) -->
+            <!-- TARJETA DE TERMINAL -->
             <div class="info-card terminal-card" id="terminal">
                 <span>></span> SISTEMA LISTO
             </div>
 
-            <!-- TARJETA DE CÁMARA (MINI) -->
+            <!-- TARJETA DE CÁMARA -->
             <div class="info-card camera-card">
                 <div class="camera-preview-mini">
                     <video id="video-feed-mini" autoplay playsinline></video>
-                    <span style="color: var(--secondary); font-size:0.6rem;" id="camera-placeholder">[INACTIVA]</span>
+                    <span id="camera-placeholder">[INACTIVA]</span>
                 </div>
                 <div class="camera-info">
                     <div id="camera-status">ACTIVAR AL ENVIAR ALERTA</div>
@@ -661,7 +734,10 @@
                 attributionControl: false
             }).setView([-38.0055, -57.5426], 16);
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(mapa);
+            // MAPA ESTILO IRON MAN (calles cian/neón)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                filter: 'brightness(0.7) invert(1) hue-rotate(160deg) saturate(3) contrast(1.2)'
+            }).addTo(mapa);
 
             // Iniciar GPS
             iniciarGPS();
@@ -744,7 +820,7 @@
         }
 
         // ==============================================
-        // TERMINAL (UNA LÍNEA)
+        // TERMINAL
         // ==============================================
         function actualizarTerminal(mensaje) {
             document.getElementById('terminal').innerHTML = `<span>></span> ${mensaje}`;
@@ -896,6 +972,22 @@
                 detenerCamara();
                 cerrarModal();
                 actualizarTerminal('ALERTA CANCELADA');
+            }
+        }
+
+        // ==============================================
+        // CERRAR SESIÓN
+        // ==============================================
+        function cerrarSesion() {
+            if (confirm('¿CERRAR SESIÓN? VOLVERÁ A LA PANTALLA DE REGISTRO')) {
+                // Detener cámara si está activa
+                if (streamCamara) {
+                    streamCamara.getTracks().forEach(t => t.stop());
+                }
+                // Limpiar localStorage
+                localStorage.removeItem('usuario_activo');
+                // Recargar la página
+                location.reload();
             }
         }
 
