@@ -25,13 +25,11 @@
             --primary: #00ffaa;
             --primary-glow: 0 0 15px #00ffaa;
             --secondary: #0066ff;
-            --secondary-glow: 0 0 15px #0066ff;
             --alert: #ff3300;
             --alert-glow: 0 0 20px #ff3300;
             --bg: #0a0c10;
-            --glass: rgba(10, 12, 16, 0.85);
+            --glass: rgba(0, 0, 0, 0.85);
             --border-glow: 0 0 10px rgba(0, 255, 170, 0.5);
-            --text-glow: 0 0 8px rgba(0, 255, 170, 0.7);
         }
 
         body {
@@ -43,7 +41,7 @@
             position: relative;
         }
 
-        /* EFECTO MATRIZ MEJORADO */
+        /* EFECTO MATRIZ (sutil) */
         body::before {
             content: "";
             position: fixed;
@@ -53,10 +51,9 @@
             height: 100%;
             background: repeating-linear-gradient(
                 0deg,
-                rgba(0, 255, 170, 0.03) 0px,
-                rgba(0, 255, 170, 0.01) 2px,
-                transparent 3px,
-                transparent 8px
+                rgba(0, 255, 170, 0.02) 0px,
+                transparent 2px,
+                transparent 6px
             );
             pointer-events: none;
             animation: matrix 20s linear infinite;
@@ -68,77 +65,39 @@
             100% { transform: translateY(100%); }
         }
 
-        /* HEADER ESTILO PELÍCULA */
+        /* HEADER MINIMAL */
         header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid var(--primary);
-            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid var(--primary);
+            padding: 8px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            box-shadow: var(--border-glow);
-            font-family: 'Orbitron', sans-serif;
-            border-image: linear-gradient(90deg, var(--primary), var(--secondary)) 1;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
         }
 
         .header-left {
             display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logo-mini {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: black;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            font-weight: bold;
-            border-radius: 4px;
-            overflow: hidden;
-            box-shadow: 0 0 20px var(--primary);
-            transform: skewX(-5deg);
-        }
-
-        .logo-mini img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .brand {
-            display: flex;
             flex-direction: column;
         }
 
-        .brand-main {
-            font-size: 1.3rem;
+        .header-left .main {
+            font-family: 'Orbitron', sans-serif;
             font-weight: 900;
-            letter-spacing: 4px;
-            text-shadow: var(--text-glow);
+            font-size: 0.9rem;
             color: var(--primary);
         }
 
-        .brand-sub {
-            font-size: 0.6rem;
+        .header-left .sub {
             color: var(--secondary);
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
-
-        .brand-tagline {
             font-size: 0.55rem;
-            color: #888;
-            letter-spacing: 2px;
         }
 
         .header-right {
@@ -147,50 +106,32 @@
             gap: 15px;
         }
 
-        .system-status {
+        .status {
             color: var(--primary);
             animation: blink 2s step-end infinite;
-            font-size: 0.7rem;
-            padding: 4px 8px;
-            border: 1px solid var(--primary);
-            border-radius: 12px;
-            background: rgba(0, 255, 170, 0.1);
         }
 
         @keyframes blink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.4; }
         }
 
-        /* BOTÓN DE SALIR REDISEÑADO */
-        .logout-button {
-            background: rgba(255, 51, 0, 0.1);
+        .logout {
             border: 1px solid var(--alert);
             color: var(--alert);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 2px;
+            font-size: 0.6rem;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.3s;
-            box-shadow: 0 0 10px rgba(255, 51, 0, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            background: rgba(255, 51, 0, 0.1);
         }
 
-        .logout-button:hover {
+        .logout:hover {
             background: rgba(255, 51, 0, 0.2);
-            box-shadow: 0 0 20px var(--alert);
-            transform: scale(1.05);
+            box-shadow: 0 0 10px var(--alert);
         }
 
-        .logout-button span {
-            font-size: 1rem;
-        }
-
-        /* MAPA */
+        /* MAPA - PROTAGONISTA ABSOLUTO */
         #map {
             position: fixed;
             top: 0;
@@ -198,274 +139,134 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            background: #000;
         }
 
-        /* CAPA DE INFORMACIÓN FLOTANTE MEJORADA */
-        .info-layer {
+        /* BARRA INFERIOR ÚNICA - TODO EL PODER AQUÍ */
+        .bottom-bar {
             position: fixed;
-            bottom: 20px;
-            left: 15px;
-            right: 15px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
-        }
-
-        /* TARJETAS ESTILO HOLOGRAMA */
-        .info-card {
-            background: var(--glass);
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(10px);
             border: 1px solid var(--primary);
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+            z-index: 1000;
+            padding: 10px 12px;
+            font-size: 0.7rem;
             border-radius: 4px;
-            padding: 12px 15px;
-            box-shadow: var(--border-glow), 0 0 30px rgba(0, 255, 170, 0.2);
-            pointer-events: auto;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-            transform: skewX(-2deg);
-        }
-
-        .info-card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-            animation: scan 3s linear infinite;
-        }
-
-        @keyframes scan {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        .info-card::after {
-            content: "⏤⏤⏤⏤";
-            position: absolute;
-            bottom: 2px;
-            right: 5px;
-            color: var(--secondary);
-            font-size: 0.5rem;
-            opacity: 0.5;
-        }
-
-        /* TELEMETRÍA MEJORADA */
-        .telemetry-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            text-align: center;
-        }
-
-        .telemetry-item {
             display: flex;
             flex-direction: column;
-            position: relative;
+            gap: 8px;
         }
 
-        .telemetry-label {
-            font-size: 0.6rem;
+        /* PRIMERA LÍNEA: DATOS TELEMÉTRICOS */
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 255, 170, 0.2);
+            padding-bottom: 6px;
+        }
+
+        .data-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .data-label {
             color: var(--secondary);
-            letter-spacing: 2px;
+            font-size: 0.6rem;
             text-transform: uppercase;
-            margin-bottom: 4px;
         }
 
-        .telemetry-value {
-            font-size: 1.4rem;
-            font-weight: bold;
-            text-shadow: var(--text-glow);
-            line-height: 1.2;
+        .data-value {
             color: var(--primary);
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--primary);
         }
 
-        .telemetry-value.small {
-            font-size: 1rem;
+        .data-value.alert {
+            color: var(--alert);
         }
 
-        /* BARRA DE BATERÍA ESTILO PELÍCULA */
-        .battery-bar {
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.1);
-            margin-top: 4px;
-            position: relative;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .battery-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            width: 0%;
-            border-radius: 2px;
-            box-shadow: 0 0 10px var(--primary);
-        }
-
-        /* TERMINAL MEJORADA (MÚLTIPLES LÍNEAS) */
-        .terminal-card {
-            font-size: 0.7rem;
-            line-height: 1.6;
+        /* SEGUNDA LÍNEA: TERMINAL + CÁMARA */
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.65rem;
         }
 
         .terminal-line {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
             color: var(--primary);
-            border-bottom: 1px solid rgba(0, 255, 170, 0.1);
-            padding: 2px 0;
         }
 
         .terminal-prompt {
             color: var(--secondary);
-            font-weight: bold;
         }
 
-        .terminal-progress {
-            color: var(--primary);
-            background: rgba(0, 255, 170, 0.1);
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 0.6rem;
-            margin-left: auto;
-        }
-
-        /* CÁMARA PREVIEW MEJORADA */
-        .camera-card {
+        .camera-indicator {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 5px;
         }
 
-        .camera-preview-mini {
-            width: 60px;
-            height: 60px;
-            background: #000;
-            border: 2px solid var(--primary);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 15px var(--primary);
-            transform: rotate(1deg);
+        .camera-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--secondary);
         }
 
-        #video-feed-mini {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: contrast(1.3) hue-rotate(100deg) brightness(1.1);
-        }
-
-        .camera-info {
-            flex: 1;
-        }
-
-        .camera-status {
-            font-size: 0.7rem;
-            color: var(--secondary);
-            letter-spacing: 1px;
-        }
-
-        #camera-placeholder {
-            color: var(--secondary);
-            font-size: 0.6rem;
-            opacity: 0.7;
-            font-style: italic;
-        }
-
-        .rec-indicator {
-            color: var(--alert);
+        .camera-dot.active {
+            background: var(--alert);
             animation: pulse 1s infinite;
-            font-weight: bold;
-            font-size: 0.7rem;
-            text-shadow: 0 0 10px var(--alert);
         }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.3; }
         }
 
-        /* BOTÓN DE ALERTA ÉPICO */
-        .alert-button-container {
-            margin-top: 5px;
-            position: relative;
+        /* TERCERA LÍNEA: BOTÓN DE ALERTA */
+        .alert-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 4px;
         }
 
         .alert-button {
-            width: 100%;
-            padding: 18px;
             background: rgba(255, 51, 0, 0.15);
             border: 2px solid var(--alert);
             color: var(--alert);
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.6rem;
             font-weight: 900;
+            font-size: 1.4rem;
             letter-spacing: 8px;
+            padding: 8px 0;
+            width: 100%;
             cursor: pointer;
-            transition: all 0.3s;
             text-transform: uppercase;
             box-shadow: 0 0 30px rgba(255, 51, 0, 0.5);
-            border-radius: 4px;
-            backdrop-filter: blur(5px);
-            pointer-events: auto;
-            position: relative;
-            animation: alertPulse 2s infinite;
-        }
-
-        @keyframes alertPulse {
-            0% { box-shadow: 0 0 30px rgba(255, 51, 0, 0.5); }
-            50% { box-shadow: 0 0 60px rgba(255, 51, 0, 0.8); }
-            100% { box-shadow: 0 0 30px rgba(255, 51, 0, 0.5); }
+            transition: all 0.3s;
+            border-radius: 2px;
         }
 
         .alert-button:hover {
             background: rgba(255, 51, 0, 0.25);
-            transform: scale(1.02);
+            box-shadow: 0 0 50px rgba(255, 51, 0, 0.8);
         }
 
         .alert-button:active {
             transform: scale(0.98);
         }
 
-        .alert-button::before {
-            content: "⚡";
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1.2rem;
-            opacity: 0.7;
-        }
-
-        .alert-button::after {
-            content: "⚡";
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1.2rem;
-            opacity: 0.7;
-        }
-
-        .alert-warning {
-            font-size: 0.6rem;
-            text-align: center;
-            margin-top: 6px;
-            color: var(--secondary);
-            opacity: 0.8;
-            letter-spacing: 2px;
-        }
-
-        /* MODAL MEJORADO */
+        /* MODAL (igual) */
         #alert-modal {
             position: fixed;
             top: 0;
@@ -481,37 +282,26 @@
         }
 
         .modal-content {
-            background: var(--glass);
-            backdrop-filter: blur(15px);
+            background: rgba(0, 0, 0, 0.9);
             border: 2px solid var(--alert);
             box-shadow: 0 0 50px rgba(255, 51, 0, 0.7);
             padding: 30px;
-            max-width: 320px;
+            max-width: 300px;
             text-align: center;
-            border-radius: 4px;
-            position: relative;
-            transform: scale(1);
-            animation: modalAppear 0.3s;
-        }
-
-        @keyframes modalAppear {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+            border-radius: 2px;
         }
 
         .modal-title {
             font-size: 2rem;
             color: var(--alert);
             margin-bottom: 15px;
-            text-shadow: 0 0 20px var(--alert);
             font-family: 'Orbitron', sans-serif;
         }
 
         .modal-text {
-            font-size: 1rem;
+            font-size: 0.9rem;
             margin-bottom: 25px;
             line-height: 1.6;
-            color: white;
         }
 
         .modal-buttons {
@@ -521,16 +311,12 @@
 
         .modal-button {
             flex: 1;
-            padding: 15px;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.9rem;
-            cursor: pointer;
+            padding: 12px;
             background: transparent;
             border: 1px solid;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
             transition: all 0.3s;
-            border-radius: 4px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
         }
 
         .modal-button.primary {
@@ -540,7 +326,6 @@
 
         .modal-button.primary:hover {
             background: rgba(255, 51, 0, 0.2);
-            box-shadow: 0 0 20px var(--alert);
         }
 
         .modal-button.secondary {
@@ -550,129 +335,82 @@
 
         .modal-button.secondary:hover {
             background: rgba(0, 255, 170, 0.1);
-            box-shadow: 0 0 20px var(--primary);
         }
 
-        /* PANTALLA DE REGISTRO (también mejorada) */
+        /* REGISTRO (simplificado) */
         #pantalla-registro {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: var(--bg);
+            background: #000;
             z-index: 10000;
             display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: center;
             padding: 20px;
-            overflow-y: auto;
         }
 
         .registro-contenedor {
-            max-width: 400px;
-            margin: 0 auto;
+            max-width: 350px;
             width: 100%;
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            border: 2px solid var(--primary);
-            box-shadow: var(--border-glow), 0 0 50px rgba(0, 255, 170, 0.3);
-            padding: 40px 25px;
-            border-radius: 4px;
-            transform: skewX(-2deg);
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--primary);
+            padding: 30px 20px;
+            box-shadow: 0 0 30px rgba(0, 255, 170, 0.3);
         }
 
-        .registro-logo {
+        .registro-titulo {
             text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .registro-logo h1 {
-            font-size: 3rem;
-            letter-spacing: 8px;
-            text-shadow: var(--text-glow);
+            margin-bottom: 25px;
             font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
             color: var(--primary);
         }
 
-        .registro-logo p {
+        .registro-sub {
+            text-align: center;
             color: var(--secondary);
-            letter-spacing: 4px;
-            font-size: 0.9rem;
+            font-size: 0.7rem;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
         }
 
         .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--secondary);
-            font-size: 0.8rem;
-            letter-spacing: 2px;
+            margin-bottom: 15px;
         }
 
         input {
             width: 100%;
-            background: rgba(0,0,0,0.7);
+            background: transparent;
             border: 1px solid var(--primary);
-            padding: 15px;
+            padding: 12px;
             color: var(--primary);
             font-family: 'Share Tech Mono', monospace;
-            font-size: 1rem;
             outline: none;
-            border-radius: 4px;
         }
 
         input:focus {
-            box-shadow: 0 0 20px var(--primary);
+            box-shadow: 0 0 15px var(--primary);
         }
 
         .registro-button {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             background: transparent;
             border: 2px solid var(--primary);
             color: var(--primary);
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem;
             font-weight: bold;
             letter-spacing: 4px;
             cursor: pointer;
             margin-top: 20px;
-            border-radius: 4px;
-            transition: all 0.3s;
         }
 
         .registro-button:hover {
-            background: rgba(0, 255, 170, 0.2);
-            box-shadow: 0 0 30px var(--primary);
-        }
-
-        .terminos {
-            margin-top: 25px;
-            font-size: 0.65rem;
-            color: #666;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        #modal-exito {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            border: 2px solid var(--primary);
-            padding: 30px;
-            text-align: center;
-            z-index: 20001;
-            display: none;
-            max-width: 280px;
-            border-radius: 4px;
-            box-shadow: 0 0 50px var(--primary);
+            background: rgba(0, 255, 170, 0.1);
+            box-shadow: 0 0 20px var(--primary);
         }
 
         .hidden {
@@ -681,163 +419,105 @@
     </style>
 </head>
 <body>
-    <!-- PANTALLA DE REGISTRO -->
+    <!-- REGISTRO -->
     <div id="pantalla-registro">
         <div class="registro-contenedor">
-            <div class="registro-logo">
-                <h1>SENTINEL</h1>
-                <p>SMART TECH</p>
-            </div>
-
+            <div class="registro-titulo">SENTINEL</div>
+            <div class="registro-sub">SMART TECH</div>
+            
             <div class="form-group">
-                <label>NOMBRE COMPLETO</label>
-                <input type="text" id="nombre" placeholder="Ej: Juan Pérez">
+                <input type="text" id="nombre" placeholder="NOMBRE COMPLETO">
             </div>
-
             <div class="form-group">
-                <label>DNI</label>
-                <input type="text" id="dni" placeholder="Ej: 12345678">
+                <input type="text" id="dni" placeholder="DNI">
             </div>
-
             <div class="form-group">
-                <label>TELÉFONO</label>
-                <input type="text" id="telefono" placeholder="Ej: 223 555-1234">
+                <input type="text" id="telefono" placeholder="TELÉFONO">
             </div>
-
             <div class="form-group">
-                <label>DOMICILIO</label>
-                <input type="text" id="domicilio" placeholder="Ej: Av. Luro 1234">
+                <input type="text" id="domicilio" placeholder="DOMICILIO">
             </div>
-
-            <button class="registro-button" onclick="registrar()">REGISTRARME</button>
-
-            <div class="terminos">
-                AL REGISTRARME ACEPTO QUE LAS FALSAS ALERTAS<br>
-                SERÁN DENUNCIADAS A LA AUTORIDAD
-            </div>
+            
+            <button class="registro-button" onclick="registrar()">INGRESAR</button>
         </div>
     </div>
 
-    <!-- MODAL REGISTRO EXITOSO -->
-    <div id="modal-exito">
+    <!-- MODAL REGISTRO -->
+    <div id="modal-exito" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#000; border:2px solid var(--primary); padding:30px; text-align:center; z-index:20001; display:none; min-width:250px;">
         <div style="font-size:3rem; color:var(--primary); margin-bottom:15px;">✓</div>
-        <p style="margin-bottom:20px; font-size:1.2rem;">REGISTRO EXITOSO</p>
-        <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0; padding:12px;">CONTINUAR</button>
+        <div style="margin-bottom:20px;">REGISTRO EXITOSO</div>
+        <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
     </div>
 
-    <!-- PANTALLA PRINCIPAL -->
-    <div id="pantalla-principal" style="display: none;">
-        <!-- HEADER ÉPICO -->
+    <!-- PRINCIPAL -->
+    <div id="pantalla-principal" style="display:none;">
         <header>
             <div class="header-left">
-                <div class="logo-mini">
-                    <span>ST</span>
-                </div>
-                <div class="brand">
-                    <div class="brand-main">SENTINEL V4.0</div>
-                    <div class="brand-sub">SMART TECH</div>
-                    <div class="brand-tagline">GLOBAL INTELLIGENCE · LOCAL CONTROL</div>
-                </div>
+                <div class="main">SENTINEL V4.0</div>
+                <div class="sub">SMART TECH · GLOBAL INTELLIGENCE · LOCAL CONTROL</div>
             </div>
             <div class="header-right">
-                <div class="system-status">● ONLINE</div>
-                <button class="logout-button" onclick="cerrarSesion()">
-                    <span>⏻</span> CERRAR SESIÓN
-                </button>
+                <div class="status">● ONLINE</div>
+                <div class="logout" onclick="cerrarSesion()">CERRAR</div>
             </div>
         </header>
 
-        <!-- MAPA -->
         <div id="map"></div>
 
-        <!-- CAPA DE INFORMACIÓN FLOTANTE -->
-        <div class="info-layer">
-            <!-- TARJETA DE TELEMETRÍA MEJORADA -->
-            <div class="info-card">
-                <div class="telemetry-grid">
-                    <div class="telemetry-item">
-                        <span class="telemetry-label">BATERÍA</span>
-                        <span class="telemetry-value" id="battery">--%</span>
-                        <div class="battery-bar">
-                            <div class="battery-fill" id="battery-fill" style="width: 0%;"></div>
-                        </div>
-                    </div>
-                    <div class="telemetry-item">
-                        <span class="telemetry-label">GPS</span>
-                        <span class="telemetry-value small" id="precision">±--m</span>
-                    </div>
-                    <div class="telemetry-item">
-                        <span class="telemetry-label">CÁMARA</span>
-                        <span class="telemetry-value small" id="video-status">OFF</span>
-                    </div>
+        <div class="bottom-bar">
+            <!-- Línea 1: Datos -->
+            <div class="data-row">
+                <div class="data-item">
+                    <span class="data-label">⚡</span>
+                    <span class="data-value" id="battery">--%</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">🛰️</span>
+                    <span class="data-value" id="precision">±--m</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">📷</span>
+                    <span class="data-value" id="video-status">OFF</span>
                 </div>
             </div>
 
-            <!-- TERMINAL MEJORADA (MÚLTIPLES LÍNEAS) -->
-            <div class="info-card terminal-card" id="terminal-container">
-                <div class="terminal-line">
-                    <span class="terminal-prompt">></span> SISTEMA INICIALIZADO
-                    <span class="terminal-progress">[OK]</span>
+            <!-- Línea 2: Terminal + Cámara -->
+            <div class="status-row">
+                <div class="terminal-line" id="terminal">
+                    <span class="terminal-prompt">></span> SISTEMA LISTO
                 </div>
-                <div class="terminal-line" id="terminal-line-1">
-                    <span class="terminal-prompt">></span> CONECTANDO CON CENTRAL...
-                    <span class="terminal-progress" id="terminal-progress">[░░░░░░░░░░]</span>
-                </div>
-                <div class="terminal-line" id="terminal-line-2">
-                    <span class="terminal-prompt">></span> ESPERANDO COMANDO
+                <div class="camera-indicator">
+                    <span class="camera-dot" id="camera-dot"></span>
+                    <span id="camera-status">INACTIVA</span>
                 </div>
             </div>
 
-            <!-- CÁMARA PREVIEW -->
-            <div class="info-card camera-card">
-                <div class="camera-preview-mini">
-                    <video id="video-feed-mini" autoplay playsinline></video>
-                    <span id="camera-placeholder">[INACTIVA]</span>
-                </div>
-                <div class="camera-info">
-                    <div class="camera-status" id="camera-status">ACTIVAR AL ENVIAR ALERTA</div>
-                    <div id="rec-indicator" class="rec-indicator hidden">● GRABANDO</div>
-                </div>
-            </div>
-
-            <!-- BOTÓN DE ALERTA ÉPICO -->
-            <div class="alert-button-container">
-                <button class="alert-button" id="alert-button">
-                    ALERTA
-                </button>
-                <div class="alert-warning">
-                    ⚡ TOQUE PARA ACTIVAR PROTOCOLO DE EMERGENCIA ⚡
-                </div>
+            <!-- Línea 3: Botón ALERTA -->
+            <div class="alert-row">
+                <button class="alert-button" id="alert-button">ALERTA</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DE ALERTA -->
+    <!-- MODAL ALERTA -->
     <div id="alert-modal">
         <div class="modal-content">
             <div class="modal-title">🚨 ALERTA</div>
             <div class="modal-text" id="modal-text">
-                UNIDADES NOTIFICADAS<br>
-                GRABANDO VIDEO
+                UNIDADES NOTIFICADAS<br>GRABANDO VIDEO
             </div>
             <div class="modal-buttons">
-                <button class="modal-button primary" onclick="cerrarModal()">ENTENDIDO</button>
+                <button class="modal-button primary" onclick="cerrarModal()">OK</button>
                 <button class="modal-button secondary" onclick="cancelarAlerta()">CANCELAR</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ==============================================
-        // CONFIGURACIÓN SUPABASE
-        // ==============================================
         const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ==============================================
-        // VARIABLES GLOBALES
-        // ==============================================
         let usuarioActual = null;
         let mapa;
         let marcador;
@@ -849,9 +529,6 @@
         let alertaActiva = false;
         let grabacionActiva = false;
 
-        // ==============================================
-        // FUNCIONES DE REGISTRO
-        // ==============================================
         async function registrar() {
             const nombre = document.getElementById('nombre').value.trim();
             const dni = document.getElementById('dni').value.trim();
@@ -864,29 +541,18 @@
             }
 
             const usuario = {
-                nombre: nombre,
-                dni: dni,
-                telefono: telefono,
-                domicilio: domicilio,
+                nombre, dni, telefono, domicilio,
                 fecha_registro: new Date().toISOString(),
                 id_unico: 'USR-' + dni + '-' + Date.now().toString().slice(-4)
             };
 
             try {
-                const { error } = await _supabase
-                    .from('ciudadanos')
-                    .insert(usuario);
-
-                if (error) throw error;
-
+                await _supabase.from('ciudadanos').insert(usuario);
                 localStorage.setItem('usuario_activo', JSON.stringify(usuario));
                 usuarioActual = usuario;
-                
                 document.getElementById('modal-exito').style.display = 'block';
-
             } catch (error) {
-                console.error(error);
-                alert("ERROR EN EL REGISTRO. ¿YA EXISTE ESE DNI?");
+                alert("ERROR EN EL REGISTRO");
             }
         }
 
@@ -894,7 +560,7 @@
             document.getElementById('modal-exito').style.display = 'none';
             document.getElementById('pantalla-registro').style.display = 'none';
             document.getElementById('pantalla-principal').style.display = 'block';
-            iniciarAppPrincipal();
+            iniciarApp();
         }
 
         function verificarRegistro() {
@@ -903,262 +569,135 @@
                 usuarioActual = JSON.parse(guardado);
                 document.getElementById('pantalla-registro').style.display = 'none';
                 document.getElementById('pantalla-principal').style.display = 'block';
-                iniciarAppPrincipal();
+                iniciarApp();
             }
         }
 
-        // ==============================================
-        // APP PRINCIPAL
-        // ==============================================
-        function iniciarAppPrincipal() {
-            actualizarTerminal(`BIENVENIDO ${usuarioActual.nombre}`, 0);
-            
-            // Inicializar mapa
-            mapa = L.map('map', {
-                zoomControl: false,
-                attributionControl: false
-            }).setView([-38.0055, -57.5426], 16);
+        function iniciarApp() {
+            actualizarTerminal(`BIENVENIDO ${usuarioActual.nombre}`);
 
-            // MAPA ESTILO IRON MAN MEJORADO
+            mapa = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 16);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 filter: 'brightness(0.6) invert(1) hue-rotate(150deg) saturate(4) contrast(1.3)'
             }).addTo(mapa);
 
-            // Iniciar GPS
             iniciarGPS();
-            
-            // Obtener batería
             obtenerBateria();
-
-            // Evento botón alerta
             document.getElementById('alert-button').addEventListener('click', activarAlerta);
-            
-            // Simular progreso de conexión
-            setTimeout(() => {
-                document.getElementById('terminal-progress').innerHTML = '[████████░░] 80%';
-            }, 2000);
-            
-            setTimeout(() => {
-                document.getElementById('terminal-progress').innerHTML = '[██████████] 100%';
-            }, 4000);
         }
 
-        // ==============================================
-        // GPS
-        // ==============================================
         function iniciarGPS() {
-            if (!navigator.geolocation) {
-                actualizarTerminal('GPS NO SOPORTADO', 2);
-                return;
-            }
+            if (!navigator.geolocation) return;
 
             watchId = navigator.geolocation.watchPosition(
                 (pos) => {
                     const { latitude, longitude, accuracy } = pos.coords;
-                    
                     ubicacionActual = { lat: latitude, lng: longitude };
                     
                     document.getElementById('precision').textContent = `±${accuracy.toFixed(1)}m`;
                     
                     if (!marcador) {
                         marcador = L.circleMarker([latitude, longitude], {
-                            radius: 10,
-                            color: '#00ffaa',
-                            fillColor: '#00ffaa',
-                            fillOpacity: 0.7,
-                            weight: 3,
-                            className: 'pulse-marker'
+                            radius: 10, color: '#00ffaa', fillColor: '#00ffaa', fillOpacity: 0.7
                         }).addTo(mapa);
-                        
                         mapa.setView([latitude, longitude], 17);
                     } else {
                         marcador.setLatLng([latitude, longitude]);
                     }
                     
-                    actualizarTerminal(`GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`, 1);
+                    actualizarTerminal(`GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
                 },
-                (error) => {
-                    let mensaje = 'ERROR GPS';
-                    if(error.code === 1) mensaje = 'PERMISO DENEGADO';
-                    if(error.code === 2) mensaje = 'SEÑAL NO DISPONIBLE';
-                    actualizarTerminal(mensaje, 2);
-                },
-                {
-                    enableHighAccuracy: true,
-                    maximumAge: 0,
-                    timeout: 10000
-                }
+                null,
+                { enableHighAccuracy: true }
             );
         }
 
-        // ==============================================
-        // BATERÍA
-        // ==============================================
         function obtenerBateria() {
             if ('getBattery' in navigator) {
                 navigator.getBattery().then(bateria => {
                     actualizarBateria(bateria.level * 100);
-                    bateria.addEventListener('levelchange', () => {
-                        actualizarBateria(bateria.level * 100);
-                    });
+                    bateria.addEventListener('levelchange', () => actualizarBateria(bateria.level * 100));
                 });
             } else {
-                let nivel = 85;
-                setInterval(() => {
-                    nivel = Math.max(10, nivel - Math.floor(Math.random() * 5));
-                    actualizarBateria(nivel);
-                }, 30000);
+                setInterval(() => actualizarBateria(Math.floor(Math.random() * 20) + 75), 30000);
             }
         }
 
         function actualizarBateria(nivel) {
             document.getElementById('battery').textContent = `${Math.floor(nivel)}%`;
-            document.getElementById('battery-fill').style.width = `${nivel}%`;
         }
 
-        // ==============================================
-        // TERMINAL MEJORADA
-        // ==============================================
-        function actualizarTerminal(mensaje, linea = 2) {
-            const lineElement = document.getElementById(`terminal-line-${linea}`);
-            if (lineElement) {
-                lineElement.innerHTML = `<span class="terminal-prompt">></span> ${mensaje}`;
-            }
+        function actualizarTerminal(mensaje) {
+            document.getElementById('terminal').innerHTML = `<span class="terminal-prompt">></span> ${mensaje}`;
         }
 
-        // ==============================================
-        // CÁMARA
-        // ==============================================
         async function activarCamara() {
             try {
-                streamCamara = await navigator.mediaDevices.getUserMedia({
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 320 },
-                        height: { ideal: 240 }
-                    },
-                    audio: true
-                });
-                
-                const video = document.getElementById('video-feed-mini');
-                video.srcObject = streamCamara;
-                video.style.display = 'block';
-                
-                document.getElementById('camera-placeholder').style.display = 'none';
-                document.getElementById('video-status').textContent = 'ON';
-                document.getElementById('camera-status').textContent = 'GRABANDO...';
+                streamCamara = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true });
                 
                 grabacionActiva = true;
                 fragmentosVideo = [];
                 
                 mediaRecorder = new MediaRecorder(streamCamara);
-                mediaRecorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) fragmentosVideo.push(e.data);
-                };
-                
-                mediaRecorder.onstop = () => {
-                    subirVideo();
-                };
-                
+                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) fragmentosVideo.push(e.data); };
+                mediaRecorder.onstop = subirVideo;
                 mediaRecorder.start();
-                document.getElementById('rec-indicator').classList.remove('hidden');
-                actualizarTerminal('GRABANDO VIDEO', 1);
-                
-                setTimeout(() => {
-                    if (grabacionActiva) detenerCamara();
-                }, 120000);
-                
+
+                document.getElementById('video-status').textContent = 'ON';
+                document.getElementById('camera-status').textContent = 'GRABANDO';
+                document.getElementById('camera-dot').classList.add('active');
+                actualizarTerminal('GRABANDO VIDEO');
+
+                setTimeout(() => { if (grabacionActiva) detenerCamara(); }, 120000);
             } catch (error) {
-                actualizarTerminal('ERROR CÁMARA', 2);
+                actualizarTerminal('ERROR CÁMARA');
             }
         }
 
         function detenerCamara() {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
+            if (mediaRecorder?.state === 'recording') mediaRecorder.stop();
+            streamCamara?.getTracks().forEach(t => t.stop());
             
-            if (streamCamara) {
-                streamCamara.getTracks().forEach(t => t.stop());
-                streamCamara = null;
-            }
-            
-            document.getElementById('video-feed-mini').style.display = 'none';
-            document.getElementById('camera-placeholder').style.display = 'inline';
-            document.getElementById('rec-indicator').classList.add('hidden');
             document.getElementById('video-status').textContent = 'OFF';
-            document.getElementById('camera-status').textContent = 'ACTIVAR AL ENVIAR ALERTA';
-            
+            document.getElementById('camera-status').textContent = 'INACTIVA';
+            document.getElementById('camera-dot').classList.remove('active');
             grabacionActiva = false;
         }
 
         async function subirVideo() {
-            if (fragmentosVideo.length === 0 || !ubicacionActual) return;
+            if (!fragmentosVideo.length || !ubicacionActual) return;
             
             try {
                 const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
-                const nombreArchivo = `alerta_${usuarioActual.id_unico}_${Date.now()}.webm`;
+                const nombre = `alerta_${usuarioActual.id_unico}_${Date.now()}.webm`;
                 
-                const { error } = await _supabase.storage
-                    .from('videos-alertas')
-                    .upload(nombreArchivo, blob);
-                
-                if (error) throw error;
-                
-                actualizarTerminal('VIDEO SUBIDO', 2);
-                
+                await _supabase.storage.from('videos-alertas').upload(nombre, blob);
+                actualizarTerminal('VIDEO SUBIDO');
             } catch (error) {
-                actualizarTerminal('ERROR SUBIR VIDEO', 2);
+                actualizarTerminal('ERROR SUBIR VIDEO');
             }
         }
 
-        // ==============================================
-        // ALERTA
-        // ==============================================
         async function activarAlerta() {
-            if (alertaActiva) {
-                actualizarTerminal('ALERTA YA ACTIVA', 2);
-                return;
-            }
+            if (alertaActiva || !ubicacionActual) return;
             
-            if (!ubicacionActual) {
-                actualizarTerminal('SIN UBICACIÓN GPS', 2);
-                return;
-            }
-            
-            actualizarTerminal('🚨 ACTIVANDO ALERTA', 1);
-            
+            actualizarTerminal('🚨 ACTIVANDO ALERTA');
             await activarCamara();
-            
+
             const alerta = {
-                unidad_id: usuarioActual.id_unico,
-                nombre: usuarioActual.nombre,
-                dni: usuarioActual.dni,
-                telefono: usuarioActual.telefono,
-                lat: ubicacionActual.lat,
-                lng: ubicacionActual.lng,
-                timestamp: new Date().toISOString(),
-                bateria: document.getElementById('battery').textContent,
-                activa: true
+                unidad_id: usuarioActual.id_unico, nombre: usuarioActual.nombre, dni: usuarioActual.dni,
+                telefono: usuarioActual.telefono, lat: ubicacionActual.lat, lng: ubicacionActual.lng,
+                timestamp: new Date().toISOString(), bateria: document.getElementById('battery').textContent, activa: true
             };
-            
+
             try {
-                const { error } = await _supabase
-                    .from('alertas')
-                    .insert(alerta);
-                
-                if (error) throw error;
-                
+                await _supabase.from('alertas').insert(alerta);
                 alertaActiva = true;
-                
-                document.getElementById('modal-text').innerHTML = 
-                    `🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO`;
+                document.getElementById('modal-text').innerHTML = '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
                 document.getElementById('alert-modal').style.display = 'flex';
-                
-                actualizarTerminal('🚨 ALERTA ENVIADA', 2);
-                
+                actualizarTerminal('🚨 ALERTA ENVIADA');
             } catch (error) {
-                actualizarTerminal('ERROR AL ENVIAR', 2);
+                actualizarTerminal('ERROR AL ENVIAR');
             }
         }
 
@@ -1171,26 +710,18 @@
                 alertaActiva = false;
                 detenerCamara();
                 cerrarModal();
-                actualizarTerminal('ALERTA CANCELADA', 2);
+                actualizarTerminal('ALERTA CANCELADA');
             }
         }
 
-        // ==============================================
-        // CERRAR SESIÓN
-        // ==============================================
         function cerrarSesion() {
-            if (confirm('¿CERRAR SESIÓN? VOLVERÁ A LA PANTALLA DE REGISTRO')) {
-                if (streamCamara) {
-                    streamCamara.getTracks().forEach(t => t.stop());
-                }
+            if (confirm('¿CERRAR SESIÓN?')) {
+                if (streamCamara) streamCamara.getTracks().forEach(t => t.stop());
                 localStorage.removeItem('usuario_activo');
                 location.reload();
             }
         }
 
-        // ==============================================
-        // INICIO
-        // ==============================================
         verificarRegistro();
     </script>
 </body>
