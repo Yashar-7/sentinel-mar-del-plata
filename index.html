@@ -24,6 +24,8 @@
         :root {
             --neon-cyan: #00f2ff;
             --neon-red: #ff3131;
+            --neon-green: #39ff14;
+            --civil-white: #ffffff;
             --bg-dark: #00050a;
             --bg-gradient: radial-gradient(circle, #001a26 0%, #00050a 100%);
         }
@@ -228,7 +230,7 @@
             100% { left: 100%; }
         }
 
-        /* UNIDAD (SOLO UNID ARRIBA) */
+        /* UNIDAD */
         .unit-bar {
             position: fixed;
             top: 80px;
@@ -356,7 +358,7 @@
             font-size: 1.2rem;
         }
 
-        /* CONSOLA INFERIOR (CON BATERÍA INCLUIDA) */
+        /* CONSOLA INFERIOR */
         .console {
             position: fixed;
             bottom: 15px;
@@ -462,7 +464,7 @@
             color: var(--neon-cyan);
         }
 
-        /* REGISTRO */
+        /* REGISTRO MEJORADO CON ROLES */
         #pantalla-registro {
             position: fixed;
             top: 0;
@@ -475,46 +477,159 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            overflow-y: auto;
         }
 
         .registro-contenedor {
-            max-width: 320px;
+            max-width: 350px;
             width: 100%;
-            background: rgba(0, 5, 10, 0.9);
+            background: rgba(0, 5, 10, 0.95);
+            backdrop-filter: blur(10px);
             border: 2px solid var(--neon-cyan);
             padding: 25px 20px;
             clip-path: polygon(
-                0% 5%, 3% 0%, 97% 0%, 100% 5%, 
-                100% 95%, 97% 100%, 3% 100%, 0% 95%
+                0% 3%, 2% 0%, 98% 0%, 100% 3%,
+                100% 97%, 98% 100%, 2% 100%, 0% 97%
             );
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+        }
+
+        .registro-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .registro-logo-img {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--neon-cyan), #0066ff);
+            clip-path: polygon(
+                0% 15%, 15% 0%, 85% 0%, 100% 15%,
+                100% 85%, 85% 100%, 15% 100%, 0% 85%
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        .registro-logo-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .registro-titulo {
-            text-align: center;
-            font-size: 1.8rem;
-            margin-bottom: 20px;
+            font-size: 1.5rem;
             color: var(--neon-cyan);
             text-shadow: 0 0 10px var(--neon-cyan);
+            letter-spacing: 4px;
+        }
+
+        .registro-sub {
+            font-size: 0.7rem;
+            color: rgba(0, 242, 255, 0.7);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
         }
 
         .form-group {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
 
-        input {
+        label {
+            display: block;
+            font-size: 0.6rem;
+            color: rgba(0, 242, 255, 0.7);
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        input, select {
             width: 100%;
-            background: transparent;
+            background: rgba(0, 5, 10, 0.7);
             border: 1px solid var(--neon-cyan);
-            padding: 10px;
+            padding: 12px;
             color: var(--neon-cyan);
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.8rem;
             outline: none;
+            clip-path: polygon(
+                0% 10%, 2% 0%, 98% 0%, 100% 10%,
+                100% 90%, 98% 100%, 2% 100%, 0% 90%
+            );
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300f2ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+
+        select option {
+            background: var(--bg-dark);
+            color: var(--neon-cyan);
+        }
+
+        .rol-selector {
+            margin-bottom: 15px;
+        }
+
+        .rol-opciones {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .rol-opcion {
+            background: rgba(0, 5, 10, 0.7);
+            border: 1px solid var(--neon-cyan);
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.65rem;
+            transition: all 0.3s;
+            clip-path: polygon(
+                0% 10%, 5% 0%, 95% 0%, 100% 10%,
+                100% 90%, 95% 100%, 5% 100%, 0% 90%
+            );
+        }
+
+        .rol-opcion.civil { color: #ffffff; border-color: #ffffff; }
+        .rol-opcion.patrulla { color: #00f2ff; border-color: #00f2ff; }
+        .rol-opcion.delivery { color: #ff3131; border-color: #ff3131; }
+        .rol-opcion.emergencia { color: #39ff14; border-color: #39ff14; }
+
+        .rol-opcion.selected {
+            background: rgba(0, 242, 255, 0.2);
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        .terminos {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .terminos input {
+            width: auto;
+            margin: 0;
         }
 
         .registro-button {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background: transparent;
             border: 2px solid var(--neon-cyan);
             color: var(--neon-cyan);
@@ -522,12 +637,17 @@
             font-weight: bold;
             letter-spacing: 2px;
             cursor: pointer;
-            margin-top: 15px;
             font-size: 0.9rem;
             clip-path: polygon(
-                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
-                100% 85%, 85% 100%, 15% 100%, 0% 85%
+                0% 10%, 3% 0%, 97% 0%, 100% 10%,
+                100% 90%, 97% 100%, 3% 100%, 0% 90%
             );
+            transition: all 0.3s;
+        }
+
+        .registro-button:hover {
+            background: rgba(0, 242, 255, 0.1);
+            box-shadow: 0 0 30px var(--neon-cyan);
         }
 
         .hidden {
@@ -550,30 +670,59 @@
     <div class="vignette"></div>
     <div class="scanline"></div>
 
-    <!-- REGISTRO -->
+    <!-- REGISTRO MEJORADO -->
     <div id="pantalla-registro">
         <div class="registro-contenedor">
-            <div class="registro-titulo">SENTINEL</div>
-            
-            <div class="form-group">
-                <input type="text" id="nombre" placeholder="NOMBRE">
-            </div>
-            <div class="form-group">
-                <input type="text" id="dni" placeholder="DNI">
-            </div>
-            <div class="form-group">
-                <input type="text" id="telefono" placeholder="TELÉFONO">
+            <div class="registro-logo">
+                <div class="registro-logo-img">
+                    <img src="logo.png" alt="SMART TECH">
+                </div>
+                <div class="registro-titulo">SENTINEL</div>
+                <div class="registro-sub">SMART TECH</div>
             </div>
             
-            <button class="registro-button" onclick="registrar()">INGRESAR</button>
+            <div class="form-group">
+                <label>NOMBRE COMPLETO</label>
+                <input type="text" id="nombre" placeholder="Ej: JUAN PÉREZ">
+            </div>
+            
+            <div class="form-group">
+                <label>DNI</label>
+                <input type="text" id="dni" placeholder="12345678">
+            </div>
+            
+            <div class="form-group">
+                <label>TELÉFONO</label>
+                <input type="text" id="telefono" placeholder="223 555-1234">
+            </div>
+            
+            <div class="rol-selector">
+                <label>SELECCIONE ROL</label>
+                <div class="rol-opciones">
+                    <div class="rol-opcion civil" onclick="seleccionarRol('civil', '#ffffff')">CIVIL</div>
+                    <div class="rol-opcion patrulla" onclick="seleccionarRol('patrulla', '#00f2ff')">PATRULLA</div>
+                    <div class="rol-opcion delivery" onclick="seleccionarRol('delivery', '#ff3131')">DELIVERY</div>
+                    <div class="rol-opcion emergencia" onclick="seleccionarRol('emergencia', '#39ff14')">EMERGENCIA</div>
+                </div>
+                <input type="hidden" id="rol" value="">
+                <input type="hidden" id="rol-color" value="">
+            </div>
+            
+            <div class="terminos">
+                <input type="checkbox" id="terminos" checked>
+                <label style="display:inline; margin:0;">ACEPTO QUE LAS FALSAS ALERTAS SERÁN DENUNCIADAS</label>
+            </div>
+            
+            <button class="registro-button" onclick="registrar()">REGISTRARME</button>
         </div>
     </div>
 
     <!-- MODAL REGISTRO -->
     <div id="modal-exito" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--bg-dark); border:2px solid var(--neon-cyan); padding:25px; text-align:center; z-index:20001; display:none; min-width:220px; clip-path: polygon(0% 10%, 5% 0%, 95% 0%, 100% 10%, 100% 90%, 95% 100%, 5% 100%, 0% 90%);">
-        <div style="font-size:2.5rem; color:var(--neon-cyan); margin-bottom:10px;">✓</div>
-        <div style="margin-bottom:15px;">REGISTRO EXITOSO</div>
-        <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
+            <div style="font-size:2.5rem; color:var(--neon-cyan); margin-bottom:10px;">✓</div>
+            <div style="margin-bottom:15px;">REGISTRO EXITOSO</div>
+            <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
+        </div>
     </div>
 
     <!-- PRINCIPAL -->
@@ -599,7 +748,7 @@
 
         <div id="map"></div>
 
-        <!-- SOLO UNID (sin coordenadas redundantes) -->
+        <!-- UNIDAD (con color según rol) -->
         <div class="unit-bar">
             <span>UNID: <span id="unid">ALPHA-7</span></span>
         </div>
@@ -625,7 +774,7 @@
             </button>
         </div>
 
-        <!-- CONSOLA INFERIOR (con batería al final) -->
+        <!-- CONSOLA INFERIOR -->
         <div class="console">
             <div class="console-line">
                 <span class="console-prompt">></span>
@@ -675,31 +824,72 @@
         let fragmentosVideo = [];
         let alertaActiva = false;
         let grabacionActiva = false;
+        let rolSeleccionado = '';
+        let colorSeleccionado = '';
+
+        function seleccionarRol(rol, color) {
+            // Quitar selección anterior
+            document.querySelectorAll('.rol-opcion').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Marcar el seleccionado
+            event.target.classList.add('selected');
+            
+            rolSeleccionado = rol;
+            colorSeleccionado = color;
+            
+            document.getElementById('rol').value = rol;
+            document.getElementById('rol-color').value = color;
+        }
 
         async function registrar() {
             const nombre = document.getElementById('nombre').value.trim();
             const dni = document.getElementById('dni').value.trim();
             const telefono = document.getElementById('telefono').value.trim();
+            const terminos = document.getElementById('terminos').checked;
 
             if (!nombre || !dni || !telefono) {
                 alert("COMPLETE TODOS LOS CAMPOS");
                 return;
             }
 
+            if (!rolSeleccionado) {
+                alert("SELECCIONE UN ROL");
+                return;
+            }
+
+            if (!terminos) {
+                alert("DEBE ACEPTAR LOS TÉRMINOS");
+                return;
+            }
+
             const usuario = {
-                nombre, dni, telefono,
+                nombre: nombre,
+                dni: dni,
+                telefono: telefono,
+                rol: rolSeleccionado,
+                color: colorSeleccionado,
                 fecha_registro: new Date().toISOString(),
-                id_unico: 'ALPHA-' + Math.floor(Math.random() * 9) + 1
+                id_unico: 'USR-' + dni + '-' + Date.now().toString().slice(-4)
             };
 
             try {
-                await _supabase.from('ciudadanos').insert(usuario);
+                const { error } = await _supabase
+                    .from('ciudadanos')
+                    .insert(usuario);
+
+                if (error) throw error;
+
                 localStorage.setItem('usuario_activo', JSON.stringify(usuario));
                 usuarioActual = usuario;
-                document.getElementById('unid').textContent = usuario.id_unico;
+                
                 document.getElementById('modal-exito').style.display = 'block';
+                document.getElementById('unid').textContent = usuario.id_unico;
+
             } catch (error) {
-                alert("ERROR EN EL REGISTRO");
+                console.error(error);
+                alert("ERROR EN EL REGISTRO. ¿YA EXISTE ESE DNI?");
             }
         }
 
@@ -746,16 +936,18 @@
                     const { latitude, longitude } = pos.coords;
                     ubicacionActual = { lat: latitude, lng: longitude };
                     
-                    // Actualizar solo la línea de GPS (sin lat/lng separados)
                     document.getElementById('gps-status').innerHTML = 
                         `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
                     
                     if (!marcador) {
+                        // Usar el color del rol para el marcador
+                        const markerColor = usuarioActual ? usuarioActual.color : '#00f2ff';
+                        
                         marcador = L.circleMarker([latitude, longitude], {
                             radius: 12,
-                            color: '#00f2ff',
+                            color: markerColor,
                             weight: 3,
-                            fillColor: '#00f2ff',
+                            fillColor: markerColor,
                             fillOpacity: 0.3,
                             className: 'iron-marker'
                         }).addTo(mapa);
@@ -853,6 +1045,7 @@
                 nombre: usuarioActual.nombre,
                 dni: usuarioActual.dni,
                 telefono: usuarioActual.telefono,
+                rol: usuarioActual.rol,
                 lat: ubicacionActual.lat,
                 lng: ubicacionActual.lng,
                 timestamp: new Date().toISOString(),
