@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL V4.0 | SMART TECH</title>
+    <title>SENTINEL V4.0 | HUD TÁCTICO</title>
     
     <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -22,14 +22,13 @@
         }
 
         :root {
-            --primary: #00ffaa;
-            --primary-glow: 0 0 15px #00ffaa;
+            --primary: #00f2ff;  /* Cian eléctrico */
+            --primary-glow: 0 0 15px #00f2ff;
             --secondary: #0066ff;
             --alert: #ff3300;
             --alert-glow: 0 0 20px #ff3300;
-            --bg: #0a0c10;
-            --glass: rgba(0, 0, 0, 0.85);
-            --border-glow: 0 0 10px rgba(0, 255, 170, 0.5);
+            --bg: #00050a;  /* Azul casi negro */
+            --glass: rgba(0, 5, 10, 0.85);
         }
 
         body {
@@ -51,7 +50,7 @@
             height: 100%;
             background: repeating-linear-gradient(
                 0deg,
-                rgba(0, 255, 170, 0.02) 0px,
+                rgba(0, 242, 255, 0.02) 0px,
                 transparent 2px,
                 transparent 6px
             );
@@ -71,7 +70,7 @@
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 5, 10, 0.8);
             backdrop-filter: blur(5px);
             border-bottom: 1px solid var(--primary);
             padding: 8px 12px;
@@ -81,6 +80,7 @@
             z-index: 1000;
             font-size: 0.7rem;
             letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
         }
 
         .header-left {
@@ -93,11 +93,13 @@
             font-weight: 900;
             font-size: 0.9rem;
             color: var(--primary);
+            text-shadow: 0 0 8px var(--primary);
         }
 
         .header-left .sub {
             color: var(--secondary);
             font-size: 0.55rem;
+            letter-spacing: 2px;
         }
 
         .header-right {
@@ -109,6 +111,7 @@
         .status {
             color: var(--primary);
             animation: blink 2s step-end infinite;
+            text-shadow: 0 0 5px var(--primary);
         }
 
         @keyframes blink {
@@ -124,14 +127,15 @@
             font-size: 0.6rem;
             cursor: pointer;
             background: rgba(255, 51, 0, 0.1);
+            text-shadow: 0 0 5px var(--alert);
         }
 
         .logout:hover {
             background: rgba(255, 51, 0, 0.2);
-            box-shadow: 0 0 10px var(--alert);
+            box-shadow: 0 0 15px var(--alert);
         }
 
-        /* MAPA - PROTAGONISTA ABSOLUTO */
+        /* MAPA - CAPA PRINCIPAL */
         #map {
             position: fixed;
             top: 0;
@@ -139,33 +143,140 @@
             width: 100%;
             height: 100%;
             z-index: 1;
+            filter: drop-shadow(0 0 20px rgba(0, 242, 255, 0.2));
         }
 
-        /* BARRA INFERIOR ÚNICA - TODO EL PODER AQUÍ */
+        /* CAPAS TÁCTICAS (SVG + efectos) */
+        .tactical-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 500;
+        }
+
+        /* RADAR: anillos concéntricos */
+        .radar-rings svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .radar-ring {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 0.3;
+            stroke-dasharray: 3 5;
+            opacity: 0.2;
+            transform-origin: center;
+            animation: pulseRing 4s infinite ease-in-out;
+        }
+
+        @keyframes pulseRing {
+            0% { opacity: 0.1; r: 15; }
+            50% { opacity: 0.3; r: 18; }
+            100% { opacity: 0.1; r: 15; }
+        }
+
+        .radar-ring:nth-child(2) {
+            animation-delay: 1s;
+        }
+        .radar-ring:nth-child(3) {
+            animation-delay: 2s;
+        }
+
+        /* Línea de escaneo rotatoria */
+        .radar-scan-line {
+            stroke: var(--primary);
+            stroke-width: 0.5;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 5px var(--primary));
+            opacity: 0.3;
+            transform-origin: 50% 50%;
+            animation: rotateScan 8s linear infinite;
+        }
+
+        @keyframes rotateScan {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* GRID HEXAGONAL */
+        .hex-grid svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .hex-pattern {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 0.15;
+            opacity: 0.1;
+        }
+
+        /* VIGNETTE (oscurecer bordes) */
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, 
+                transparent 30%, 
+                rgba(0, 5, 10, 0.7) 90%);
+            pointer-events: none;
+            z-index: 600;
+        }
+
+        /* SCANLINE (barrido vertical) */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--primary), 
+                transparent
+            );
+            opacity: 0.2;
+            z-index: 700;
+            pointer-events: none;
+            animation: scanMove 6s linear infinite;
+            filter: blur(1px);
+        }
+
+        @keyframes scanMove {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* BARRA INFERIOR (HUD) */
         .bottom-bar {
             position: fixed;
             bottom: 10px;
             left: 10px;
             right: 10px;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 5, 10, 0.85);
             backdrop-filter: blur(10px);
             border: 1px solid var(--primary);
-            box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
             z-index: 1000;
             padding: 10px 12px;
             font-size: 0.7rem;
-            border-radius: 4px;
+            border-radius: 2px;
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
 
-        /* PRIMERA LÍNEA: DATOS TELEMÉTRICOS */
         .data-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(0, 255, 170, 0.2);
+            border-bottom: 1px solid rgba(0, 242, 255, 0.2);
             padding-bottom: 6px;
         }
 
@@ -187,11 +298,6 @@
             text-shadow: 0 0 5px var(--primary);
         }
 
-        .data-value.alert {
-            color: var(--alert);
-        }
-
-        /* SEGUNDA LÍNEA: TERMINAL + CÁMARA */
         .status-row {
             display: flex;
             justify-content: space-between;
@@ -221,10 +327,12 @@
             height: 8px;
             border-radius: 50%;
             background: var(--secondary);
+            box-shadow: 0 0 5px var(--secondary);
         }
 
         .camera-dot.active {
             background: var(--alert);
+            box-shadow: 0 0 10px var(--alert);
             animation: pulse 1s infinite;
         }
 
@@ -233,7 +341,6 @@
             50% { opacity: 0.3; }
         }
 
-        /* TERCERA LÍNEA: BOTÓN DE ALERTA */
         .alert-row {
             display: flex;
             justify-content: center;
@@ -255,6 +362,7 @@
             box-shadow: 0 0 30px rgba(255, 51, 0, 0.5);
             transition: all 0.3s;
             border-radius: 2px;
+            text-shadow: 0 0 8px var(--alert);
         }
 
         .alert-button:hover {
@@ -266,14 +374,29 @@
             transform: scale(0.98);
         }
 
-        /* MODAL (igual) */
+        /* ESTILOS PARA MARCADORES (IRON MARKER) */
+        .iron-marker {
+            filter: drop-shadow(0 0 8px #00f2ff) 
+                    drop-shadow(0 0 15px #00f2ff);
+        }
+
+        .target-line {
+            filter: drop-shadow(0 0 5px #00f2ff);
+            animation: dash 20s linear infinite;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: 1000; }
+        }
+
+        /* MODAL */
         #alert-modal {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0, 5, 10, 0.95);
             z-index: 20000;
             display: none;
             align-items: center;
@@ -282,7 +405,7 @@
         }
 
         .modal-content {
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 5, 10, 0.9);
             border: 2px solid var(--alert);
             box-shadow: 0 0 50px rgba(255, 51, 0, 0.7);
             padding: 30px;
@@ -296,6 +419,7 @@
             color: var(--alert);
             margin-bottom: 15px;
             font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 10px var(--alert);
         }
 
         .modal-text {
@@ -326,6 +450,7 @@
 
         .modal-button.primary:hover {
             background: rgba(255, 51, 0, 0.2);
+            box-shadow: 0 0 20px var(--alert);
         }
 
         .modal-button.secondary {
@@ -334,17 +459,18 @@
         }
 
         .modal-button.secondary:hover {
-            background: rgba(0, 255, 170, 0.1);
+            background: rgba(0, 242, 255, 0.1);
+            box-shadow: 0 0 20px var(--primary);
         }
 
-        /* REGISTRO (simplificado) */
+        /* REGISTRO */
         #pantalla-registro {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: #000;
+            background: var(--bg);
             z-index: 10000;
             display: flex;
             align-items: center;
@@ -355,10 +481,10 @@
         .registro-contenedor {
             max-width: 350px;
             width: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 5, 10, 0.9);
             border: 1px solid var(--primary);
             padding: 30px 20px;
-            box-shadow: 0 0 30px rgba(0, 255, 170, 0.3);
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.3);
         }
 
         .registro-titulo {
@@ -367,6 +493,7 @@
             font-family: 'Orbitron', sans-serif;
             font-size: 2rem;
             color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
         }
 
         .registro-sub {
@@ -409,8 +536,8 @@
         }
 
         .registro-button:hover {
-            background: rgba(0, 255, 170, 0.1);
-            box-shadow: 0 0 20px var(--primary);
+            background: rgba(0, 242, 255, 0.1);
+            box-shadow: 0 0 30px var(--primary);
         }
 
         .hidden {
@@ -419,11 +546,44 @@
     </style>
 </head>
 <body>
+    <!-- CAPAS TÁCTICAS SOBRE EL MAPA -->
+    <div class="tactical-overlay">
+        <!-- Radar con anillos concéntricos -->
+        <div class="radar-rings" style="position:absolute; width:100%; height:100%;">
+            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <circle cx="50" cy="50" r="15" class="radar-ring"/>
+                <circle cx="50" cy="50" r="30" class="radar-ring"/>
+                <circle cx="50" cy="50" r="45" class="radar-ring"/>
+                <!-- Línea de escaneo -->
+                <line x1="50" y1="50" x2="100" y2="50" class="radar-scan-line"/>
+            </svg>
+        </div>
+        
+        <!-- Grid hexagonal -->
+        <div class="hex-grid" style="position:absolute; width:100%; height:100%; opacity:0.1;">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <pattern id="hexGrid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M10 0 L18 5 L18 15 L10 20 L2 15 L2 5 Z" 
+                              fill="none" stroke="var(--primary)" stroke-width="0.2"/>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#hexGrid)"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Vignette (oscurecer bordes) -->
+    <div class="vignette"></div>
+
+    <!-- Scanline (barrido) -->
+    <div class="scanline"></div>
+
     <!-- REGISTRO -->
     <div id="pantalla-registro">
         <div class="registro-contenedor">
             <div class="registro-titulo">SENTINEL</div>
-            <div class="registro-sub">SMART TECH</div>
+            <div class="registro-sub">SMART TECH · HUD TÁCTICO</div>
             
             <div class="form-group">
                 <input type="text" id="nombre" placeholder="NOMBRE COMPLETO">
@@ -443,8 +603,8 @@
     </div>
 
     <!-- MODAL REGISTRO -->
-    <div id="modal-exito" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#000; border:2px solid var(--primary); padding:30px; text-align:center; z-index:20001; display:none; min-width:250px;">
-        <div style="font-size:3rem; color:var(--primary); margin-bottom:15px;">✓</div>
+    <div id="modal-exito" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--bg); border:2px solid var(--primary); padding:30px; text-align:center; z-index:20001; display:none; min-width:250px; box-shadow:0 0 40px var(--primary);">
+        <div style="font-size:3rem; color:var(--primary); margin-bottom:15px; text-shadow:0 0 15px var(--primary);">✓</div>
         <div style="margin-bottom:20px;">REGISTRO EXITOSO</div>
         <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
     </div>
@@ -454,7 +614,7 @@
         <header>
             <div class="header-left">
                 <div class="main">SENTINEL V4.0</div>
-                <div class="sub">SMART TECH · GLOBAL INTELLIGENCE · LOCAL CONTROL</div>
+                <div class="sub">SMART TECH · HUD TÁCTICO</div>
             </div>
             <div class="header-right">
                 <div class="status">● ONLINE</div>
@@ -576,10 +736,31 @@
         function iniciarApp() {
             actualizarTerminal(`BIENVENIDO ${usuarioActual.nombre}`);
 
+            // MAPA CON FILTRO HUD TÁCTICO
             mapa = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 16);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                filter: 'brightness(0.6) invert(1) hue-rotate(150deg) saturate(4) contrast(1.3)'
+            
+            // Capa con filtro Iron Man (calles cian neón, fondo negro)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                filter: 'invert(1) hue-rotate(160deg) saturate(3) brightness(0.8) contrast(1.5)'
             }).addTo(mapa);
+
+            // Click en mapa para línea de conexión (efecto táctico)
+            mapa.on('click', (e) => {
+                if (marcador) {
+                    const center = mapa.getCenter();
+                    const line = L.polyline([
+                        [center.lat, center.lng],
+                        [e.latlng.lat, e.latlng.lng]
+                    ], {
+                        color: '#00f2ff',
+                        weight: 1.5,
+                        dashArray: '5, 8',
+                        className: 'target-line'
+                    }).addTo(mapa);
+                    
+                    setTimeout(() => mapa.removeLayer(line), 3000);
+                }
+            });
 
             iniciarGPS();
             obtenerBateria();
@@ -598,8 +779,14 @@
                     
                     if (!marcador) {
                         marcador = L.circleMarker([latitude, longitude], {
-                            radius: 10, color: '#00ffaa', fillColor: '#00ffaa', fillOpacity: 0.7
+                            radius: 12,
+                            color: '#00f2ff',
+                            weight: 3,
+                            fillColor: '#00f2ff',
+                            fillOpacity: 0.3,
+                            className: 'iron-marker'
                         }).addTo(mapa);
+                        
                         mapa.setView([latitude, longitude], 17);
                     } else {
                         marcador.setLatLng([latitude, longitude]);
