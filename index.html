@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         
         * {
             margin: 0;
@@ -22,120 +22,89 @@
         }
 
         :root {
-            --primary: #00f2ff;  /* Cian eléctrico */
-            --primary-glow: 0 0 15px #00f2ff;
-            --secondary: #0066ff;
-            --alert: #ff3300;
-            --alert-glow: 0 0 20px #ff3300;
-            --bg: #00050a;  /* Azul casi negro */
-            --glass: rgba(0, 5, 10, 0.85);
+            --neon-cyan: #00f2ff;
+            --neon-red: #ff3131;
+            --bg-dark: #00050a;
+            --bg-gradient: radial-gradient(circle, #001a26 0%, #00050a 100%);
+            --glass: rgba(0, 10, 20, 0.85);
         }
 
         body {
-            background: var(--bg);
-            color: var(--primary);
-            font-family: 'Share Tech Mono', monospace;
+            background: var(--bg-gradient);
+            color: var(--neon-cyan);
+            font-family: 'JetBrains Mono', monospace;
             height: 100vh;
             overflow: hidden;
             position: relative;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
 
-        /* EFECTO MATRIZ (sutil) */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 242, 255, 0.02) 0px,
-                transparent 2px,
-                transparent 6px
+        /* EFECTO TEXTO NEÓN */
+        .neon-text {
+            text-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan);
+        }
+
+        .neon-border {
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.5), inset 0 0 10px rgba(0, 242, 255, 0.2);
+        }
+
+        /* ESQUINAS RECORTADAS (HUD TÁCTICO) */
+        .hud-corner {
+            clip-path: polygon(
+                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
+                100% 85%, 85% 100%, 15% 100%, 0% 85%
             );
-            pointer-events: none;
-            animation: matrix 20s linear infinite;
-            z-index: 0;
+            border: 2px solid var(--neon-cyan);
+            background: rgba(0, 242, 255, 0.05);
         }
 
-        @keyframes matrix {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
-        }
-
-        /* HEADER MINIMAL */
+        /* HEADER */
         header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(0, 5, 10, 0.8);
-            backdrop-filter: blur(5px);
-            border-bottom: 1px solid var(--primary);
-            padding: 8px 12px;
+            padding: 15px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            font-size: 0.7rem;
-            letter-spacing: 1px;
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+            background: rgba(0, 5, 10, 0.7);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid var(--neon-cyan);
         }
 
-        .header-left {
-            display: flex;
-            flex-direction: column;
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan);
+            letter-spacing: 4px;
         }
 
-        .header-left .main {
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 0.9rem;
-            color: var(--primary);
-            text-shadow: 0 0 8px var(--primary);
-        }
-
-        .header-left .sub {
-            color: var(--secondary);
-            font-size: 0.55rem;
-            letter-spacing: 2px;
-        }
-
-        .header-right {
+        .system-indicator {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 8px;
+            font-size: 0.7rem;
         }
 
-        .status {
-            color: var(--primary);
-            animation: blink 2s step-end infinite;
-            text-shadow: 0 0 5px var(--primary);
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--neon-cyan);
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+            box-shadow: 0 0 10px var(--neon-cyan);
         }
 
         @keyframes blink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+            50% { opacity: 0.3; }
         }
 
-        .logout {
-            border: 1px solid var(--alert);
-            color: var(--alert);
-            padding: 4px 8px;
-            border-radius: 2px;
-            font-size: 0.6rem;
-            cursor: pointer;
-            background: rgba(255, 51, 0, 0.1);
-            text-shadow: 0 0 5px var(--alert);
-        }
-
-        .logout:hover {
-            background: rgba(255, 51, 0, 0.2);
-            box-shadow: 0 0 15px var(--alert);
-        }
-
-        /* MAPA - CAPA PRINCIPAL */
+        /* MAPA */
         #map {
             position: fixed;
             top: 0;
@@ -143,10 +112,9 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            filter: drop-shadow(0 0 20px rgba(0, 242, 255, 0.2));
         }
 
-        /* CAPAS TÁCTICAS (SVG + efectos) */
+        /* CAPAS TÁCTICAS (RADAR) */
         .tactical-overlay {
             position: fixed;
             top: 0;
@@ -157,7 +125,6 @@
             z-index: 500;
         }
 
-        /* RADAR: anillos concéntricos */
         .radar-rings svg {
             width: 100%;
             height: 100%;
@@ -165,7 +132,7 @@
 
         .radar-ring {
             fill: none;
-            stroke: var(--primary);
+            stroke: var(--neon-cyan);
             stroke-width: 0.3;
             stroke-dasharray: 3 5;
             opacity: 0.2;
@@ -179,20 +146,10 @@
             100% { opacity: 0.1; r: 15; }
         }
 
-        .radar-ring:nth-child(2) {
-            animation-delay: 1s;
-        }
-        .radar-ring:nth-child(3) {
-            animation-delay: 2s;
-        }
-
-        /* Línea de escaneo rotatoria */
         .radar-scan-line {
-            stroke: var(--primary);
+            stroke: var(--neon-cyan);
             stroke-width: 0.5;
-            stroke-linecap: round;
-            filter: drop-shadow(0 0 5px var(--primary));
-            opacity: 0.3;
+            opacity: 0.2;
             transform-origin: 50% 50%;
             animation: rotateScan 8s linear infinite;
         }
@@ -202,20 +159,7 @@
             to { transform: rotate(360deg); }
         }
 
-        /* GRID HEXAGONAL */
-        .hex-grid svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .hex-pattern {
-            fill: none;
-            stroke: var(--primary);
-            stroke-width: 0.15;
-            opacity: 0.1;
-        }
-
-        /* VIGNETTE (oscurecer bordes) */
+        /* VIGNETTE */
         .vignette {
             position: fixed;
             top: 0;
@@ -229,7 +173,7 @@
             z-index: 600;
         }
 
-        /* SCANLINE (barrido vertical) */
+        /* SCANLINE */
         .scanline {
             position: fixed;
             top: 0;
@@ -238,14 +182,13 @@
             height: 4px;
             background: linear-gradient(90deg, 
                 transparent, 
-                var(--primary), 
+                var(--neon-cyan), 
                 transparent
             );
-            opacity: 0.2;
+            opacity: 0.15;
             z-index: 700;
             pointer-events: none;
             animation: scanMove 6s linear infinite;
-            filter: blur(1px);
         }
 
         @keyframes scanMove {
@@ -253,140 +196,184 @@
             100% { left: 100%; }
         }
 
-        /* BARRA INFERIOR (HUD) */
-        .bottom-bar {
+        /* PANEL IZQUIERDO (TELEMETRÍA) */
+        .left-panel {
             position: fixed;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
-            background: rgba(0, 5, 10, 0.85);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--primary);
-            box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
-            z-index: 1000;
-            padding: 10px 12px;
+            top: 80px;
+            left: 15px;
+            z-index: 800;
+            background: rgba(0, 5, 10, 0.6);
+            backdrop-filter: blur(5px);
+            padding: 15px;
+            border: 1px solid var(--neon-cyan);
             font-size: 0.7rem;
-            border-radius: 2px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            line-height: 1.8;
+            min-width: 140px;
         }
 
-        .data-row {
+        .data-line {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(0, 242, 255, 0.2);
-            padding-bottom: 6px;
-        }
-
-        .data-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            color: var(--neon-cyan);
         }
 
         .data-label {
-            color: var(--secondary);
-            font-size: 0.6rem;
-            text-transform: uppercase;
+            color: rgba(0, 242, 255, 0.6);
         }
 
         .data-value {
-            color: var(--primary);
             font-weight: bold;
-            text-shadow: 0 0 5px var(--primary);
+            text-shadow: 0 0 5px var(--neon-cyan);
         }
 
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.65rem;
+        .batt-value {
+            color: var(--neon-cyan);
         }
 
-        .terminal-line {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: var(--primary);
+        /* VISOR DE CÁMARA (ESQUINAS RECORTADAS) */
+        .camera-container {
+            position: fixed;
+            bottom: 120px;
+            left: 15px;
+            width: 140px;
+            height: 100px;
+            z-index: 800;
         }
 
-        .terminal-prompt {
-            color: var(--secondary);
-        }
-
-        .camera-indicator {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .camera-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--secondary);
-            box-shadow: 0 0 5px var(--secondary);
-        }
-
-        .camera-dot.active {
-            background: var(--alert);
-            box-shadow: 0 0 10px var(--alert);
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .alert-row {
-            display: flex;
-            justify-content: center;
-            margin-top: 4px;
-        }
-
-        .alert-button {
-            background: rgba(255, 51, 0, 0.15);
-            border: 2px solid var(--alert);
-            color: var(--alert);
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 1.4rem;
-            letter-spacing: 8px;
-            padding: 8px 0;
+        .camera-frame {
             width: 100%;
-            cursor: pointer;
+            height: 100%;
+            clip-path: polygon(
+                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
+                100% 85%, 85% 100%, 15% 100%, 0% 85%
+            );
+            border: 2px solid var(--neon-cyan);
+            background: #000;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: hue-rotate(140deg) contrast(1.2);
+        }
+
+        .rec-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: var(--neon-red);
+            font-size: 0.6rem;
+            font-weight: bold;
+            animation: blink 1s infinite;
+            text-shadow: 0 0 5px var(--neon-red);
+        }
+
+        .camera-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--neon-cyan);
+            font-size: 0.6rem;
+            opacity: 0.5;
+        }
+
+        /* BOTONES TÁCTICOS */
+        .buttons-container {
+            position: fixed;
+            bottom: 120px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 800;
+        }
+
+        .tactical-button {
+            width: 70px;
+            height: 70px;
+            clip-path: polygon(
+                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
+                100% 85%, 85% 100%, 15% 100%, 0% 85%
+            );
+            border: 2px solid var(--neon-cyan);
+            background: rgba(0, 242, 255, 0.05);
+            color: var(--neon-cyan);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: bold;
             text-transform: uppercase;
-            box-shadow: 0 0 30px rgba(255, 51, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
             transition: all 0.3s;
-            border-radius: 2px;
-            text-shadow: 0 0 8px var(--alert);
+            backdrop-filter: blur(5px);
         }
 
-        .alert-button:hover {
-            background: rgba(255, 51, 0, 0.25);
-            box-shadow: 0 0 50px rgba(255, 51, 0, 0.8);
+        .tactical-button.alert {
+            border-color: var(--neon-red);
+            color: var(--neon-red);
+            background: rgba(255, 49, 49, 0.05);
+            animation: pulseAlert 2s infinite;
         }
 
-        .alert-button:active {
-            transform: scale(0.98);
+        @keyframes pulseAlert {
+            0% { box-shadow: 0 0 10px rgba(255, 49, 49, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(255, 49, 49, 0.7); }
+            100% { box-shadow: 0 0 10px rgba(255, 49, 49, 0.3); }
         }
 
-        /* ESTILOS PARA MARCADORES (IRON MARKER) */
-        .iron-marker {
-            filter: drop-shadow(0 0 8px #00f2ff) 
-                    drop-shadow(0 0 15px #00f2ff);
+        .tactical-button:hover {
+            background: rgba(0, 242, 255, 0.15);
+            transform: scale(1.05);
         }
 
-        .target-line {
-            filter: drop-shadow(0 0 5px #00f2ff);
-            animation: dash 20s linear infinite;
+        .tactical-button.alert:hover {
+            background: rgba(255, 49, 49, 0.15);
         }
 
-        @keyframes dash {
-            to { stroke-dashoffset: 1000; }
+        .button-icon {
+            font-size: 1.2rem;
+        }
+
+        /* CONSOLA INFERIOR */
+        .console {
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            background: rgba(0, 5, 10, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--neon-cyan);
+            padding: 12px 15px;
+            z-index: 800;
+            font-size: 0.65rem;
+            line-height: 1.6;
+            color: var(--neon-cyan);
+        }
+
+        .console-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(0, 242, 255, 0.1);
+            padding: 2px 0;
+        }
+
+        .console-prompt {
+            color: var(--neon-cyan);
+            opacity: 0.7;
+        }
+
+        .console-text {
+            color: var(--neon-cyan);
         }
 
         /* MODAL */
@@ -406,31 +393,27 @@
 
         .modal-content {
             background: rgba(0, 5, 10, 0.9);
-            border: 2px solid var(--alert);
-            box-shadow: 0 0 50px rgba(255, 51, 0, 0.7);
+            border: 2px solid var(--neon-red);
             padding: 30px;
             max-width: 300px;
             text-align: center;
-            border-radius: 2px;
+            clip-path: polygon(
+                0% 10%, 10% 0%, 90% 0%, 100% 10%, 
+                100% 90%, 90% 100%, 10% 100%, 0% 90%
+            );
         }
 
         .modal-title {
-            font-size: 2rem;
-            color: var(--alert);
+            font-size: 1.5rem;
+            color: var(--neon-red);
             margin-bottom: 15px;
-            font-family: 'Orbitron', sans-serif;
-            text-shadow: 0 0 10px var(--alert);
-        }
-
-        .modal-text {
-            font-size: 0.9rem;
-            margin-bottom: 25px;
-            line-height: 1.6;
+            text-shadow: 0 0 10px var(--neon-red);
         }
 
         .modal-buttons {
             display: flex;
             gap: 15px;
+            margin-top: 20px;
         }
 
         .modal-button {
@@ -438,29 +421,22 @@
             padding: 12px;
             background: transparent;
             border: 1px solid;
+            font-family: 'JetBrains Mono', monospace;
             cursor: pointer;
-            font-family: 'Share Tech Mono', monospace;
-            transition: all 0.3s;
+            clip-path: polygon(
+                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
+                100% 85%, 85% 100%, 15% 100%, 0% 85%
+            );
         }
 
         .modal-button.primary {
-            border-color: var(--alert);
-            color: var(--alert);
-        }
-
-        .modal-button.primary:hover {
-            background: rgba(255, 51, 0, 0.2);
-            box-shadow: 0 0 20px var(--alert);
+            border-color: var(--neon-red);
+            color: var(--neon-red);
         }
 
         .modal-button.secondary {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .modal-button.secondary:hover {
-            background: rgba(0, 242, 255, 0.1);
-            box-shadow: 0 0 20px var(--primary);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
         }
 
         /* REGISTRO */
@@ -470,7 +446,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: var(--bg);
+            background: var(--bg-gradient);
             z-index: 10000;
             display: flex;
             align-items: center;
@@ -482,26 +458,20 @@
             max-width: 350px;
             width: 100%;
             background: rgba(0, 5, 10, 0.9);
-            border: 1px solid var(--primary);
+            border: 2px solid var(--neon-cyan);
             padding: 30px 20px;
-            box-shadow: 0 0 40px rgba(0, 242, 255, 0.3);
+            clip-path: polygon(
+                0% 5%, 5% 0%, 95% 0%, 100% 5%, 
+                100% 95%, 95% 100%, 5% 100%, 0% 95%
+            );
         }
 
         .registro-titulo {
             text-align: center;
-            margin-bottom: 25px;
-            font-family: 'Orbitron', sans-serif;
             font-size: 2rem;
-            color: var(--primary);
-            text-shadow: 0 0 10px var(--primary);
-        }
-
-        .registro-sub {
-            text-align: center;
-            color: var(--secondary);
-            font-size: 0.7rem;
             margin-bottom: 25px;
-            letter-spacing: 2px;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan);
         }
 
         .form-group {
@@ -511,82 +481,83 @@
         input {
             width: 100%;
             background: transparent;
-            border: 1px solid var(--primary);
+            border: 1px solid var(--neon-cyan);
             padding: 12px;
-            color: var(--primary);
-            font-family: 'Share Tech Mono', monospace;
+            color: var(--neon-cyan);
+            font-family: 'JetBrains Mono', monospace;
             outline: none;
         }
 
         input:focus {
-            box-shadow: 0 0 15px var(--primary);
+            box-shadow: 0 0 15px var(--neon-cyan);
         }
 
         .registro-button {
             width: 100%;
             padding: 12px;
             background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-            font-family: 'Orbitron', sans-serif;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-family: 'JetBrains Mono', monospace;
             font-weight: bold;
-            letter-spacing: 4px;
+            letter-spacing: 2px;
             cursor: pointer;
             margin-top: 20px;
-        }
-
-        .registro-button:hover {
-            background: rgba(0, 242, 255, 0.1);
-            box-shadow: 0 0 30px var(--primary);
+            clip-path: polygon(
+                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
+                100% 85%, 85% 100%, 15% 100%, 0% 85%
+            );
         }
 
         .hidden {
             display: none !important;
         }
+
+        /* MARCADORES IRON MAN */
+        .iron-marker {
+            filter: drop-shadow(0 0 8px var(--neon-cyan)) 
+                    drop-shadow(0 0 15px var(--neon-cyan));
+        }
+
+        .alert-marker {
+            filter: drop-shadow(0 0 8px var(--neon-red)) 
+                    drop-shadow(0 0 15px var(--neon-red));
+            animation: pulseAlert 1.5s infinite;
+        }
+
+        .target-line {
+            filter: drop-shadow(0 0 5px var(--neon-cyan));
+            animation: dash 20s linear infinite;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: 1000; }
+        }
     </style>
 </head>
 <body>
-    <!-- CAPAS TÁCTICAS SOBRE EL MAPA -->
+    <!-- CAPAS TÁCTICAS -->
     <div class="tactical-overlay">
-        <!-- Radar con anillos concéntricos -->
         <div class="radar-rings" style="position:absolute; width:100%; height:100%;">
             <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <circle cx="50" cy="50" r="15" class="radar-ring"/>
                 <circle cx="50" cy="50" r="30" class="radar-ring"/>
                 <circle cx="50" cy="50" r="45" class="radar-ring"/>
-                <!-- Línea de escaneo -->
                 <line x1="50" y1="50" x2="100" y2="50" class="radar-scan-line"/>
-            </svg>
-        </div>
-        
-        <!-- Grid hexagonal -->
-        <div class="hex-grid" style="position:absolute; width:100%; height:100%; opacity:0.1;">
-            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="hexGrid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                        <path d="M10 0 L18 5 L18 15 L10 20 L2 15 L2 5 Z" 
-                              fill="none" stroke="var(--primary)" stroke-width="0.2"/>
-                    </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#hexGrid)"/>
             </svg>
         </div>
     </div>
 
-    <!-- Vignette (oscurecer bordes) -->
     <div class="vignette"></div>
-
-    <!-- Scanline (barrido) -->
     <div class="scanline"></div>
 
     <!-- REGISTRO -->
     <div id="pantalla-registro">
         <div class="registro-contenedor">
             <div class="registro-titulo">SENTINEL</div>
-            <div class="registro-sub">SMART TECH · HUD TÁCTICO</div>
             
             <div class="form-group">
-                <input type="text" id="nombre" placeholder="NOMBRE COMPLETO">
+                <input type="text" id="nombre" placeholder="NOMBRE">
             </div>
             <div class="form-group">
                 <input type="text" id="dni" placeholder="DNI">
@@ -594,17 +565,14 @@
             <div class="form-group">
                 <input type="text" id="telefono" placeholder="TELÉFONO">
             </div>
-            <div class="form-group">
-                <input type="text" id="domicilio" placeholder="DOMICILIO">
-            </div>
             
             <button class="registro-button" onclick="registrar()">INGRESAR</button>
         </div>
     </div>
 
     <!-- MODAL REGISTRO -->
-    <div id="modal-exito" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--bg); border:2px solid var(--primary); padding:30px; text-align:center; z-index:20001; display:none; min-width:250px; box-shadow:0 0 40px var(--primary);">
-        <div style="font-size:3rem; color:var(--primary); margin-bottom:15px; text-shadow:0 0 15px var(--primary);">✓</div>
+    <div id="modal-exito" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--bg-dark); border:2px solid var(--neon-cyan); padding:30px; text-align:center; z-index:20001; display:none; min-width:250px; clip-path: polygon(0% 10%, 10% 0%, 90% 0%, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0% 90%);">
+        <div style="font-size:3rem; color:var(--neon-cyan); margin-bottom:15px;">✓</div>
         <div style="margin-bottom:20px;">REGISTRO EXITOSO</div>
         <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
     </div>
@@ -612,49 +580,69 @@
     <!-- PRINCIPAL -->
     <div id="pantalla-principal" style="display:none;">
         <header>
-            <div class="header-left">
-                <div class="main">SENTINEL V4.0</div>
-                <div class="sub">SMART TECH · HUD TÁCTICO</div>
-            </div>
-            <div class="header-right">
-                <div class="status">● ONLINE</div>
-                <div class="logout" onclick="cerrarSesion()">CERRAR</div>
+            <div class="logo">SENTINEL</div>
+            <div class="system-indicator">
+                <span class="online-dot"></span>
+                <span>ONLINE</span>
             </div>
         </header>
 
         <div id="map"></div>
 
-        <div class="bottom-bar">
-            <!-- Línea 1: Datos -->
-            <div class="data-row">
-                <div class="data-item">
-                    <span class="data-label">⚡</span>
-                    <span class="data-value" id="battery">--%</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">🛰️</span>
-                    <span class="data-value" id="precision">±--m</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">📷</span>
-                    <span class="data-value" id="video-status">OFF</span>
-                </div>
+        <!-- PANEL IZQUIERDO (TELEMETRÍA) -->
+        <div class="left-panel">
+            <div class="data-line">
+                <span class="data-label">UNID:</span>
+                <span class="data-value" id="unid">ALPHA-7</span>
             </div>
-
-            <!-- Línea 2: Terminal + Cámara -->
-            <div class="status-row">
-                <div class="terminal-line" id="terminal">
-                    <span class="terminal-prompt">></span> SISTEMA LISTO
-                </div>
-                <div class="camera-indicator">
-                    <span class="camera-dot" id="camera-dot"></span>
-                    <span id="camera-status">INACTIVA</span>
-                </div>
+            <div class="data-line">
+                <span class="data-label">LAT:</span>
+                <span class="data-value" id="lat">-38.06674</span>
             </div>
+            <div class="data-line">
+                <span class="data-label">LNG:</span>
+                <span class="data-value" id="lng">-57.54959</span>
+            </div>
+            <div class="data-line">
+                <span class="data-label">BATT:</span>
+                <span class="data-value batt-value" id="battery">92%</span>
+            </div>
+        </div>
 
-            <!-- Línea 3: Botón ALERTA -->
-            <div class="alert-row">
-                <button class="alert-button" id="alert-button">ALERTA</button>
+        <!-- VISOR DE CÁMARA (ESQUINAS RECORTADAS) -->
+        <div class="camera-container">
+            <div class="camera-frame">
+                <video id="video-feed" autoplay playsinline></video>
+                <div class="camera-placeholder" id="camera-placeholder">[CAM OFF]</div>
+                <div class="rec-indicator hidden" id="rec-indicator">● REC</div>
+            </div>
+        </div>
+
+        <!-- BOTONES TÁCTICOS -->
+        <div class="buttons-container">
+            <button class="tactical-button" id="btn-respaldo">
+                <span class="button-icon">🔄</span>
+                RESPALDO
+            </button>
+            <button class="tactical-button alert" id="btn-alerta">
+                <span class="button-icon">⚡</span>
+                ALERTA
+            </button>
+        </div>
+
+        <!-- CONSOLA INFERIOR -->
+        <div class="console" id="console">
+            <div class="console-line">
+                <span class="console-prompt">></span>
+                <span class="console-text">SISTEMA: CONEXIÓN ESTABLE</span>
+            </div>
+            <div class="console-line">
+                <span class="console-prompt">></span>
+                <span class="console-text" id="gps-status">GPS: BUSCANDO SEÑAL</span>
+            </div>
+            <div class="console-line" id="alert-line">
+                <span class="console-prompt">></span>
+                <span class="console-text">ALERTA: SIN INCIDENTES</span>
             </div>
         </div>
     </div>
@@ -662,13 +650,14 @@
     <!-- MODAL ALERTA -->
     <div id="alert-modal">
         <div class="modal-content">
-            <div class="modal-title">🚨 ALERTA</div>
+            <div class="modal-title">ALERTA CRÍTICA</div>
             <div class="modal-text" id="modal-text">
-                UNIDADES NOTIFICADAS<br>GRABANDO VIDEO
+                UNIDADES NOTIFICADAS<br>
+                GRABANDO VIDEO
             </div>
             <div class="modal-buttons">
                 <button class="modal-button primary" onclick="cerrarModal()">OK</button>
-                <button class="modal-button secondary" onclick="cancelarAlerta()">CANCELAR</button>
+                <button class="modal-button secondary" onclick="cancelarAlerta()">CANCEL</button>
             </div>
         </div>
     </div>
@@ -681,6 +670,8 @@
         let usuarioActual = null;
         let mapa;
         let marcador;
+        let incidentes = [];
+        let lineasIncidentes = [];
         let ubicacionActual = null;
         let watchId = null;
         let streamCamara = null;
@@ -693,23 +684,23 @@
             const nombre = document.getElementById('nombre').value.trim();
             const dni = document.getElementById('dni').value.trim();
             const telefono = document.getElementById('telefono').value.trim();
-            const domicilio = document.getElementById('domicilio').value.trim();
 
-            if (!nombre || !dni || !telefono || !domicilio) {
+            if (!nombre || !dni || !telefono) {
                 alert("COMPLETE TODOS LOS CAMPOS");
                 return;
             }
 
             const usuario = {
-                nombre, dni, telefono, domicilio,
+                nombre, dni, telefono,
                 fecha_registro: new Date().toISOString(),
-                id_unico: 'USR-' + dni + '-' + Date.now().toString().slice(-4)
+                id_unico: 'ALPHA-' + Math.floor(Math.random() * 9) + 1
             };
 
             try {
                 await _supabase.from('ciudadanos').insert(usuario);
                 localStorage.setItem('usuario_activo', JSON.stringify(usuario));
                 usuarioActual = usuario;
+                document.getElementById('unid').textContent = usuario.id_unico;
                 document.getElementById('modal-exito').style.display = 'block';
             } catch (error) {
                 alert("ERROR EN EL REGISTRO");
@@ -727,6 +718,7 @@
             const guardado = localStorage.getItem('usuario_activo');
             if (guardado) {
                 usuarioActual = JSON.parse(guardado);
+                document.getElementById('unid').textContent = usuarioActual.id_unico;
                 document.getElementById('pantalla-registro').style.display = 'none';
                 document.getElementById('pantalla-principal').style.display = 'block';
                 iniciarApp();
@@ -734,37 +726,67 @@
         }
 
         function iniciarApp() {
-            actualizarTerminal(`BIENVENIDO ${usuarioActual.nombre}`);
-
-            // MAPA CON FILTRO HUD TÁCTICO
-            mapa = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 16);
+            mapa = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 15);
             
-            // Capa con filtro Iron Man (calles cian neón, fondo negro)
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 filter: 'invert(1) hue-rotate(160deg) saturate(3) brightness(0.8) contrast(1.5)'
             }).addTo(mapa);
 
-            // Click en mapa para línea de conexión (efecto táctico)
-            mapa.on('click', (e) => {
-                if (marcador) {
-                    const center = mapa.getCenter();
-                    const line = L.polyline([
-                        [center.lat, center.lng],
-                        [e.latlng.lat, e.latlng.lng]
-                    ], {
-                        color: '#00f2ff',
-                        weight: 1.5,
-                        dashArray: '5, 8',
-                        className: 'target-line'
-                    }).addTo(mapa);
-                    
-                    setTimeout(() => mapa.removeLayer(line), 3000);
-                }
+            // Simular incidentes
+            generarIncidentesSimulados();
+
+            document.getElementById('btn-respaldo').addEventListener('click', () => {
+                alert('RESPALDO SOLICITADO');
             });
+
+            document.getElementById('btn-alerta').addEventListener('click', activarAlerta);
 
             iniciarGPS();
             obtenerBateria();
-            document.getElementById('alert-button').addEventListener('click', activarAlerta);
+        }
+
+        function generarIncidentesSimulados() {
+            const baseLat = -38.0055;
+            const baseLng = -57.5426;
+            
+            const puntos = [
+                { lat: baseLat + 0.005, lng: baseLng + 0.003, tipo: 'robo' },
+                { lat: baseLat - 0.004, lng: baseLng - 0.002, tipo: 'accidente' },
+                { lat: baseLat + 0.002, lng: baseLng - 0.005, tipo: 'sospechoso' },
+                { lat: baseLat - 0.003, lng: baseLng + 0.004, tipo: 'emergencia' },
+                { lat: baseLat + 0.007, lng: baseLng - 0.003, tipo: 'robo' }
+            ];
+
+            puntos.forEach((p, index) => {
+                const marker = L.circleMarker([p.lat, p.lng], {
+                    radius: 8,
+                    color: '#ff3131',
+                    weight: 2,
+                    fillColor: '#ff3131',
+                    fillOpacity: 0.5,
+                    className: 'alert-marker'
+                }).addTo(mapa);
+
+                if (index > 0) {
+                    const line = L.polyline([
+                        [puntos[index-1].lat, puntos[index-1].lng],
+                        [p.lat, p.lng]
+                    ], {
+                        color: '#ff3131',
+                        weight: 1.5,
+                        dashArray: '5, 8',
+                        opacity: 0.3,
+                        className: 'target-line'
+                    }).addTo(mapa);
+                    lineasIncidentes.push(line);
+                }
+
+                incidentes.push(marker);
+            });
+
+            document.getElementById('alert-line').innerHTML = 
+                '<span class="console-prompt">></span> ' +
+                '<span class="console-text">ALERTA: INCIDENTE 0.9KM NORTE</span>';
         }
 
         function iniciarGPS() {
@@ -772,10 +794,11 @@
 
             watchId = navigator.geolocation.watchPosition(
                 (pos) => {
-                    const { latitude, longitude, accuracy } = pos.coords;
+                    const { latitude, longitude } = pos.coords;
                     ubicacionActual = { lat: latitude, lng: longitude };
                     
-                    document.getElementById('precision').textContent = `±${accuracy.toFixed(1)}m`;
+                    document.getElementById('lat').textContent = latitude.toFixed(5);
+                    document.getElementById('lng').textContent = longitude.toFixed(5);
                     
                     if (!marcador) {
                         marcador = L.circleMarker([latitude, longitude], {
@@ -787,12 +810,13 @@
                             className: 'iron-marker'
                         }).addTo(mapa);
                         
-                        mapa.setView([latitude, longitude], 17);
+                        mapa.setView([latitude, longitude], 16);
                     } else {
                         marcador.setLatLng([latitude, longitude]);
                     }
-                    
-                    actualizarTerminal(`GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+
+                    document.getElementById('gps-status').innerHTML = 
+                        `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
                 },
                 null,
                 { enableHighAccuracy: true }
@@ -803,7 +827,8 @@
             if ('getBattery' in navigator) {
                 navigator.getBattery().then(bateria => {
                     actualizarBateria(bateria.level * 100);
-                    bateria.addEventListener('levelchange', () => actualizarBateria(bateria.level * 100));
+                    bateria.addEventListener('levelchange', () => 
+                        actualizarBateria(bateria.level * 100));
                 });
             } else {
                 setInterval(() => actualizarBateria(Math.floor(Math.random() * 20) + 75), 30000);
@@ -814,30 +839,36 @@
             document.getElementById('battery').textContent = `${Math.floor(nivel)}%`;
         }
 
-        function actualizarTerminal(mensaje) {
-            document.getElementById('terminal').innerHTML = `<span class="terminal-prompt">></span> ${mensaje}`;
-        }
-
         async function activarCamara() {
             try {
-                streamCamara = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true });
+                streamCamara = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" }, 
+                    audio: true 
+                });
+                
+                const video = document.getElementById('video-feed');
+                video.srcObject = streamCamara;
+                video.style.display = 'block';
+                
+                document.getElementById('camera-placeholder').style.display = 'none';
+                document.getElementById('rec-indicator').classList.remove('hidden');
                 
                 grabacionActiva = true;
                 fragmentosVideo = [];
                 
                 mediaRecorder = new MediaRecorder(streamCamara);
-                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) fragmentosVideo.push(e.data); };
+                mediaRecorder.ondataavailable = (e) => { 
+                    if (e.data.size > 0) fragmentosVideo.push(e.data); 
+                };
                 mediaRecorder.onstop = subirVideo;
                 mediaRecorder.start();
 
-                document.getElementById('video-status').textContent = 'ON';
-                document.getElementById('camera-status').textContent = 'GRABANDO';
-                document.getElementById('camera-dot').classList.add('active');
-                actualizarTerminal('GRABANDO VIDEO');
-
-                setTimeout(() => { if (grabacionActiva) detenerCamara(); }, 120000);
+                setTimeout(() => { 
+                    if (grabacionActiva) detenerCamara(); 
+                }, 120000);
+                
             } catch (error) {
-                actualizarTerminal('ERROR CÁMARA');
+                console.log('Error cámara');
             }
         }
 
@@ -845,9 +876,9 @@
             if (mediaRecorder?.state === 'recording') mediaRecorder.stop();
             streamCamara?.getTracks().forEach(t => t.stop());
             
-            document.getElementById('video-status').textContent = 'OFF';
-            document.getElementById('camera-status').textContent = 'INACTIVA';
-            document.getElementById('camera-dot').classList.remove('active');
+            document.getElementById('video-feed').style.display = 'none';
+            document.getElementById('camera-placeholder').style.display = 'flex';
+            document.getElementById('rec-indicator').classList.add('hidden');
             grabacionActiva = false;
         }
 
@@ -857,35 +888,34 @@
             try {
                 const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
                 const nombre = `alerta_${usuarioActual.id_unico}_${Date.now()}.webm`;
-                
                 await _supabase.storage.from('videos-alertas').upload(nombre, blob);
-                actualizarTerminal('VIDEO SUBIDO');
-            } catch (error) {
-                actualizarTerminal('ERROR SUBIR VIDEO');
-            }
+            } catch (error) {}
         }
 
         async function activarAlerta() {
             if (alertaActiva || !ubicacionActual) return;
             
-            actualizarTerminal('🚨 ACTIVANDO ALERTA');
             await activarCamara();
 
             const alerta = {
-                unidad_id: usuarioActual.id_unico, nombre: usuarioActual.nombre, dni: usuarioActual.dni,
-                telefono: usuarioActual.telefono, lat: ubicacionActual.lat, lng: ubicacionActual.lng,
-                timestamp: new Date().toISOString(), bateria: document.getElementById('battery').textContent, activa: true
+                unidad_id: usuarioActual.id_unico,
+                nombre: usuarioActual.nombre,
+                dni: usuarioActual.dni,
+                telefono: usuarioActual.telefono,
+                lat: ubicacionActual.lat,
+                lng: ubicacionActual.lng,
+                timestamp: new Date().toISOString(),
+                bateria: document.getElementById('battery').textContent,
+                activa: true
             };
 
             try {
                 await _supabase.from('alertas').insert(alerta);
                 alertaActiva = true;
-                document.getElementById('modal-text').innerHTML = '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
+                document.getElementById('modal-text').innerHTML = 
+                    '🚨 ALERTA CRÍTICA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
                 document.getElementById('alert-modal').style.display = 'flex';
-                actualizarTerminal('🚨 ALERTA ENVIADA');
-            } catch (error) {
-                actualizarTerminal('ERROR AL ENVIAR');
-            }
+            } catch (error) {}
         }
 
         function cerrarModal() {
@@ -897,15 +927,6 @@
                 alertaActiva = false;
                 detenerCamara();
                 cerrarModal();
-                actualizarTerminal('ALERTA CANCELADA');
-            }
-        }
-
-        function cerrarSesion() {
-            if (confirm('¿CERRAR SESIÓN?')) {
-                if (streamCamara) streamCamara.getTracks().forEach(t => t.stop());
-                localStorage.removeItem('usuario_activo');
-                location.reload();
             }
         }
 
