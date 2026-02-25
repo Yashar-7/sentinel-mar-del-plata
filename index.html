@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL | SMART TECH</title>
+    <title>SENTINEL V4.0 | SMART TECH</title>
     
     <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
         
         * {
             margin: 0;
@@ -23,12 +23,15 @@
 
         :root {
             --primary: #00ffaa;
+            --primary-glow: 0 0 15px #00ffaa;
             --secondary: #0066ff;
+            --secondary-glow: 0 0 15px #0066ff;
             --alert: #ff3300;
+            --alert-glow: 0 0 20px #ff3300;
             --bg: #0a0c10;
-            --glass: rgba(10, 12, 16, 0.75);
-            --border-glow: 0 0 10px rgba(0, 255, 170, 0.3);
-            --text-glow: 0 0 5px rgba(0, 255, 170, 0.5);
+            --glass: rgba(10, 12, 16, 0.85);
+            --border-glow: 0 0 10px rgba(0, 255, 170, 0.5);
+            --text-glow: 0 0 8px rgba(0, 255, 170, 0.7);
         }
 
         body {
@@ -40,7 +43,7 @@
             position: relative;
         }
 
-        /* EFECTO MATRIZ SUTIL */
+        /* EFECTO MATRIZ MEJORADO */
         body::before {
             content: "";
             position: fixed;
@@ -48,12 +51,15 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, 
-                transparent 0%,
-                rgba(0, 255, 170, 0.03) 50%,
-                transparent 100%);
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 255, 170, 0.03) 0px,
+                rgba(0, 255, 170, 0.01) 2px,
+                transparent 3px,
+                transparent 8px
+            );
             pointer-events: none;
-            animation: matrix 8s linear infinite;
+            animation: matrix 20s linear infinite;
             z-index: 0;
         }
 
@@ -62,42 +68,45 @@
             100% { transform: translateY(100%); }
         }
 
-        /* HEADER CON LOGO */
+        /* HEADER ESTILO PELÍCULA */
         header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             background: var(--glass);
-            backdrop-filter: blur(5px);
-            border-bottom: 1px solid var(--primary);
-            padding: 8px 15px;
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--primary);
+            padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
             box-shadow: var(--border-glow);
-            font-size: 0.8rem;
+            font-family: 'Orbitron', sans-serif;
+            border-image: linear-gradient(90deg, var(--primary), var(--secondary)) 1;
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
 
         .logo-mini {
-            width: 32px;
-            height: 32px;
-            background: var(--primary);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: black;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.9rem;
             font-weight: bold;
             border-radius: 4px;
             overflow: hidden;
+            box-shadow: 0 0 20px var(--primary);
+            transform: skewX(-5deg);
         }
 
         .logo-mini img {
@@ -106,52 +115,82 @@
             object-fit: cover;
         }
 
-        .system-title {
-            font-weight: bold;
+        .brand {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-main {
+            font-size: 1.3rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-shadow: var(--text-glow);
+            color: var(--primary);
+        }
+
+        .brand-sub {
+            font-size: 0.6rem;
+            color: var(--secondary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .brand-tagline {
+            font-size: 0.55rem;
+            color: #888;
             letter-spacing: 2px;
         }
 
         .header-right {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
 
         .system-status {
             color: var(--primary);
             animation: blink 2s step-end infinite;
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            background: rgba(0, 255, 170, 0.1);
         }
 
         @keyframes blink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            50% { opacity: 0.5; }
         }
 
-        /* BOTÓN DE SALIR */
+        /* BOTÓN DE SALIR REDISEÑADO */
         .logout-button {
-            background: transparent;
-            border: 1px solid var(--secondary);
-            color: var(--secondary);
-            width: 36px;
-            height: 36px;
-            border-radius: 4px;
-            font-size: 1.3rem;
+            background: rgba(255, 51, 0, 0.1);
+            border: 1px solid var(--alert);
+            color: var(--alert);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.7rem;
             cursor: pointer;
-            margin-left: 10px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 5px;
             transition: all 0.3s;
-            box-shadow: 0 0 5px rgba(0, 102, 255, 0.3);
+            box-shadow: 0 0 10px rgba(255, 51, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .logout-button:hover {
-            background: rgba(0, 102, 255, 0.2);
-            box-shadow: 0 0 15px var(--secondary);
+            background: rgba(255, 51, 0, 0.2);
+            box-shadow: 0 0 20px var(--alert);
             transform: scale(1.05);
         }
 
-        /* MAPA (PROTAGONISTA ABSOLUTO) */
+        .logout-button span {
+            font-size: 1rem;
+        }
+
+        /* MAPA */
         #map {
             position: fixed;
             top: 0;
@@ -162,167 +201,271 @@
             background: #000;
         }
 
-        /* CAPA DE INFORMACIÓN FLOTANTE */
+        /* CAPA DE INFORMACIÓN FLOTANTE MEJORADA */
         .info-layer {
             position: fixed;
             bottom: 20px;
-            left: 10px;
-            right: 10px;
+            left: 15px;
+            right: 15px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             pointer-events: none;
         }
 
-        /* TARJETAS FLOTANTES */
+        /* TARJETAS ESTILO HOLOGRAMA */
         .info-card {
             background: var(--glass);
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
             border: 1px solid var(--primary);
-            border-radius: 8px;
-            padding: 8px 12px;
-            box-shadow: var(--border-glow);
+            border-radius: 4px;
+            padding: 12px 15px;
+            box-shadow: var(--border-glow), 0 0 30px rgba(0, 255, 170, 0.2);
             pointer-events: auto;
             width: 100%;
+            position: relative;
+            overflow: hidden;
+            transform: skewX(-2deg);
         }
 
-        /* TARJETA DE TELEMETRÍA (3 columnas) */
+        .info-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: scan 3s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .info-card::after {
+            content: "⏤⏤⏤⏤";
+            position: absolute;
+            bottom: 2px;
+            right: 5px;
+            color: var(--secondary);
+            font-size: 0.5rem;
+            opacity: 0.5;
+        }
+
+        /* TELEMETRÍA MEJORADA */
         .telemetry-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
+            gap: 15px;
             text-align: center;
         }
 
         .telemetry-item {
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .telemetry-label {
-            font-size: 0.55rem;
+            font-size: 0.6rem;
             color: var(--secondary);
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             text-transform: uppercase;
+            margin-bottom: 4px;
         }
 
         .telemetry-value {
-            font-size: 1.1rem;
+            font-size: 1.4rem;
             font-weight: bold;
             text-shadow: var(--text-glow);
-            line-height: 1.3;
-        }
-
-        .telemetry-value.small {
-            font-size: 0.8rem;
-        }
-
-        /* TERMINAL (UNA LÍNEA) */
-        .terminal-card {
-            font-size: 0.65rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            line-height: 1.2;
             color: var(--primary);
         }
 
-        .terminal-card span {
-            color: var(--secondary);
-            margin-right: 5px;
+        .telemetry-value.small {
+            font-size: 1rem;
         }
 
-        /* CÁMARA PREVIEW (MINI) */
+        /* BARRA DE BATERÍA ESTILO PELÍCULA */
+        .battery-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 4px;
+            position: relative;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .battery-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        /* TERMINAL MEJORADA (MÚLTIPLES LÍNEAS) */
+        .terminal-card {
+            font-size: 0.7rem;
+            line-height: 1.6;
+        }
+
+        .terminal-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            border-bottom: 1px solid rgba(0, 255, 170, 0.1);
+            padding: 2px 0;
+        }
+
+        .terminal-prompt {
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .terminal-progress {
+            color: var(--primary);
+            background: rgba(0, 255, 170, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.6rem;
+            margin-left: auto;
+        }
+
+        /* CÁMARA PREVIEW MEJORADA */
         .camera-card {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
 
         .camera-preview-mini {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             background: #000;
-            border: 1px solid var(--primary);
+            border: 2px solid var(--primary);
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 0 15px var(--primary);
+            transform: rotate(1deg);
         }
 
         #video-feed-mini {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: contrast(1.2) hue-rotate(100deg);
-            display: none;
+            filter: contrast(1.3) hue-rotate(100deg) brightness(1.1);
         }
 
         .camera-info {
             flex: 1;
-            font-size: 0.65rem;
+        }
+
+        .camera-status {
+            font-size: 0.7rem;
+            color: var(--secondary);
+            letter-spacing: 1px;
         }
 
         #camera-placeholder {
             color: var(--secondary);
-            font-size: 0.55rem;
+            font-size: 0.6rem;
             opacity: 0.7;
-            letter-spacing: 0.5px;
+            font-style: italic;
         }
 
         .rec-indicator {
             color: var(--alert);
-            animation: blink 1s infinite;
+            animation: pulse 1s infinite;
             font-weight: bold;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
+            text-shadow: 0 0 10px var(--alert);
         }
 
-        .hidden {
-            display: none !important;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
-        /* BOTÓN DE ALERTA (DESTACADO) */
+        /* BOTÓN DE ALERTA ÉPICO */
         .alert-button-container {
             margin-top: 5px;
+            position: relative;
         }
 
         .alert-button {
             width: 100%;
-            padding: 16px;
+            padding: 18px;
             background: rgba(255, 51, 0, 0.15);
             border: 2px solid var(--alert);
             color: var(--alert);
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1.3rem;
-            font-weight: bold;
-            letter-spacing: 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 900;
+            letter-spacing: 8px;
             cursor: pointer;
             transition: all 0.3s;
             text-transform: uppercase;
-            box-shadow: 0 0 20px rgba(255, 51, 0, 0.3);
-            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(255, 51, 0, 0.5);
+            border-radius: 4px;
             backdrop-filter: blur(5px);
             pointer-events: auto;
+            position: relative;
+            animation: alertPulse 2s infinite;
+        }
+
+        @keyframes alertPulse {
+            0% { box-shadow: 0 0 30px rgba(255, 51, 0, 0.5); }
+            50% { box-shadow: 0 0 60px rgba(255, 51, 0, 0.8); }
+            100% { box-shadow: 0 0 30px rgba(255, 51, 0, 0.5); }
         }
 
         .alert-button:hover {
             background: rgba(255, 51, 0, 0.25);
-            box-shadow: 0 0 30px rgba(255, 51, 0, 0.6);
+            transform: scale(1.02);
         }
 
         .alert-button:active {
             transform: scale(0.98);
         }
 
-        .alert-warning {
-            font-size: 0.55rem;
-            text-align: center;
-            margin-top: 4px;
-            color: var(--secondary);
+        .alert-button::before {
+            content: "⚡";
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
             opacity: 0.7;
         }
 
-        /* MODAL DE ALERTA */
+        .alert-button::after {
+            content: "⚡";
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            opacity: 0.7;
+        }
+
+        .alert-warning {
+            font-size: 0.6rem;
+            text-align: center;
+            margin-top: 6px;
+            color: var(--secondary);
+            opacity: 0.8;
+            letter-spacing: 2px;
+        }
+
+        /* MODAL MEJORADO */
         #alert-modal {
             position: fixed;
             top: 0;
@@ -334,47 +477,60 @@
             display: none;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
         }
 
         .modal-content {
             background: var(--glass);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
             border: 2px solid var(--alert);
-            box-shadow: 0 0 30px rgba(255, 51, 0, 0.5);
-            padding: 25px;
-            max-width: 300px;
+            box-shadow: 0 0 50px rgba(255, 51, 0, 0.7);
+            padding: 30px;
+            max-width: 320px;
             text-align: center;
-            border-radius: 8px;
+            border-radius: 4px;
+            position: relative;
+            transform: scale(1);
+            animation: modalAppear 0.3s;
+        }
+
+        @keyframes modalAppear {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         .modal-title {
-            font-size: 1.5rem;
+            font-size: 2rem;
             color: var(--alert);
             margin-bottom: 15px;
+            text-shadow: 0 0 20px var(--alert);
+            font-family: 'Orbitron', sans-serif;
         }
 
         .modal-text {
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-            line-height: 1.5;
+            font-size: 1rem;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            color: white;
         }
 
         .modal-buttons {
             display: flex;
-            gap: 10px;
+            gap: 15px;
         }
 
         .modal-button {
             flex: 1;
-            padding: 12px;
+            padding: 15px;
             font-family: 'Share Tech Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             cursor: pointer;
             background: transparent;
             border: 1px solid;
             transition: all 0.3s;
             border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .modal-button.primary {
@@ -384,6 +540,7 @@
 
         .modal-button.primary:hover {
             background: rgba(255, 51, 0, 0.2);
+            box-shadow: 0 0 20px var(--alert);
         }
 
         .modal-button.secondary {
@@ -393,9 +550,10 @@
 
         .modal-button.secondary:hover {
             background: rgba(0, 255, 170, 0.1);
+            box-shadow: 0 0 20px var(--primary);
         }
 
-        /* PANTALLA DE REGISTRO */
+        /* PANTALLA DE REGISTRO (también mejorada) */
         #pantalla-registro {
             position: fixed;
             top: 0;
@@ -416,84 +574,88 @@
             margin: 0 auto;
             width: 100%;
             background: var(--glass);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--primary);
-            box-shadow: var(--border-glow);
-            padding: 30px 20px;
-            border-radius: 8px;
+            backdrop-filter: blur(15px);
+            border: 2px solid var(--primary);
+            box-shadow: var(--border-glow), 0 0 50px rgba(0, 255, 170, 0.3);
+            padding: 40px 25px;
+            border-radius: 4px;
+            transform: skewX(-2deg);
         }
 
-        .logo {
+        .registro-logo {
             text-align: center;
             margin-bottom: 30px;
         }
 
-        .logo h1 {
-            font-size: 2.5rem;
-            letter-spacing: 5px;
+        .registro-logo h1 {
+            font-size: 3rem;
+            letter-spacing: 8px;
             text-shadow: var(--text-glow);
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
         }
 
-        .logo p {
+        .registro-logo p {
             color: var(--secondary);
-            letter-spacing: 2px;
+            letter-spacing: 4px;
             font-size: 0.9rem;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             color: var(--secondary);
             font-size: 0.8rem;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
         }
 
         input {
             width: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
             border: 1px solid var(--primary);
-            padding: 12px;
+            padding: 15px;
             color: var(--primary);
             font-family: 'Share Tech Mono', monospace;
-            font-size: 0.9rem;
+            font-size: 1rem;
             outline: none;
             border-radius: 4px;
         }
 
         input:focus {
-            box-shadow: 0 0 10px var(--primary);
+            box-shadow: 0 0 20px var(--primary);
         }
 
         .registro-button {
             width: 100%;
-            padding: 12px;
+            padding: 15px;
             background: transparent;
             border: 2px solid var(--primary);
             color: var(--primary);
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
             font-weight: bold;
-            letter-spacing: 2px;
+            letter-spacing: 4px;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 20px;
             border-radius: 4px;
+            transition: all 0.3s;
         }
 
         .registro-button:hover {
-            background: rgba(0, 255, 170, 0.1);
-            box-shadow: 0 0 15px var(--primary);
+            background: rgba(0, 255, 170, 0.2);
+            box-shadow: 0 0 30px var(--primary);
         }
 
         .terminos {
-            margin-top: 20px;
+            margin-top: 25px;
             font-size: 0.65rem;
             color: #666;
             text-align: center;
-            line-height: 1.4;
+            line-height: 1.5;
         }
 
         #modal-exito {
@@ -502,14 +664,19 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: var(--glass);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
             border: 2px solid var(--primary);
-            padding: 20px;
+            padding: 30px;
             text-align: center;
             z-index: 20001;
             display: none;
-            max-width: 250px;
-            border-radius: 8px;
+            max-width: 280px;
+            border-radius: 4px;
+            box-shadow: 0 0 50px var(--primary);
+        }
+
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
@@ -517,7 +684,7 @@
     <!-- PANTALLA DE REGISTRO -->
     <div id="pantalla-registro">
         <div class="registro-contenedor">
-            <div class="logo">
+            <div class="registro-logo">
                 <h1>SENTINEL</h1>
                 <p>SMART TECH</p>
             </div>
@@ -553,39 +720,47 @@
 
     <!-- MODAL REGISTRO EXITOSO -->
     <div id="modal-exito">
-        <div style="font-size:3rem; color:var(--primary); margin-bottom:10px;">✓</div>
-        <p style="margin-bottom:15px;">REGISTRO EXITOSO</p>
-        <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
+        <div style="font-size:3rem; color:var(--primary); margin-bottom:15px;">✓</div>
+        <p style="margin-bottom:20px; font-size:1.2rem;">REGISTRO EXITOSO</p>
+        <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0; padding:12px;">CONTINUAR</button>
     </div>
 
     <!-- PANTALLA PRINCIPAL -->
     <div id="pantalla-principal" style="display: none;">
-        <!-- HEADER CON LOGO -->
+        <!-- HEADER ÉPICO -->
         <header>
             <div class="header-left">
                 <div class="logo-mini">
-                    <!-- AQUÍ VA SU LOGO - Reemplace esto por: <img src="logo.png" alt="SMART TECH"> -->
-                    <img src="logo.png" alt="SMART TECH">
+                    <span>ST</span>
                 </div>
-                <div class="system-title">SENTINEL</div>
+                <div class="brand">
+                    <div class="brand-main">SENTINEL V4.0</div>
+                    <div class="brand-sub">SMART TECH</div>
+                    <div class="brand-tagline">GLOBAL INTELLIGENCE · LOCAL CONTROL</div>
+                </div>
             </div>
             <div class="header-right">
                 <div class="system-status">● ONLINE</div>
-                <button class="logout-button" onclick="cerrarSesion()" title="CERRAR SESIÓN">⏻</button>
+                <button class="logout-button" onclick="cerrarSesion()">
+                    <span>⏻</span> CERRAR SESIÓN
+                </button>
             </div>
         </header>
 
-        <!-- MAPA (ESTILO IRON MAN) -->
+        <!-- MAPA -->
         <div id="map"></div>
 
         <!-- CAPA DE INFORMACIÓN FLOTANTE -->
         <div class="info-layer">
-            <!-- TARJETA DE TELEMETRÍA -->
+            <!-- TARJETA DE TELEMETRÍA MEJORADA -->
             <div class="info-card">
                 <div class="telemetry-grid">
                     <div class="telemetry-item">
                         <span class="telemetry-label">BATERÍA</span>
                         <span class="telemetry-value" id="battery">--%</span>
+                        <div class="battery-bar">
+                            <div class="battery-fill" id="battery-fill" style="width: 0%;"></div>
+                        </div>
                     </div>
                     <div class="telemetry-item">
                         <span class="telemetry-label">GPS</span>
@@ -598,30 +773,40 @@
                 </div>
             </div>
 
-            <!-- TARJETA DE TERMINAL -->
-            <div class="info-card terminal-card" id="terminal">
-                <span>></span> SISTEMA LISTO
+            <!-- TERMINAL MEJORADA (MÚLTIPLES LÍNEAS) -->
+            <div class="info-card terminal-card" id="terminal-container">
+                <div class="terminal-line">
+                    <span class="terminal-prompt">></span> SISTEMA INICIALIZADO
+                    <span class="terminal-progress">[OK]</span>
+                </div>
+                <div class="terminal-line" id="terminal-line-1">
+                    <span class="terminal-prompt">></span> CONECTANDO CON CENTRAL...
+                    <span class="terminal-progress" id="terminal-progress">[░░░░░░░░░░]</span>
+                </div>
+                <div class="terminal-line" id="terminal-line-2">
+                    <span class="terminal-prompt">></span> ESPERANDO COMANDO
+                </div>
             </div>
 
-            <!-- TARJETA DE CÁMARA -->
+            <!-- CÁMARA PREVIEW -->
             <div class="info-card camera-card">
                 <div class="camera-preview-mini">
                     <video id="video-feed-mini" autoplay playsinline></video>
                     <span id="camera-placeholder">[INACTIVA]</span>
                 </div>
                 <div class="camera-info">
-                    <div id="camera-status">ACTIVAR AL ENVIAR ALERTA</div>
+                    <div class="camera-status" id="camera-status">ACTIVAR AL ENVIAR ALERTA</div>
                     <div id="rec-indicator" class="rec-indicator hidden">● GRABANDO</div>
                 </div>
             </div>
 
-            <!-- BOTÓN DE ALERTA -->
+            <!-- BOTÓN DE ALERTA ÉPICO -->
             <div class="alert-button-container">
                 <button class="alert-button" id="alert-button">
                     ALERTA
                 </button>
                 <div class="alert-warning">
-                    TOQUE PARA ACTIVAR EMERGENCIA
+                    ⚡ TOQUE PARA ACTIVAR PROTOCOLO DE EMERGENCIA ⚡
                 </div>
             </div>
         </div>
@@ -630,7 +815,7 @@
     <!-- MODAL DE ALERTA -->
     <div id="alert-modal">
         <div class="modal-content">
-            <div class="modal-title">🚨 ALERTA ENVIADA</div>
+            <div class="modal-title">🚨 ALERTA</div>
             <div class="modal-text" id="modal-text">
                 UNIDADES NOTIFICADAS<br>
                 GRABANDO VIDEO
@@ -726,7 +911,7 @@
         // APP PRINCIPAL
         // ==============================================
         function iniciarAppPrincipal() {
-            actualizarTerminal(`BIENVENIDO ${usuarioActual.nombre}`);
+            actualizarTerminal(`BIENVENIDO ${usuarioActual.nombre}`, 0);
             
             // Inicializar mapa
             mapa = L.map('map', {
@@ -734,9 +919,9 @@
                 attributionControl: false
             }).setView([-38.0055, -57.5426], 16);
 
-            // MAPA ESTILO IRON MAN (calles cian/neón)
+            // MAPA ESTILO IRON MAN MEJORADO
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                filter: 'brightness(0.7) invert(1) hue-rotate(160deg) saturate(3) contrast(1.2)'
+                filter: 'brightness(0.6) invert(1) hue-rotate(150deg) saturate(4) contrast(1.3)'
             }).addTo(mapa);
 
             // Iniciar GPS
@@ -747,6 +932,15 @@
 
             // Evento botón alerta
             document.getElementById('alert-button').addEventListener('click', activarAlerta);
+            
+            // Simular progreso de conexión
+            setTimeout(() => {
+                document.getElementById('terminal-progress').innerHTML = '[████████░░] 80%';
+            }, 2000);
+            
+            setTimeout(() => {
+                document.getElementById('terminal-progress').innerHTML = '[██████████] 100%';
+            }, 4000);
         }
 
         // ==============================================
@@ -754,7 +948,7 @@
         // ==============================================
         function iniciarGPS() {
             if (!navigator.geolocation) {
-                actualizarTerminal('GPS NO SOPORTADO');
+                actualizarTerminal('GPS NO SOPORTADO', 2);
                 return;
             }
 
@@ -768,11 +962,12 @@
                     
                     if (!marcador) {
                         marcador = L.circleMarker([latitude, longitude], {
-                            radius: 8,
+                            radius: 10,
                             color: '#00ffaa',
                             fillColor: '#00ffaa',
-                            fillOpacity: 0.5,
-                            weight: 2
+                            fillOpacity: 0.7,
+                            weight: 3,
+                            className: 'pulse-marker'
                         }).addTo(mapa);
                         
                         mapa.setView([latitude, longitude], 17);
@@ -780,13 +975,13 @@
                         marcador.setLatLng([latitude, longitude]);
                     }
                     
-                    actualizarTerminal(`GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+                    actualizarTerminal(`GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`, 1);
                 },
                 (error) => {
                     let mensaje = 'ERROR GPS';
                     if(error.code === 1) mensaje = 'PERMISO DENEGADO';
                     if(error.code === 2) mensaje = 'SEÑAL NO DISPONIBLE';
-                    actualizarTerminal(mensaje);
+                    actualizarTerminal(mensaje, 2);
                 },
                 {
                     enableHighAccuracy: true,
@@ -808,8 +1003,9 @@
                     });
                 });
             } else {
+                let nivel = 85;
                 setInterval(() => {
-                    const nivel = Math.floor(Math.random() * 20) + 75;
+                    nivel = Math.max(10, nivel - Math.floor(Math.random() * 5));
                     actualizarBateria(nivel);
                 }, 30000);
             }
@@ -817,13 +1013,17 @@
 
         function actualizarBateria(nivel) {
             document.getElementById('battery').textContent = `${Math.floor(nivel)}%`;
+            document.getElementById('battery-fill').style.width = `${nivel}%`;
         }
 
         // ==============================================
-        // TERMINAL
+        // TERMINAL MEJORADA
         // ==============================================
-        function actualizarTerminal(mensaje) {
-            document.getElementById('terminal').innerHTML = `<span>></span> ${mensaje}`;
+        function actualizarTerminal(mensaje, linea = 2) {
+            const lineElement = document.getElementById(`terminal-line-${linea}`);
+            if (lineElement) {
+                lineElement.innerHTML = `<span class="terminal-prompt">></span> ${mensaje}`;
+            }
         }
 
         // ==============================================
@@ -862,14 +1062,14 @@
                 
                 mediaRecorder.start();
                 document.getElementById('rec-indicator').classList.remove('hidden');
-                actualizarTerminal('GRABANDO VIDEO');
+                actualizarTerminal('GRABANDO VIDEO', 1);
                 
                 setTimeout(() => {
                     if (grabacionActiva) detenerCamara();
                 }, 120000);
                 
             } catch (error) {
-                actualizarTerminal('ERROR CÁMARA');
+                actualizarTerminal('ERROR CÁMARA', 2);
             }
         }
 
@@ -905,10 +1105,10 @@
                 
                 if (error) throw error;
                 
-                actualizarTerminal('VIDEO SUBIDO');
+                actualizarTerminal('VIDEO SUBIDO', 2);
                 
             } catch (error) {
-                actualizarTerminal('ERROR SUBIR VIDEO');
+                actualizarTerminal('ERROR SUBIR VIDEO', 2);
             }
         }
 
@@ -917,16 +1117,16 @@
         // ==============================================
         async function activarAlerta() {
             if (alertaActiva) {
-                actualizarTerminal('ALERTA YA ACTIVA');
+                actualizarTerminal('ALERTA YA ACTIVA', 2);
                 return;
             }
             
             if (!ubicacionActual) {
-                actualizarTerminal('SIN UBICACIÓN GPS');
+                actualizarTerminal('SIN UBICACIÓN GPS', 2);
                 return;
             }
             
-            actualizarTerminal('🚨 ACTIVANDO ALERTA');
+            actualizarTerminal('🚨 ACTIVANDO ALERTA', 1);
             
             await activarCamara();
             
@@ -952,13 +1152,13 @@
                 alertaActiva = true;
                 
                 document.getElementById('modal-text').innerHTML = 
-                    `UNIDADES NOTIFICADAS<br>GRABANDO VIDEO`;
+                    `🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO`;
                 document.getElementById('alert-modal').style.display = 'flex';
                 
-                actualizarTerminal('🚨 ALERTA ENVIADA');
+                actualizarTerminal('🚨 ALERTA ENVIADA', 2);
                 
             } catch (error) {
-                actualizarTerminal('ERROR AL ENVIAR');
+                actualizarTerminal('ERROR AL ENVIAR', 2);
             }
         }
 
@@ -971,7 +1171,7 @@
                 alertaActiva = false;
                 detenerCamara();
                 cerrarModal();
-                actualizarTerminal('ALERTA CANCELADA');
+                actualizarTerminal('ALERTA CANCELADA', 2);
             }
         }
 
@@ -980,13 +1180,10 @@
         // ==============================================
         function cerrarSesion() {
             if (confirm('¿CERRAR SESIÓN? VOLVERÁ A LA PANTALLA DE REGISTRO')) {
-                // Detener cámara si está activa
                 if (streamCamara) {
                     streamCamara.getTracks().forEach(t => t.stop());
                 }
-                // Limpiar localStorage
                 localStorage.removeItem('usuario_activo');
-                // Recargar la página
                 location.reload();
             }
         }
