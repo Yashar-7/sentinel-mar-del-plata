@@ -130,7 +130,8 @@
             50% { opacity: 0.3; }
         }
 
-        .logout-button {
+        /* BOTÓN SALIR (ahora cierra la app, no la sesión) */
+        .exit-button {
             background: rgba(255, 49, 49, 0.1);
             border: 1px solid var(--neon-red);
             color: var(--neon-red);
@@ -146,7 +147,7 @@
             text-transform: uppercase;
         }
 
-        .logout-button:hover {
+        .exit-button:hover {
             background: rgba(255, 49, 49, 0.2);
             box-shadow: 0 0 15px var(--neon-red);
         }
@@ -464,7 +465,7 @@
             color: var(--neon-cyan);
         }
 
-        /* REGISTRO MEJORADO CON ROLES */
+        /* REGISTRO */
         #pantalla-registro {
             position: fixed;
             top: 0;
@@ -549,7 +550,15 @@
             letter-spacing: 1px;
         }
 
-        input, select {
+        .label-opcional {
+            display: block;
+            font-size: 0.55rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        input {
             width: 100%;
             background: rgba(0, 5, 10, 0.7);
             border: 1px solid var(--neon-cyan);
@@ -562,20 +571,6 @@
                 0% 10%, 2% 0%, 98% 0%, 100% 10%,
                 100% 90%, 98% 100%, 2% 100%, 0% 90%
             );
-        }
-
-        select {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300f2ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 16px;
-        }
-
-        select option {
-            background: var(--bg-dark);
-            color: var(--neon-cyan);
         }
 
         .rol-selector {
@@ -670,7 +665,7 @@
     <div class="vignette"></div>
     <div class="scanline"></div>
 
-    <!-- REGISTRO MEJORADO -->
+    <!-- REGISTRO -->
     <div id="pantalla-registro">
         <div class="registro-contenedor">
             <div class="registro-logo">
@@ -696,6 +691,11 @@
                 <input type="text" id="telefono" placeholder="223 555-1234">
             </div>
             
+            <div class="form-group">
+                <label>DOMICILIO <span class="label-opcional">(OPCIONAL)</span></label>
+                <input type="text" id="domicilio" placeholder="Av. Luro 1234">
+            </div>
+            
             <div class="rol-selector">
                 <label>SELECCIONE ROL</label>
                 <div class="rol-opciones">
@@ -719,10 +719,9 @@
 
     <!-- MODAL REGISTRO -->
     <div id="modal-exito" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--bg-dark); border:2px solid var(--neon-cyan); padding:25px; text-align:center; z-index:20001; display:none; min-width:220px; clip-path: polygon(0% 10%, 5% 0%, 95% 0%, 100% 10%, 100% 90%, 95% 100%, 5% 100%, 0% 90%);">
-            <div style="font-size:2.5rem; color:var(--neon-cyan); margin-bottom:10px;">✓</div>
-            <div style="margin-bottom:15px;">REGISTRO EXITOSO</div>
-            <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
-        </div>
+        <div style="font-size:2.5rem; color:var(--neon-cyan); margin-bottom:10px;">✓</div>
+        <div style="margin-bottom:15px;">REGISTRO EXITOSO</div>
+        <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
     </div>
 
     <!-- PRINCIPAL -->
@@ -742,13 +741,14 @@
                     <span class="online-dot"></span>
                     <span>ONLINE</span>
                 </div>
-                <button class="logout-button" onclick="cerrarSesion()">CERRAR</button>
+                <!-- Botón SALIR ahora cierra la ventana, no la sesión -->
+                <button class="exit-button" onclick="salirApp()">SALIR</button>
             </div>
         </header>
 
         <div id="map"></div>
 
-        <!-- UNIDAD (con color según rol) -->
+        <!-- UNIDAD -->
         <div class="unit-bar">
             <span>UNID: <span id="unid">ALPHA-7</span></span>
         </div>
@@ -828,12 +828,10 @@
         let colorSeleccionado = '';
 
         function seleccionarRol(rol, color) {
-            // Quitar selección anterior
             document.querySelectorAll('.rol-opcion').forEach(el => {
                 el.classList.remove('selected');
             });
             
-            // Marcar el seleccionado
             event.target.classList.add('selected');
             
             rolSeleccionado = rol;
@@ -847,10 +845,11 @@
             const nombre = document.getElementById('nombre').value.trim();
             const dni = document.getElementById('dni').value.trim();
             const telefono = document.getElementById('telefono').value.trim();
+            const domicilio = document.getElementById('domicilio').value.trim();
             const terminos = document.getElementById('terminos').checked;
 
             if (!nombre || !dni || !telefono) {
-                alert("COMPLETE TODOS LOS CAMPOS");
+                alert("COMPLETE NOMBRE, DNI Y TELÉFONO");
                 return;
             }
 
@@ -868,6 +867,7 @@
                 nombre: nombre,
                 dni: dni,
                 telefono: telefono,
+                domicilio: domicilio || null,
                 rol: rolSeleccionado,
                 color: colorSeleccionado,
                 fecha_registro: new Date().toISOString(),
@@ -889,7 +889,11 @@
 
             } catch (error) {
                 console.error(error);
-                alert("ERROR EN EL REGISTRO. ¿YA EXISTE ESE DNI?");
+                if (error.code === '23505') {
+                    alert("ESTE DNI YA ESTÁ REGISTRADO. USE OTRO DNI.");
+                } else {
+                    alert("ERROR EN EL REGISTRO. INTENTE DE NUEVO.");
+                }
             }
         }
 
@@ -908,6 +912,20 @@
                 document.getElementById('pantalla-registro').style.display = 'none';
                 document.getElementById('pantalla-principal').style.display = 'block';
                 iniciarApp();
+            }
+        }
+
+        function salirApp() {
+            // Esto cierra la pestaña o ventana actual (si fue abierta por script)
+            // En la mayoría de navegadores modernos, solo funciona si la ventana fue abierta por JS
+            // Pero al menos intentamos cerrar la app
+            if (confirm('¿SALIR DE LA APLICACIÓN?')) {
+                // Intentar cerrar la ventana
+                window.close();
+                // Si no funciona, mostramos un mensaje
+                setTimeout(() => {
+                    alert("CIERRE ESTA PESTAÑA MANUALMENTE");
+                }, 500);
             }
         }
 
@@ -940,7 +958,6 @@
                         `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
                     
                     if (!marcador) {
-                        // Usar el color del rol para el marcador
                         const markerColor = usuarioActual ? usuarioActual.color : '#00f2ff';
                         
                         marcador = L.circleMarker([latitude, longitude], {
@@ -1072,14 +1089,6 @@
                 alertaActiva = false;
                 detenerCamara();
                 cerrarModal();
-            }
-        }
-
-        function cerrarSesion() {
-            if (confirm('¿CERRAR SESIÓN?')) {
-                if (streamCamara) streamCamara.getTracks().forEach(t => t.stop());
-                localStorage.removeItem('usuario_activo');
-                location.reload();
             }
         }
 
