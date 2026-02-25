@@ -26,7 +26,6 @@
             --neon-red: #ff3131;
             --bg-dark: #00050a;
             --bg-gradient: radial-gradient(circle, #001a26 0%, #00050a 100%);
-            --glass: rgba(0, 10, 20, 0.85);
         }
 
         body {
@@ -74,12 +73,13 @@
                 100% 85%, 85% 100%, 15% 100%, 0% 85%
             );
             box-shadow: 0 0 15px var(--neon-cyan);
+            overflow: hidden;
         }
 
-        .logo-container span {
-            color: black;
-            font-weight: bold;
-            font-size: 1.2rem;
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .brand {
@@ -228,47 +228,27 @@
             100% { left: 100%; }
         }
 
-        /* PANEL INFERIOR DE TELEMETRÍA (UNA SOLA LÍNEA) */
-        .telemetry-bar {
+        /* UNIDAD (SOLO UNID ARRIBA) */
+        .unit-bar {
             position: fixed;
-            bottom: 80px;
+            top: 80px;
             left: 15px;
-            right: 15px;
-            background: rgba(0, 5, 10, 0.7);
+            background: rgba(0, 5, 10, 0.6);
             backdrop-filter: blur(5px);
             border: 1px solid var(--neon-cyan);
-            padding: 10px 15px;
+            padding: 8px 15px;
             z-index: 800;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             font-size: 0.65rem;
             clip-path: polygon(
-                0% 15%, 1% 0%, 99% 0%, 100% 15%,
-                100% 85%, 99% 100%, 1% 100%, 0% 85%
+                0% 15%, 5% 0%, 95% 0%, 100% 15%,
+                100% 85%, 95% 100%, 5% 100%, 0% 85%
             );
-        }
-
-        .telemetry-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .telemetry-label {
-            color: rgba(0, 242, 255, 0.6);
-        }
-
-        .telemetry-value {
-            color: var(--neon-cyan);
-            font-weight: bold;
-            text-shadow: 0 0 5px var(--neon-cyan);
         }
 
         /* VISOR DE CÁMARA */
         .camera-container {
             position: fixed;
-            bottom: 140px;
+            bottom: 120px;
             left: 15px;
             width: 120px;
             height: 90px;
@@ -322,7 +302,7 @@
         /* BOTONES TÁCTICOS */
         .buttons-container {
             position: fixed;
-            bottom: 140px;
+            bottom: 120px;
             right: 15px;
             display: flex;
             flex-direction: column;
@@ -376,7 +356,7 @@
             font-size: 1.2rem;
         }
 
-        /* CONSOLA INFERIOR */
+        /* CONSOLA INFERIOR (CON BATERÍA INCLUIDA) */
         .console {
             position: fixed;
             bottom: 15px;
@@ -406,6 +386,16 @@
         .console-prompt {
             color: var(--neon-cyan);
             opacity: 0.7;
+        }
+
+        .battery-line {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px solid rgba(0, 242, 255, 0.2);
+            font-size: 0.55rem;
+            color: var(--neon-cyan);
         }
 
         /* MODAL */
@@ -591,7 +581,7 @@
         <header>
             <div class="header-left">
                 <div class="logo-container">
-                    <span>ST</span>
+                    <img src="logo.png" alt="SMART TECH">
                 </div>
                 <div class="brand">
                     <div class="brand-main">SENTINEL</div>
@@ -609,24 +599,9 @@
 
         <div id="map"></div>
 
-        <!-- PANEL DE TELEMETRÍA (UNA SOLA LÍNEA) -->
-        <div class="telemetry-bar">
-            <div class="telemetry-item">
-                <span class="telemetry-label">UNID:</span>
-                <span class="telemetry-value" id="unid">ALPHA-7</span>
-            </div>
-            <div class="telemetry-item">
-                <span class="telemetry-label">LAT:</span>
-                <span class="telemetry-value" id="lat">--</span>
-            </div>
-            <div class="telemetry-item">
-                <span class="telemetry-label">LNG:</span>
-                <span class="telemetry-value" id="lng">--</span>
-            </div>
-            <div class="telemetry-item">
-                <span class="telemetry-label">BATT:</span>
-                <span class="telemetry-value" id="battery">--%</span>
-            </div>
+        <!-- SOLO UNID (sin coordenadas redundantes) -->
+        <div class="unit-bar">
+            <span>UNID: <span id="unid">ALPHA-7</span></span>
         </div>
 
         <!-- VISOR DE CÁMARA -->
@@ -650,7 +625,7 @@
             </button>
         </div>
 
-        <!-- CONSOLA INFERIOR -->
+        <!-- CONSOLA INFERIOR (con batería al final) -->
         <div class="console">
             <div class="console-line">
                 <span class="console-prompt">></span>
@@ -663,6 +638,9 @@
             <div class="console-line">
                 <span class="console-prompt">></span>
                 <span>ALERTA: SIN INCIDENTES</span>
+            </div>
+            <div class="battery-line">
+                <span>BATERÍA: <span id="battery">--%</span></span>
             </div>
         </div>
     </div>
@@ -768,8 +746,9 @@
                     const { latitude, longitude } = pos.coords;
                     ubicacionActual = { lat: latitude, lng: longitude };
                     
-                    document.getElementById('lat').textContent = latitude.toFixed(5);
-                    document.getElementById('lng').textContent = longitude.toFixed(5);
+                    // Actualizar solo la línea de GPS (sin lat/lng separados)
+                    document.getElementById('gps-status').innerHTML = 
+                        `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
                     
                     if (!marcador) {
                         marcador = L.circleMarker([latitude, longitude], {
@@ -785,9 +764,6 @@
                     } else {
                         marcador.setLatLng([latitude, longitude]);
                     }
-
-                    document.getElementById('gps-status').innerHTML = 
-                        `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
                 },
                 null,
                 { enableHighAccuracy: true }
