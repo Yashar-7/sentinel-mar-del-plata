@@ -22,7 +22,7 @@
         }
 
         :root {
-            --neon-cyan: #00f2ff;
+            --neon-cyan: #00ffff;
             --neon-red: #ff3131;
             --neon-green: #39ff14;
             --civil-white: #ffffff;
@@ -130,7 +130,7 @@
             50% { opacity: 0.3; }
         }
 
-        /* BOTÓN SALIR (cierra la app, no la sesión) */
+        /* BOTÓN SALIR */
         .exit-button {
             background: rgba(255, 49, 49, 0.1);
             border: 1px solid var(--neon-red);
@@ -153,99 +153,85 @@
         }
 
         /* ============================================== */
-        /* COMPONENTE SENTINEL EYE (OJO TÁCTICO)        */
+        /* MARCADOR SENTINEL EYE (para el mapa)         */
         /* ============================================== */
         .sentinel-eye-container {
-            position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 180px;
+            position: relative;
+            width: 100px;
             height: 100px;
-            z-index: 2000;
-            pointer-events: none; /* Para que no interfiera con clicks */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 0 15px currentColor);
+            color: var(--neon-cyan);
+            transition: color 0.3s ease;
         }
 
-        .sentinel-eye {
-            width: 100%;
-            height: 100%;
-            filter: drop-shadow(0 0 10px currentColor);
-            transition: all 0.3s ease;
-            color: var(--neon-cyan); /* Color por defecto */
-        }
-
-        .sentinel-eye.alert-mode {
+        .sentinel-eye-container.alert-active {
             color: var(--neon-red);
-            animation: pulse-glitch 0.5s infinite alternate;
+            animation: redPulse 1s infinite;
         }
 
-        @keyframes pulse-glitch {
-            0% { filter: drop-shadow(0 0 5px currentColor); }
-            100% { filter: drop-shadow(0 0 15px currentColor) drop-shadow(0 0 5px red); }
+        /* El haz de luz que escanea (Radar Beam) */
+        .scanner-beam {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, currentColor, transparent 60deg);
+            border-radius: 50%;
+            animation: rotateScan 4s linear infinite;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.5;
         }
 
-        /* Forma almendrada exterior */
-        .eye-outer {
-            stroke: currentColor;
-            stroke-width: 1.5;
-            fill: none;
+        .sentinel-eye-container.alert-active .scanner-beam {
+            animation-duration: 2s; /* Más rápido en alerta */
         }
 
-        /* Círculos concéntricos (iris) */
-        .eye-circle {
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 0.8;
+        /* Anillos interiores rotatorios */
+        .eye-rings {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            border: 2px dashed currentColor;
+            border-radius: 50%;
+            animation: rotateReverse 6s linear infinite;
+            box-shadow: 0 0 15px currentColor;
+            z-index: 2;
         }
 
-        .eye-circle-1 {
-            stroke-dasharray: 2 3;
-            opacity: 0.6;
+        .sentinel-eye-container.alert-active .eye-rings {
+            animation-duration: 3s; /* Más rápido en alerta */
         }
 
-        .eye-circle-2 {
-            stroke-dasharray: 4 5;
-            opacity: 0.4;
+        /* Punto central */
+        .eye-core {
+            width: 20px;
+            height: 20px;
+            background: currentColor;
+            border-radius: 50%;
+            z-index: 3;
+            box-shadow: 0 0 20px currentColor;
+            transition: all 0.3s;
         }
 
-        .eye-circle-3 {
-            stroke-dasharray: none; /* Sólido */
-            opacity: 0.8;
-            transform-origin: center;
-            animation: rotateCircle 8s linear infinite;
-        }
-
-        .sentinel-eye.alert-mode .eye-circle-3 {
-            animation-duration: 4s; /* Duplica velocidad */
-        }
-
-        @keyframes rotateCircle {
+        /* Animaciones */
+        @keyframes rotateScan {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
-        /* Haz de escaneo */
-        .scan-beam {
-            fill: url(#beamGradient);
-            filter: blur(2px);
-            opacity: 0.8;
-            animation: scanMove 3s linear infinite;
+        @keyframes rotateReverse {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
         }
 
-        .sentinel-eye.alert-mode .scan-beam {
-            animation-duration: 1.5s;
-        }
-
-        @keyframes scanMove {
-            0% { y: 20; }
-            100% { y: 80; }
-        }
-
-        /* Pupila central */
-        .pupil {
-            fill: currentColor;
-            filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 12px currentColor);
-            transition: all 0.3s;
+        /* Pulso de alerta (Red Pulse) */
+        @keyframes redPulse {
+            0% { filter: drop-shadow(0 0 0px 0px rgba(255, 0, 0, 0.7)); }
+            70% { filter: drop-shadow(0 0 0px 20px rgba(255, 0, 0, 0)); }
+            100% { filter: drop-shadow(0 0 0px 0px rgba(255, 0, 0, 0)); }
         }
 
         /* ============================================== */
@@ -259,7 +245,7 @@
             z-index: 1;
         }
 
-        /* ONDAS DE RADAR */
+        /* ONDAS DE RADAR (fondo, no el marcador) */
         .radar-wave {
             position: absolute;
             top: 50%;
@@ -331,7 +317,7 @@
         /* UNIDAD */
         .unit-bar {
             position: fixed;
-            top: 200px; /* Ajustado para no tapar el ojo */
+            top: 80px;
             left: 15px;
             background: rgba(0, 5, 10, 0.6);
             backdrop-filter: blur(5px);
@@ -450,6 +436,10 @@
         .tactical-button:hover {
             background: rgba(0, 242, 255, 0.15);
             transform: scale(1.05);
+        }
+
+        .tactical-button.alert:hover {
+            background: rgba(255, 49, 49, 0.15);
         }
 
         .button-icon {
@@ -745,12 +735,6 @@
         .hidden {
             display: none !important;
         }
-
-        /* MARCADOR IRON MAN */
-        .iron-marker {
-            filter: drop-shadow(0 0 8px var(--neon-cyan)) 
-                    drop-shadow(0 0 15px var(--neon-cyan));
-        }
     </style>
 </head>
 <body>
@@ -838,43 +822,9 @@
                     <span class="online-dot"></span>
                     <span>ONLINE</span>
                 </div>
-                <!-- Botón SALIR ahora cierra la ventana, no la sesión -->
                 <button class="exit-button" onclick="salirApp()">SALIR</button>
             </div>
         </header>
-
-        <!-- ============================================== -->
-        <!-- COMPONENTE SENTINEL EYE (OJO TÁCTICO)        -->
-        <!-- ============================================== -->
-        <div class="sentinel-eye-container">
-            <div class="sentinel-eye" id="sentinelEye">
-                <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-                    <!-- Gradiente para el haz de escaneo -->
-                    <defs>
-                        <linearGradient id="beamGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="currentColor" stop-opacity="0" />
-                            <stop offset="40%" stop-color="currentColor" stop-opacity="1" />
-                            <stop offset="60%" stop-color="currentColor" stop-opacity="1" />
-                            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
-                        </linearGradient>
-                    </defs>
-
-                    <!-- Forma almendrada exterior (elipse) -->
-                    <ellipse cx="50" cy="50" rx="40" ry="25" class="eye-outer" />
-
-                    <!-- Círculos concéntricos interiores (iris) -->
-                    <circle cx="50" cy="50" r="15" class="eye-circle eye-circle-1" />
-                    <circle cx="50" cy="50" r="20" class="eye-circle eye-circle-2" />
-                    <circle cx="50" cy="50" r="25" class="eye-circle eye-circle-3" />
-
-                    <!-- Haz de escaneo (línea horizontal animada) -->
-                    <rect x="20" y="20" width="60" height="4" class="scan-beam" />
-
-                    <!-- Pupila central -->
-                    <circle cx="50" cy="50" r="5" class="pupil" />
-                </svg>
-            </div>
-        </div>
 
         <div id="map"></div>
 
@@ -1083,15 +1033,26 @@
                         `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
                     
                     if (!marcador) {
-                        const markerColor = usuarioActual ? usuarioActual.color : '#00f2ff';
+                        // Crear el contenido HTML del marcador personalizado
+                        const markerHtml = `
+                            <div class="sentinel-eye-container ${alertaActiva ? 'alert-active' : ''}" id="user-marker">
+                                <div class="scanner-beam"></div>
+                                <div class="eye-rings"></div>
+                                <div class="eye-core"></div>
+                            </div>
+                        `;
                         
-                        marcador = L.circleMarker([latitude, longitude], {
-                            radius: 12,
-                            color: markerColor,
-                            weight: 3,
-                            fillColor: markerColor,
-                            fillOpacity: 0.3,
-                            className: 'iron-marker'
+                        // Crear el icono con L.divIcon
+                        const userIcon = L.divIcon({
+                            html: markerHtml,
+                            className: '', // Vacío para que no añada clases extra
+                            iconSize: [100, 100],
+                            iconAnchor: [50, 50] // Centro del icono en la posición GPS
+                        });
+                        
+                        marcador = L.marker([latitude, longitude], {
+                            icon: userIcon,
+                            zIndexOffset: 1000
                         }).addTo(mapa);
                         
                         mapa.setView([latitude, longitude], 17);
@@ -1199,8 +1160,11 @@
                 await _supabase.from('alertas').insert(alerta);
                 alertaActiva = true;
                 
-                // Activar modo alerta en el ojo
-                document.getElementById('sentinelEye').classList.add('alert-mode');
+                // Activar modo alerta en el marcador
+                const markerElement = document.getElementById('user-marker');
+                if (markerElement) {
+                    markerElement.classList.add('alert-active');
+                }
                 
                 document.getElementById('modal-text').innerHTML = 
                     '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
@@ -1216,7 +1180,13 @@
             if (confirm('¿CANCELAR ALERTA?')) {
                 alertaActiva = false;
                 detenerCamara();
-                document.getElementById('sentinelEye').classList.remove('alert-mode');
+                
+                // Desactivar modo alerta en el marcador
+                const markerElement = document.getElementById('user-marker');
+                if (markerElement) {
+                    markerElement.classList.remove('alert-active');
+                }
+                
                 cerrarModal();
             }
         }
