@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL V4.0 | SMART TECH</title>
+    <title>SENTINEL V5.0 | SMART TECH</title>
     
     <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -130,8 +130,8 @@
             50% { opacity: 0.3; }
         }
 
-        /* BOTÓN SALIR */
-        .exit-button {
+        /* BOTÓN CERRAR SESIÓN */
+        .logout-button {
             background: rgba(255, 49, 49, 0.1);
             border: 1px solid var(--neon-red);
             color: var(--neon-red);
@@ -147,13 +147,13 @@
             text-transform: uppercase;
         }
 
-        .exit-button:hover {
+        .logout-button:hover {
             background: rgba(255, 49, 49, 0.2);
             box-shadow: 0 0 15px var(--neon-red);
         }
 
         /* ============================================== */
-        /* MARCADOR SENTINEL EYE (para el mapa)         */
+        /* MARCADOR SENTINEL EYE */
         /* ============================================== */
         .sentinel-eye-container {
             position: relative;
@@ -172,7 +172,6 @@
             animation: redPulse 1s infinite;
         }
 
-        /* El haz de luz que escanea (Radar Beam) */
         .scanner-beam {
             position: absolute;
             width: 200%;
@@ -186,10 +185,9 @@
         }
 
         .sentinel-eye-container.alert-active .scanner-beam {
-            animation-duration: 2s; /* Más rápido en alerta */
+            animation-duration: 2s;
         }
 
-        /* Anillos interiores rotatorios */
         .eye-rings {
             position: absolute;
             width: 80%;
@@ -202,10 +200,9 @@
         }
 
         .sentinel-eye-container.alert-active .eye-rings {
-            animation-duration: 3s; /* Más rápido en alerta */
+            animation-duration: 3s;
         }
 
-        /* Punto central */
         .eye-core {
             width: 20px;
             height: 20px;
@@ -216,7 +213,6 @@
             transition: all 0.3s;
         }
 
-        /* Animaciones */
         @keyframes rotateScan {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -227,14 +223,12 @@
             to { transform: rotate(0deg); }
         }
 
-        /* Pulso de alerta (Red Pulse) */
         @keyframes redPulse {
             0% { filter: drop-shadow(0 0 0px 0px rgba(255, 0, 0, 0.7)); }
             70% { filter: drop-shadow(0 0 0px 20px rgba(255, 0, 0, 0)); }
             100% { filter: drop-shadow(0 0 0px 0px rgba(255, 0, 0, 0)); }
         }
 
-        /* ============================================== */
         /* MAPA */
         #map {
             position: fixed;
@@ -245,7 +239,7 @@
             z-index: 1;
         }
 
-        /* ONDAS DE RADAR (fondo, no el marcador) */
+        /* ONDAS DE RADAR */
         .radar-wave {
             position: absolute;
             top: 50%;
@@ -552,8 +546,8 @@
             color: var(--neon-cyan);
         }
 
-        /* REGISTRO */
-        #pantalla-registro {
+        /* PANTALLA DE AUTENTICACIÓN */
+        #pantalla-auth {
             position: fixed;
             top: 0;
             left: 0;
@@ -568,7 +562,7 @@
             overflow-y: auto;
         }
 
-        .registro-contenedor {
+        .auth-contenedor {
             max-width: 350px;
             width: 100%;
             background: rgba(0, 5, 10, 0.95);
@@ -582,14 +576,14 @@
             box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
         }
 
-        .registro-logo {
+        .auth-logo {
             display: flex;
             flex-direction: column;
             align-items: center;
             margin-bottom: 20px;
         }
 
-        .registro-logo-img {
+        .auth-logo-img {
             width: 60px;
             height: 60px;
             background: linear-gradient(135deg, var(--neon-cyan), #0066ff);
@@ -605,24 +599,58 @@
             box-shadow: 0 0 20px var(--neon-cyan);
         }
 
-        .registro-logo-img img {
+        .auth-logo-img img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .registro-titulo {
+        .auth-titulo {
             font-size: 1.5rem;
             color: var(--neon-cyan);
             text-shadow: 0 0 10px var(--neon-cyan);
             letter-spacing: 4px;
         }
 
-        .registro-sub {
+        .auth-sub {
             font-size: 0.7rem;
             color: rgba(0, 242, 255, 0.7);
             margin-bottom: 20px;
             letter-spacing: 2px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            clip-path: polygon(
+                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
+                100% 85%, 85% 100%, 15% 100%, 0% 85%
+            );
+        }
+
+        .tab-button.active {
+            background: rgba(0, 242, 255, 0.2);
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+
+        .auth-form {
+            display: block;
+        }
+
+        .auth-form.hidden {
+            display: none;
         }
 
         .form-group {
@@ -709,7 +737,7 @@
             margin: 0;
         }
 
-        .registro-button {
+        .auth-button {
             width: 100%;
             padding: 12px;
             background: transparent;
@@ -725,11 +753,19 @@
                 100% 90%, 97% 100%, 3% 100%, 0% 90%
             );
             transition: all 0.3s;
+            margin-top: 15px;
         }
 
-        .registro-button:hover {
+        .auth-button:hover {
             background: rgba(0, 242, 255, 0.1);
             box-shadow: 0 0 30px var(--neon-cyan);
+        }
+
+        .error-message {
+            color: var(--neon-red);
+            font-size: 0.65rem;
+            margin-top: 10px;
+            text-align: center;
         }
 
         .hidden {
@@ -746,63 +782,92 @@
     <div class="vignette"></div>
     <div class="scanline"></div>
 
-    <!-- REGISTRO -->
-    <div id="pantalla-registro">
-        <div class="registro-contenedor">
-            <div class="registro-logo">
-                <div class="registro-logo-img">
+    <!-- PANTALLA DE AUTENTICACIÓN -->
+    <div id="pantalla-auth">
+        <div class="auth-contenedor">
+            <div class="auth-logo">
+                <div class="auth-logo-img">
                     <img src="logo.png" alt="SMART TECH">
                 </div>
-                <div class="registro-titulo">SENTINEL</div>
-                <div class="registro-sub">SMART TECH</div>
+                <div class="auth-titulo">SENTINEL</div>
+                <div class="auth-sub">SMART TECH</div>
             </div>
             
-            <div class="form-group">
-                <label>NOMBRE COMPLETO</label>
-                <input type="text" id="nombre" placeholder="Ej: JUAN PÉREZ">
+            <!-- Pestañas: REGISTRO / INICIAR SESIÓN -->
+            <div class="tab-buttons">
+                <button class="tab-button active" id="tab-registro" onclick="mostrarFormulario('registro')">REGISTRO</button>
+                <button class="tab-button" id="tab-login" onclick="mostrarFormulario('login')">INGRESAR</button>
             </div>
-            
-            <div class="form-group">
-                <label>DNI</label>
-                <input type="text" id="dni" placeholder="12345678">
-            </div>
-            
-            <div class="form-group">
-                <label>TELÉFONO</label>
-                <input type="text" id="telefono" placeholder="223 555-1234">
-            </div>
-            
-            <div class="form-group">
-                <label>DOMICILIO <span class="label-opcional">(OPCIONAL)</span></label>
-                <input type="text" id="domicilio" placeholder="Av. Luro 1234">
-            </div>
-            
-            <div class="rol-selector">
-                <label>SELECCIONE ROL</label>
-                <div class="rol-opciones">
-                    <div class="rol-opcion civil" onclick="seleccionarRol('civil', '#ffffff')">CIVIL</div>
-                    <div class="rol-opcion patrulla" onclick="seleccionarRol('patrulla', '#00f2ff')">PATRULLA</div>
-                    <div class="rol-opcion delivery" onclick="seleccionarRol('delivery', '#ff3131')">DELIVERY</div>
-                    <div class="rol-opcion emergencia" onclick="seleccionarRol('emergencia', '#39ff14')">EMERGENCIA</div>
-                </div>
-                <input type="hidden" id="rol" value="">
-                <input type="hidden" id="rol-color" value="">
-            </div>
-            
-            <div class="terminos">
-                <input type="checkbox" id="terminos" checked>
-                <label style="display:inline; margin:0;">ACEPTO QUE LAS FALSAS ALERTAS SERÁN DENUNCIADAS</label>
-            </div>
-            
-            <button class="registro-button" onclick="registrar()">REGISTRARME</button>
-        </div>
-    </div>
 
-    <!-- MODAL REGISTRO -->
-    <div id="modal-exito" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--bg-dark); border:2px solid var(--neon-cyan); padding:25px; text-align:center; z-index:20001; display:none; min-width:220px; clip-path: polygon(0% 10%, 5% 0%, 95% 0%, 100% 10%, 100% 90%, 95% 100%, 5% 100%, 0% 90%);">
-        <div style="font-size:2.5rem; color:var(--neon-cyan); margin-bottom:10px;">✓</div>
-        <div style="margin-bottom:15px;">REGISTRO EXITOSO</div>
-        <button class="registro-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
+            <!-- FORMULARIO DE REGISTRO -->
+            <div id="form-registro" class="auth-form">
+                <div class="form-group">
+                    <label>EMAIL</label>
+                    <input type="email" id="reg-email" placeholder="ejemplo@mail.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>CONTRASEÑA</label>
+                    <input type="password" id="reg-password" placeholder="••••••••">
+                </div>
+                
+                <div class="form-group">
+                    <label>NOMBRE COMPLETO</label>
+                    <input type="text" id="reg-nombre" placeholder="JUAN PÉREZ">
+                </div>
+                
+                <div class="form-group">
+                    <label>DNI</label>
+                    <input type="text" id="reg-dni" placeholder="12345678">
+                </div>
+                
+                <div class="form-group">
+                    <label>TELÉFONO</label>
+                    <input type="text" id="reg-telefono" placeholder="223 555-1234">
+                </div>
+                
+                <div class="form-group">
+                    <label>DOMICILIO <span class="label-opcional">(OPCIONAL)</span></label>
+                    <input type="text" id="reg-domicilio" placeholder="Av. Luro 1234">
+                </div>
+                
+                <div class="rol-selector">
+                    <label>ROL</label>
+                    <div class="rol-opciones">
+                        <div class="rol-opcion civil" onclick="seleccionarRolRegistro('civil', '#ffffff')">CIVIL</div>
+                        <div class="rol-opcion patrulla" onclick="seleccionarRolRegistro('patrulla', '#00f2ff')">PATRULLA</div>
+                        <div class="rol-opcion delivery" onclick="seleccionarRolRegistro('delivery', '#ff3131')">DELIVERY</div>
+                        <div class="rol-opcion emergencia" onclick="seleccionarRolRegistro('emergencia', '#39ff14')">EMERGENCIA</div>
+                    </div>
+                    <input type="hidden" id="reg-rol" value="">
+                    <input type="hidden" id="reg-rol-color" value="">
+                </div>
+                
+                <div class="terminos">
+                    <input type="checkbox" id="reg-terminos" checked>
+                    <label style="display:inline; margin:0;">ACEPTO QUE LAS FALSAS ALERTAS SERÁN DENUNCIADAS</label>
+                </div>
+                
+                <button class="auth-button" onclick="registrarUsuario()">REGISTRARME</button>
+                <div id="reg-error" class="error-message"></div>
+            </div>
+
+            <!-- FORMULARIO DE INICIO DE SESIÓN -->
+            <div id="form-login" class="auth-form hidden">
+                <div class="form-group">
+                    <label>EMAIL</label>
+                    <input type="email" id="login-email" placeholder="ejemplo@mail.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>CONTRASEÑA</label>
+                    <input type="password" id="login-password" placeholder="••••••••">
+                </div>
+                
+                <button class="auth-button" onclick="iniciarSesion()">INGRESAR</button>
+                <div id="login-error" class="error-message"></div>
+            </div>
+        </div>
     </div>
 
     <!-- PRINCIPAL -->
@@ -822,7 +887,7 @@
                     <span class="online-dot"></span>
                     <span>ONLINE</span>
                 </div>
-                <button class="exit-button" onclick="salirApp()">SALIR</button>
+                <button class="logout-button" onclick="cerrarSesion()">CERRAR SESIÓN</button>
             </div>
         </header>
 
@@ -830,7 +895,7 @@
 
         <!-- UNIDAD -->
         <div class="unit-bar">
-            <span>UNID: <span id="unid">ALPHA-7</span></span>
+            <span>UNID: <span id="unid">--</span></span>
         </div>
 
         <!-- VISOR DE CÁMARA -->
@@ -907,8 +972,26 @@
         let rolSeleccionado = '';
         let colorSeleccionado = '';
 
-        function seleccionarRol(rol, color) {
-            document.querySelectorAll('.rol-opcion').forEach(el => {
+        // ==============================================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ==============================================
+        
+        function mostrarFormulario(tipo) {
+            if (tipo === 'registro') {
+                document.getElementById('form-registro').classList.remove('hidden');
+                document.getElementById('form-login').classList.add('hidden');
+                document.getElementById('tab-registro').classList.add('active');
+                document.getElementById('tab-login').classList.remove('active');
+            } else {
+                document.getElementById('form-registro').classList.add('hidden');
+                document.getElementById('form-login').classList.remove('hidden');
+                document.getElementById('tab-registro').classList.remove('active');
+                document.getElementById('tab-login').classList.add('active');
+            }
+        }
+
+        function seleccionarRolRegistro(rol, color) {
+            document.querySelectorAll('#form-registro .rol-opcion').forEach(el => {
                 el.classList.remove('selected');
             });
             
@@ -917,92 +1000,141 @@
             rolSeleccionado = rol;
             colorSeleccionado = color;
             
-            document.getElementById('rol').value = rol;
-            document.getElementById('rol-color').value = color;
+            document.getElementById('reg-rol').value = rol;
+            document.getElementById('reg-rol-color').value = color;
         }
 
-        async function registrar() {
-            const nombre = document.getElementById('nombre').value.trim();
-            const dni = document.getElementById('dni').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
-            const domicilio = document.getElementById('domicilio').value.trim();
-            const terminos = document.getElementById('terminos').checked;
+        async function registrarUsuario() {
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+            const nombre = document.getElementById('reg-nombre').value.trim();
+            const dni = document.getElementById('reg-dni').value.trim();
+            const telefono = document.getElementById('reg-telefono').value.trim();
+            const domicilio = document.getElementById('reg-domicilio').value.trim();
+            const terminos = document.getElementById('reg-terminos').checked;
 
-            if (!nombre || !dni || !telefono) {
-                alert("COMPLETE NOMBRE, DNI Y TELÉFONO");
+            // Validaciones
+            if (!email || !password || !nombre || !dni || !telefono) {
+                document.getElementById('reg-error').textContent = "COMPLETE TODOS LOS CAMPOS OBLIGATORIOS";
                 return;
             }
 
             if (!rolSeleccionado) {
-                alert("SELECCIONE UN ROL");
+                document.getElementById('reg-error').textContent = "SELECCIONE UN ROL";
                 return;
             }
 
             if (!terminos) {
-                alert("DEBE ACEPTAR LOS TÉRMINOS");
+                document.getElementById('reg-error').textContent = "DEBE ACEPTAR LOS TÉRMINOS";
                 return;
             }
 
-            const usuario = {
-                nombre: nombre,
-                dni: dni,
-                telefono: telefono,
-                domicilio: domicilio || null,
-                rol: rolSeleccionado,
-                color: colorSeleccionado,
-                fecha_registro: new Date().toISOString(),
-                id_unico: 'USR-' + dni + '-' + Date.now().toString().slice(-4)
-            };
-
             try {
-                const { error } = await _supabase
-                    .from('ciudadanos')
-                    .insert(usuario);
+                // 1. Registrar en Supabase Auth
+                const { data, error } = await _supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            nombre: nombre,
+                            dni: dni,
+                            telefono: telefono,
+                            domicilio: domicilio || '',
+                            rol: rolSeleccionado,
+                            color: colorSeleccionado
+                        }
+                    }
+                });
 
                 if (error) throw error;
 
-                localStorage.setItem('usuario_activo', JSON.stringify(usuario));
-                usuarioActual = usuario;
-                
-                document.getElementById('modal-exito').style.display = 'block';
-                document.getElementById('unid').textContent = usuario.id_unico;
+                // El trigger insertará automáticamente en ciudadanos
+                // Solo esperamos un momento para que el trigger haga su trabajo
+                setTimeout(() => {
+                    document.getElementById('pantalla-auth').style.display = 'none';
+                    document.getElementById('pantalla-principal').style.display = 'block';
+                    iniciarApp(data.user);
+                }, 1000);
 
             } catch (error) {
                 console.error(error);
-                if (error.code === '23505') {
-                    alert("ESTE DNI YA ESTÁ REGISTRADO. USE OTRO DNI.");
+                if (error.message.includes('already registered')) {
+                    document.getElementById('reg-error').textContent = "ESTE EMAIL YA ESTÁ REGISTRADO";
                 } else {
-                    alert("ERROR EN EL REGISTRO. INTENTE DE NUEVO.");
+                    document.getElementById('reg-error').textContent = "ERROR: " + error.message;
                 }
             }
         }
 
-        function cerrarModalRegistro() {
-            document.getElementById('modal-exito').style.display = 'none';
-            document.getElementById('pantalla-registro').style.display = 'none';
-            document.getElementById('pantalla-principal').style.display = 'block';
-            iniciarApp();
-        }
+        async function iniciarSesion() {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value.trim();
 
-        function verificarRegistro() {
-            const guardado = localStorage.getItem('usuario_activo');
-            if (guardado) {
-                usuarioActual = JSON.parse(guardado);
-                document.getElementById('unid').textContent = usuarioActual.id_unico;
-                document.getElementById('pantalla-registro').style.display = 'none';
+            if (!email || !password) {
+                document.getElementById('login-error').textContent = "COMPLETE EMAIL Y CONTRASEÑA";
+                return;
+            }
+
+            try {
+                const { data, error } = await _supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                // Obtener datos del usuario desde la tabla ciudadanos
+                const { data: ciudadano, error: dbError } = await _supabase
+                    .from('ciudadanos')
+                    .select('*')
+                    .eq('id_usuario', data.user.id)
+                    .single();
+
+                if (dbError) throw dbError;
+
+                usuarioActual = ciudadano;
+                document.getElementById('unid').textContent = ciudadano.id_unico;
+                document.getElementById('pantalla-auth').style.display = 'none';
                 document.getElementById('pantalla-principal').style.display = 'block';
                 iniciarApp();
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('login-error').textContent = "EMAIL O CONTRASEÑA INCORRECTOS";
             }
         }
 
-        function salirApp() {
-            if (confirm('¿SALIR DE LA APLICACIÓN?')) {
-                window.close();
-                setTimeout(() => {
-                    alert("CIERRE ESTA PESTAÑA MANUALMENTE");
-                }, 500);
+        async function verificarSesion() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            
+            if (session) {
+                // Hay sesión activa, obtener datos del ciudadano
+                const { data: ciudadano, error } = await _supabase
+                    .from('ciudadanos')
+                    .select('*')
+                    .eq('id_usuario', session.user.id)
+                    .single();
+
+                if (!error && ciudadano) {
+                    usuarioActual = ciudadano;
+                    document.getElementById('unid').textContent = ciudadano.id_unico;
+                    document.getElementById('pantalla-auth').style.display = 'none';
+                    document.getElementById('pantalla-principal').style.display = 'block';
+                    iniciarApp();
+                }
             }
         }
+
+        async function cerrarSesion() {
+            const { error } = await _supabase.auth.signOut();
+            if (!error) {
+                window.location.reload();
+            }
+        }
+
+        // ==============================================
+        // FUNCIONES DE LA APP PRINCIPAL
+        // ==============================================
 
         function iniciarApp() {
             mapa = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 16);
@@ -1033,7 +1165,6 @@
                         `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
                     
                     if (!marcador) {
-                        // Crear el contenido HTML del marcador personalizado
                         const markerHtml = `
                             <div class="sentinel-eye-container ${alertaActiva ? 'alert-active' : ''}" id="user-marker">
                                 <div class="scanner-beam"></div>
@@ -1042,12 +1173,11 @@
                             </div>
                         `;
                         
-                        // Crear el icono con L.divIcon
                         const userIcon = L.divIcon({
                             html: markerHtml,
-                            className: '', // Vacío para que no añada clases extra
+                            className: '',
                             iconSize: [100, 100],
-                            iconAnchor: [50, 50] // Centro del icono en la posición GPS
+                            iconAnchor: [50, 50]
                         });
                         
                         marcador = L.marker([latitude, longitude], {
@@ -1129,7 +1259,7 @@
         }
 
         async function subirVideo() {
-            if (!fragmentosVideo.length || !ubicacionActual) return;
+            if (!fragmentosVideo.length || !ubicacionActual || !usuarioActual) return;
             
             try {
                 const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
@@ -1139,7 +1269,7 @@
         }
 
         async function activarAlerta() {
-            if (alertaActiva || !ubicacionActual) return;
+            if (alertaActiva || !ubicacionActual || !usuarioActual) return;
             
             await activarCamara();
 
@@ -1160,7 +1290,6 @@
                 await _supabase.from('alertas').insert(alerta);
                 alertaActiva = true;
                 
-                // Activar modo alerta en el marcador
                 const markerElement = document.getElementById('user-marker');
                 if (markerElement) {
                     markerElement.classList.add('alert-active');
@@ -1181,7 +1310,6 @@
                 alertaActiva = false;
                 detenerCamara();
                 
-                // Desactivar modo alerta en el marcador
                 const markerElement = document.getElementById('user-marker');
                 if (markerElement) {
                     markerElement.classList.remove('alert-active');
@@ -1191,7 +1319,8 @@
             }
         }
 
-        verificarRegistro();
+        // Iniciar verificando si hay sesión activa
+        verificarSesion();
     </script>
 </body>
 </html>
