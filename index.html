@@ -22,7 +22,7 @@
         }
 
         :root {
-            --neon-cyan: #00ffff;
+            --neon-cyan: #00f2ff;
             --neon-red: #ff3131;
             --neon-green: #39ff14;
             --civil-white: #ffffff;
@@ -150,83 +150,6 @@
         .logout-button:hover {
             background: rgba(255, 49, 49, 0.2);
             box-shadow: 0 0 15px var(--neon-red);
-        }
-
-        /* ============================================== */
-        /* MARCADOR SENTINEL EYE */
-        /* ============================================== */
-        .sentinel-eye-container {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            filter: drop-shadow(0 0 15px currentColor);
-            color: var(--neon-cyan);
-            transition: color 0.3s ease;
-        }
-
-        .sentinel-eye-container.alert-active {
-            color: var(--neon-red);
-            animation: redPulse 1s infinite;
-        }
-
-        .scanner-beam {
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(from 0deg, currentColor, transparent 60deg);
-            border-radius: 50%;
-            animation: rotateScan 4s linear infinite;
-            pointer-events: none;
-            z-index: 1;
-            opacity: 0.5;
-        }
-
-        .sentinel-eye-container.alert-active .scanner-beam {
-            animation-duration: 2s;
-        }
-
-        .eye-rings {
-            position: absolute;
-            width: 80%;
-            height: 80%;
-            border: 2px dashed currentColor;
-            border-radius: 50%;
-            animation: rotateReverse 6s linear infinite;
-            box-shadow: 0 0 15px currentColor;
-            z-index: 2;
-        }
-
-        .sentinel-eye-container.alert-active .eye-rings {
-            animation-duration: 3s;
-        }
-
-        .eye-core {
-            width: 20px;
-            height: 20px;
-            background: currentColor;
-            border-radius: 50%;
-            z-index: 3;
-            box-shadow: 0 0 20px currentColor;
-            transition: all 0.3s;
-        }
-
-        @keyframes rotateScan {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes rotateReverse {
-            from { transform: rotate(360deg); }
-            to { transform: rotate(0deg); }
-        }
-
-        @keyframes redPulse {
-            0% { filter: drop-shadow(0 0 0px 0px rgba(255, 0, 0, 0.7)); }
-            70% { filter: drop-shadow(0 0 0px 20px rgba(255, 0, 0, 0)); }
-            100% { filter: drop-shadow(0 0 0px 0px rgba(255, 0, 0, 0)); }
         }
 
         /* MAPA */
@@ -771,6 +694,12 @@
         .hidden {
             display: none !important;
         }
+
+        /* MARCADOR SIMPLE (círculo con glow) */
+        .simple-marker {
+            filter: drop-shadow(0 0 8px var(--neon-cyan)) 
+                    drop-shadow(0 0 15px var(--neon-cyan));
+        }
     </style>
 </head>
 <body>
@@ -1049,7 +978,6 @@
                 if (error) throw error;
 
                 // El trigger insertará automáticamente en ciudadanos
-                // Solo esperamos un momento para que el trigger haga su trabajo
                 setTimeout(() => {
                     document.getElementById('pantalla-auth').style.display = 'none';
                     document.getElementById('pantalla-principal').style.display = 'block';
@@ -1165,24 +1093,14 @@
                         `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
                     
                     if (!marcador) {
-                        const markerHtml = `
-                            <div class="sentinel-eye-container ${alertaActiva ? 'alert-active' : ''}" id="user-marker">
-                                <div class="scanner-beam"></div>
-                                <div class="eye-rings"></div>
-                                <div class="eye-core"></div>
-                            </div>
-                        `;
-                        
-                        const userIcon = L.divIcon({
-                            html: markerHtml,
-                            className: '',
-                            iconSize: [100, 100],
-                            iconAnchor: [50, 50]
-                        });
-                        
-                        marcador = L.marker([latitude, longitude], {
-                            icon: userIcon,
-                            zIndexOffset: 1000
+                        // Marcador simple (círculo con glow)
+                        marcador = L.circleMarker([latitude, longitude], {
+                            radius: 12,
+                            color: usuarioActual ? usuarioActual.color : '#00f2ff',
+                            weight: 3,
+                            fillColor: usuarioActual ? usuarioActual.color : '#00f2ff',
+                            fillOpacity: 0.3,
+                            className: 'simple-marker'
                         }).addTo(mapa);
                         
                         mapa.setView([latitude, longitude], 17);
@@ -1290,11 +1208,6 @@
                 await _supabase.from('alertas').insert(alerta);
                 alertaActiva = true;
                 
-                const markerElement = document.getElementById('user-marker');
-                if (markerElement) {
-                    markerElement.classList.add('alert-active');
-                }
-                
                 document.getElementById('modal-text').innerHTML = 
                     '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
                 document.getElementById('alert-modal').style.display = 'flex';
@@ -1309,12 +1222,6 @@
             if (confirm('¿CANCELAR ALERTA?')) {
                 alertaActiva = false;
                 detenerCamara();
-                
-                const markerElement = document.getElementById('user-marker');
-                if (markerElement) {
-                    markerElement.classList.remove('alert-active');
-                }
-                
                 cerrarModal();
             }
         }
