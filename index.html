@@ -130,7 +130,7 @@
             50% { opacity: 0.3; }
         }
 
-        /* BOTÓN SALIR (ahora cierra la app, no la sesión) */
+        /* BOTÓN SALIR (cierra la app, no la sesión) */
         .exit-button {
             background: rgba(255, 49, 49, 0.1);
             border: 1px solid var(--neon-red);
@@ -152,6 +152,103 @@
             box-shadow: 0 0 15px var(--neon-red);
         }
 
+        /* ============================================== */
+        /* COMPONENTE SENTINEL EYE (OJO TÁCTICO)        */
+        /* ============================================== */
+        .sentinel-eye-container {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 100px;
+            z-index: 2000;
+            pointer-events: none; /* Para que no interfiera con clicks */
+        }
+
+        .sentinel-eye {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px currentColor);
+            transition: all 0.3s ease;
+            color: var(--neon-cyan); /* Color por defecto */
+        }
+
+        .sentinel-eye.alert-mode {
+            color: var(--neon-red);
+            animation: pulse-glitch 0.5s infinite alternate;
+        }
+
+        @keyframes pulse-glitch {
+            0% { filter: drop-shadow(0 0 5px currentColor); }
+            100% { filter: drop-shadow(0 0 15px currentColor) drop-shadow(0 0 5px red); }
+        }
+
+        /* Forma almendrada exterior */
+        .eye-outer {
+            stroke: currentColor;
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        /* Círculos concéntricos (iris) */
+        .eye-circle {
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 0.8;
+        }
+
+        .eye-circle-1 {
+            stroke-dasharray: 2 3;
+            opacity: 0.6;
+        }
+
+        .eye-circle-2 {
+            stroke-dasharray: 4 5;
+            opacity: 0.4;
+        }
+
+        .eye-circle-3 {
+            stroke-dasharray: none; /* Sólido */
+            opacity: 0.8;
+            transform-origin: center;
+            animation: rotateCircle 8s linear infinite;
+        }
+
+        .sentinel-eye.alert-mode .eye-circle-3 {
+            animation-duration: 4s; /* Duplica velocidad */
+        }
+
+        @keyframes rotateCircle {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Haz de escaneo */
+        .scan-beam {
+            fill: url(#beamGradient);
+            filter: blur(2px);
+            opacity: 0.8;
+            animation: scanMove 3s linear infinite;
+        }
+
+        .sentinel-eye.alert-mode .scan-beam {
+            animation-duration: 1.5s;
+        }
+
+        @keyframes scanMove {
+            0% { y: 20; }
+            100% { y: 80; }
+        }
+
+        /* Pupila central */
+        .pupil {
+            fill: currentColor;
+            filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 12px currentColor);
+            transition: all 0.3s;
+        }
+
+        /* ============================================== */
         /* MAPA */
         #map {
             position: fixed;
@@ -234,7 +331,7 @@
         /* UNIDAD */
         .unit-bar {
             position: fixed;
-            top: 80px;
+            top: 200px; /* Ajustado para no tapar el ojo */
             left: 15px;
             background: rgba(0, 5, 10, 0.6);
             backdrop-filter: blur(5px);
@@ -746,6 +843,39 @@
             </div>
         </header>
 
+        <!-- ============================================== -->
+        <!-- COMPONENTE SENTINEL EYE (OJO TÁCTICO)        -->
+        <!-- ============================================== -->
+        <div class="sentinel-eye-container">
+            <div class="sentinel-eye" id="sentinelEye">
+                <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+                    <!-- Gradiente para el haz de escaneo -->
+                    <defs>
+                        <linearGradient id="beamGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="currentColor" stop-opacity="0" />
+                            <stop offset="40%" stop-color="currentColor" stop-opacity="1" />
+                            <stop offset="60%" stop-color="currentColor" stop-opacity="1" />
+                            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Forma almendrada exterior (elipse) -->
+                    <ellipse cx="50" cy="50" rx="40" ry="25" class="eye-outer" />
+
+                    <!-- Círculos concéntricos interiores (iris) -->
+                    <circle cx="50" cy="50" r="15" class="eye-circle eye-circle-1" />
+                    <circle cx="50" cy="50" r="20" class="eye-circle eye-circle-2" />
+                    <circle cx="50" cy="50" r="25" class="eye-circle eye-circle-3" />
+
+                    <!-- Haz de escaneo (línea horizontal animada) -->
+                    <rect x="20" y="20" width="60" height="4" class="scan-beam" />
+
+                    <!-- Pupila central -->
+                    <circle cx="50" cy="50" r="5" class="pupil" />
+                </svg>
+            </div>
+        </div>
+
         <div id="map"></div>
 
         <!-- UNIDAD -->
@@ -916,13 +1046,8 @@
         }
 
         function salirApp() {
-            // Esto cierra la pestaña o ventana actual (si fue abierta por script)
-            // En la mayoría de navegadores modernos, solo funciona si la ventana fue abierta por JS
-            // Pero al menos intentamos cerrar la app
             if (confirm('¿SALIR DE LA APLICACIÓN?')) {
-                // Intentar cerrar la ventana
                 window.close();
-                // Si no funciona, mostramos un mensaje
                 setTimeout(() => {
                     alert("CIERRE ESTA PESTAÑA MANUALMENTE");
                 }, 500);
@@ -1074,6 +1199,9 @@
                 await _supabase.from('alertas').insert(alerta);
                 alertaActiva = true;
                 
+                // Activar modo alerta en el ojo
+                document.getElementById('sentinelEye').classList.add('alert-mode');
+                
                 document.getElementById('modal-text').innerHTML = 
                     '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
                 document.getElementById('alert-modal').style.display = 'flex';
@@ -1088,6 +1216,7 @@
             if (confirm('¿CANCELAR ALERTA?')) {
                 alertaActiva = false;
                 detenerCamara();
+                document.getElementById('sentinelEye').classList.remove('alert-mode');
                 cerrarModal();
             }
         }
