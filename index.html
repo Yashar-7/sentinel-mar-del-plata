@@ -1187,33 +1187,52 @@
         }
 
         async function activarAlerta() {
-            if (alertaActiva || !ubicacionActual || !usuarioActual) return;
-            
-            await activarCamara();
+    console.log('1. Intentando activar alerta');
+    console.log('2. alertaActiva:', alertaActiva);
+    console.log('3. ubicacionActual:', ubicacionActual);
+    console.log('4. usuarioActual:', usuarioActual);
+    
+    if (alertaActiva || !ubicacionActual || !usuarioActual) {
+        console.log('5. ❌ Condiciones no cumplidas');
+        return;
+    }
+    
+    console.log('6. Activando cámara...');
+    await activarCamara();
 
-            const alerta = {
-                unidad_id: usuarioActual.id_unico,
-                nombre: usuarioActual.nombre,
-                dni: usuarioActual.dni,
-                telefono: usuarioActual.telefono,
-                rol: usuarioActual.rol,
-                lat: ubicacionActual.lat,
-                lng: ubicacionActual.lng,
-                timestamp: new Date().toISOString(),
-                bateria: document.getElementById('battery').textContent,
-                activa: true
-            };
+    const alerta = {
+        unidad_id: usuarioActual.id_unico,
+        nombre: usuarioActual.nombre,
+        dni: usuarioActual.dni,
+        telefono: usuarioActual.telefono,
+        rol: usuarioActual.rol,
+        lat: ubicacionActual.lat,
+        lng: ubicacionActual.lng,
+        timestamp: new Date().toISOString(),
+        bateria: document.getElementById('battery').textContent,
+        activa: true
+    };
+    
+    console.log('7. Alerta a insertar:', alerta);
 
-            try {
-                await _supabase.from('alertas').insert(alerta);
-                alertaActiva = true;
-                
-                document.getElementById('modal-text').innerHTML = 
-                    '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
-                document.getElementById('alert-modal').style.display = 'flex';
-            } catch (error) {}
-        }
-
+    try {
+        console.log('8. Enviando a Supabase...');
+        const { data, error } = await _supabase
+            .from('alertas')
+            .insert(alerta);
+        
+        console.log('9. Respuesta:', { data, error });
+        
+        if (error) throw error;
+        
+        console.log('10. ✅ Alerta insertada correctamente');
+        
+        // El resto del código...
+        
+    } catch (error) {
+        console.log('11. ❌ Error en el catch:', error);
+    }
+}
         function cerrarModal() {
             document.getElementById('alert-modal').style.display = 'none';
         }
