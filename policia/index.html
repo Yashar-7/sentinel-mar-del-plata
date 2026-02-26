@@ -2,208 +2,178 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL | CENTRO DE MANDO TÁCTICO</title>
-    
+    <title>SENTINEL | TACTICAL COMMAND CENTER</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;500&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
         :root {
-            --cian-glow: #00f2ff;
-            --cian-dark: #006666;
+            --cian-pure: #00f2ff;
+            --cian-glow: rgba(0, 242, 255, 0.6);
+            --bg-obsidian: #000b0e;
+            --panel-glass: rgba(0, 15, 20, 0.9);
             --alert-red: #ff003c;
-            --bg-obsidian: #00080a;
-            --glass-ui: rgba(0, 20, 30, 0.85);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            background: var(--bg-obsidian);
-            color: var(--cian-glow);
-            font-family: 'JetBrains Mono', monospace;
-            height: 100vh; overflow: hidden;
+        body, html { 
+            margin: 0; padding: 0; height: 100%; 
+            background: var(--bg-obsidian); color: var(--cian-pure);
+            font-family: 'Share Tech Mono', monospace; overflow: hidden;
             text-transform: uppercase;
         }
 
-        /* --- FILTRO CINEMATOGRÁFICO --- */
-        body::after {
-            content: ""; position: fixed; inset: 0;
-            background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.9) 100%);
-            pointer-events: none; z-index: 2000;
-        }
-
-        /* --- MAPA ESTILO CIAN TRON --- */
-        #map {
-            position: absolute; inset: 0; z-index: 1;
-            filter: invert(100%) hue-rotate(150deg) brightness(0.5) contrast(1.4) saturate(1.2);
+        /* --- MAPA CON PROCESAMIENTO CIAN --- */
+        #map-wrapper {
+            position: absolute; inset: 0;
             background: var(--bg-obsidian);
+            z-index: 1;
+        }
+        
+        #map { 
+            height: 100%; width: 100%; 
+            filter: invert(100%) hue-rotate(170deg) brightness(0.55) contrast(1.3) saturate(1.8);
         }
 
-        /* --- INTERFAZ SUPERIOR --- */
+        /* --- EFECTO DE ESCANEO DE RADAR (LÍNEA HORIZONTAL) --- */
+        .radar-scan {
+            position: absolute; width: 100%; height: 100px;
+            background: linear-gradient(to bottom, transparent, var(--cian-glow), transparent);
+            z-index: 5; pointer-events: none; opacity: 0.3;
+            animation: scanLine 4s linear infinite;
+        }
+
+        @keyframes scanLine {
+            0% { top: -100px; }
+            100% { top: 100%; }
+        }
+
+        /* --- CAPA DE VIÑETA PARA PROFUNDIDAD --- */
+        .vignette {
+            position: absolute; inset: 0; z-index: 6; pointer-events: none;
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.8) 100%);
+        }
+
+        /* --- HEADER TÁCTICO --- */
         header {
-            position: fixed; top: 0; width: 100%; padding: 30px;
-            display: flex; justify-content: space-between; align-items: center;
-            z-index: 2500; pointer-events: none;
+            position: absolute; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 30px; display: flex; justify-content: space-between;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
         }
 
-        .brand-box {
-            border-left: 4px solid var(--cian-glow);
-            padding-left: 20px; pointer-events: all;
+        .main-title h1 {
+            font-family: 'Orbitron', sans-serif; font-size: 2.8rem; letter-spacing: 12px;
+            margin: 0; text-shadow: 0 0 25px var(--cian-pure); color: #fff;
         }
 
-        .brand-box h1 {
-            font-family: 'Orbitron', sans-serif; font-size: 2.2rem;
-            letter-spacing: 8px; text-shadow: 0 0 20px var(--cian-glow);
-        }
-
-        /* --- PANEL DE INCIDENTES HOLOGRÁFICO --- */
+        /* --- PANEL DE INCIDENTES (ESTILO CINEMATOGRÁFICO) --- */
         .side-panel {
-            position: fixed; right: 30px; top: 120px; width: 380px;
-            background: var(--glass-ui); border: 1px solid var(--cian-dark);
-            backdrop-filter: blur(15px); z-index: 1000; padding: 25px;
-            box-shadow: 0 0 40px rgba(0, 242, 255, 0.1);
-            clip-path: polygon(0 0, 100% 0, 100% 95%, 95% 100%, 0 100%);
+            position: absolute; right: 30px; top: 130px; width: 380px;
+            background: var(--panel-glass); border: 2px solid var(--cian-pure);
+            padding: 25px; z-index: 100;
+            clip-path: polygon(0 0, 100% 0, 100% 92%, 92% 100%, 0 100%);
+            backdrop-filter: blur(10px);
         }
 
         .incident-card {
-            background: rgba(0, 242, 255, 0.03); border: 1px solid rgba(0, 242, 255, 0.1);
-            padding: 15px; margin-bottom: 15px; cursor: pointer; transition: 0.4s;
+            border: 1px solid var(--cian-glow); padding: 15px; margin-top: 15px;
+            background: rgba(0, 242, 255, 0.05); border-left: 5px solid var(--alert-red);
+            animation: glitch 5s infinite;
         }
 
-        .incident-card.critical {
-            border-left: 4px solid var(--alert-red);
-            animation: alertPulse 2s infinite;
-        }
-
-        @keyframes alertPulse {
-            0% { box-shadow: 0 0 0px var(--alert-red); }
-            50% { box-shadow: 0 0 15px var(--alert-red); }
-            100% { box-shadow: 0 0 0px var(--alert-red); }
-        }
-
-        /* --- MODO PERSECUCIÓN (INFERIOR) --- */
-        .bottom-ui {
-            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 40px; z-index: 1000;
+        /* --- FOOTER DE MODO PERSECUCIÓN --- */
+        .pursuit-footer {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 40px; z-index: 100;
         }
 
         .hex-data {
-            background: var(--glass-ui); padding: 20px 40px;
-            border: 1px solid var(--cian-glow);
+            background: var(--panel-glass); border: 2px solid var(--cian-pure);
+            padding: 15px 40px; min-width: 220px; text-align: center;
             clip-path: polygon(15% 0, 85% 0, 100% 50%, 85% 100%, 15% 100%, 0 50%);
-            text-align: center; min-width: 200px;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);
         }
 
-        .hex-data label { font-size: 10px; opacity: 0.6; letter-spacing: 2px; }
-        .hex-data div { font-family: 'Orbitron'; font-size: 1.5rem; color: #fff; }
-
-        /* --- ICONO SENTINEL --- */
-        .sentinel-eye {
-            width: 80px; height: 80px; position: relative;
-            animation: eyeFloat 4s ease-in-out infinite;
-        }
-
-        @keyframes eyeFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .ring {
-            position: absolute; inset: 0; border: 2px solid var(--cian-glow);
-            border-radius: 50%; border-right-color: transparent;
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .hex-data div { font-family: 'Orbitron'; font-size: 1.8rem; color: #fff; text-shadow: 0 0 10px var(--cian-pure); }
+        .hex-data label { font-size: 10px; opacity: 0.7; letter-spacing: 2px; }
 
     </style>
 </head>
 <body>
 
     <header>
-        <div style="display: flex; align-items: center; gap: 20px;">
-            <div class="sentinel-eye">
-                <div class="ring"></div>
-                <div class="ring" style="inset: 10px; animation-direction: reverse; opacity: 0.5;"></div>
-                <div style="position: absolute; inset: 30px; background: var(--cian-glow); border-radius: 50%; box-shadow: 0 0 20px var(--cian-glow);"></div>
-            </div>
-            <div class="brand-box">
-                <h1>SENTINEL</h1>
-                <p style="letter-spacing: 4px; font-size: 12px;">CENTRO DE MANDO TÁCTICO // MAR DEL PLATA</p>
-            </div>
+        <div class="main-title">
+            <h1>SENTINEL</h1>
+            <div style="color: var(--cian-pure); font-size: 0.8rem; letter-spacing: 4px;">CENTRO DE MANDO TÁCTICO // SECTOR MDQ</div>
         </div>
         <div style="text-align: right;">
-            <div id="clock" style="font-family: 'Orbitron'; font-size: 2.5rem;">00:00:00</div>
-            <p style="color: var(--cian-glow); opacity: 0.8;">SISTEMA OPERATIVO : ACTIVO</p>
+            <div id="reloj" style="font-family: 'Orbitron'; font-size: 2.5rem; color: #fff;">00:00:00</div>
+            <div style="color: #00ff9f; font-size: 0.9rem; letter-spacing: 2px;">● ENLACE SATELITAL SEGURO ACTIVO</div>
         </div>
     </header>
 
-    <div id="map"></div>
+    <div id="map-wrapper">
+        <div id="map"></div>
+        <div class="radar-scan"></div>
+        <div class="vignette"></div>
+    </div>
 
     <div class="side-panel">
-        <h2 style="font-family: 'Orbitron'; font-size: 14px; margin-bottom: 20px; border-bottom: 1px solid var(--cian-dark);">PANEL DE INCIDENTES</h2>
-        <div id="feed">
-            <div class="incident-card critical">
-                <div style="color: var(--alert-red); font-size: 11px;">⚠️ ALERTA CRÍTICA detectada</div>
-                <div style="font-size: 16px; margin: 5px 0; font-weight: bold;">SAQUEO / ROBO EN PROGRESO</div>
-                <div style="font-size: 10px; opacity: 0.7;">UBICACIÓN: AV. COLÓN Y MITRE</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                    <span style="color: var(--cian-glow);">[ VER CÁMARA ]</span>
-                    <span style="color: var(--cian-glow);">[ UNIDADES: 02 ]</span>
-                </div>
-            </div>
+        <div style="font-family: 'Orbitron'; font-size: 1rem; border-bottom: 2px solid var(--cian-pure); padding-bottom: 10px;">
+            ALERTAS EN TIEMPO REAL
+        </div>
+        <div class="incident-card">
+            <div style="font-size: 0.7rem; color: var(--alert-red); font-weight: bold;">[ EMERGENCIA NIVEL 5 ]</div>
+            <div style="font-size: 1.2rem; margin: 8px 0; color: #fff;">ROBO EN PROGRESO</div>
+            <div style="font-size: 0.8rem; opacity: 0.8;">LOCALIZACIÓN: AV. COLÓN & INDEPENDENCIA</div>
+            <div style="margin-top: 10px; font-size: 0.7rem; color: var(--cian-pure);">UNIDADES CERCANAS: 02 (ZONA 4)</div>
         </div>
     </div>
 
-    <div class="bottom-ui">
+    <div class="pursuit-footer">
         <div class="hex-data">
-            <label>MODO PERSECUCIÓN</label>
-            <div id="speed">15.60%</div>
-            <span style="font-size: 9px;">PROBABILIDAD ÉXITO</span>
+            <label>PROBABILIDAD</label>
+            <div id="prob">94.8%</div>
         </div>
         <div class="hex-data" style="border-color: var(--alert-red);">
-            <label>TIEMPO RESPUESTA</label>
-            <div>02:45 min</div>
-            <span style="font-size: 9px; color: var(--alert-red);">CRÍTICO</span>
+            <label>RESPUESTA ESTIMADA</label>
+            <div id="time">03:12</div>
         </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        function initMap() {
-            // El mapa se inicializa centrado en Mar del Plata
-            const map = L.map('map', { zoomControl: false }).setView([-38.0055, -57.5426], 15);
-            
-            // Capa de mapa oscura estilo Tron
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+        // Inicializar Mapa centrado en Mar del Plata
+        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 15);
 
-            // Reloj en tiempo real
-            setInterval(() => {
-                document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-            }, 1000);
+        // Capa base oscura (CartoDB)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-            // Simular punto cian resaltado (Patrulla Smart Tech)
-            const unit = L.circleMarker([-38.0055, -57.5426], {
-                radius: 10, color: '#00f2ff', fillColor: '#00f2ff', fillOpacity: 0.8, weight: 5
-            }).addTo(map);
+        // Reloj
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('reloj').innerText = now.toLocaleTimeString('es-AR', { hour12: false });
+        }, 1000);
 
-            // Añadir resplandor al marcador
-            unit.bindTooltip("UNIDAD K-9", { permanent: true, direction: 'right', className: 'tactical-label' });
-        }
+        // Marcador Táctico Resaltado
+        const tacticalMarker = L.divIcon({
+            className: 'marker-cian',
+            html: `
+                <div style="position:relative;">
+                    <div style="position:absolute; width:20px; height:20px; background:var(--cian-pure); border-radius:50%; box-shadow:0 0 25px var(--cian-pure); border:2px solid #fff;"></div>
+                    <div style="position:absolute; width:40px; height:40px; border:1px solid var(--cian-pure); border-radius:50%; top:-10px; left:-10px; animation: pulse 2s infinite;"></div>
+                </div>
+            `,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
 
-        window.onload = initMap;
+        L.marker([-38.0055, -57.5426], {icon: tacticalMarker}).addTo(map);
     </script>
 
     <style>
-        .tactical-label {
-            background: rgba(0, 242, 255, 0.1) !important;
-            border: 1px solid var(--cian-glow) !important;
-            color: var(--cian-glow) !important;
-            font-family: 'Share Tech Mono', monospace !important;
-            text-transform: uppercase;
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(2.5); opacity: 0; }
         }
     </style>
 </body>
