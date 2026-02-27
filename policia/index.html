@@ -1186,7 +1186,26 @@
             setTimeout(() => {
                 agregarTerminal('✅ RUTA CALCULADA: ETA 02:30 MIN', 'normal');
             }, 1500);
+
+            // Función para actualizar el progreso del video
+function actualizarProgresoVideo(alerta) {
+    const placeholder = document.getElementById('videoPlaceholder');
+    const progresoDiv = document.getElementById('videoProgreso');
+    const miniatura = document.getElementById('videoMiniatura');
+    
+    if (alerta.video_progreso) {
+        progresoDiv.innerHTML = `[ VIDEO: ${alerta.video_progreso * 10}% COMPLETADO ]`;
+        
+        if (alerta.video_url) {
+            // Si ya hay URL, mostramos un frame (simulado)
+            miniatura.style.display = 'block';
+            miniatura.innerHTML = `<img src="${alerta.video_url}" style="width:100%; height:100%; object-fit:cover;">`;
+            progresoDiv.style.display = 'none';
         }
+    } else {
+        progresoDiv.innerHTML = '[ ESPERANDO VIDEO... ]';
+    }
+}
 
         // ==============================================
         // INICIO
