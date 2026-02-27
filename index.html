@@ -1300,31 +1300,33 @@
             };
 
             try {
-                console.log('3. Enviando a Supabase...');
-                const { data, error } = await _supabase
-                    .from('alertas')
-                    .insert(alerta)
-                    .select();
-                
-                if (error) throw error;
-                
-                if (data && data[0]) {
-                    alertaId = data[0].id;
-                    console.log('4. ✅ Alerta creada con ID:', alertaId);
-                }
-                
-                alertaActiva = true;
-                
-                document.getElementById('modal-text').innerHTML = 
-                    '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
-                document.getElementById('alert-modal').style.display = 'flex';
-                
-                actualizarTerminal('🚨 ALERTA ENVIADA');
-                
-            } catch (error) {
-                console.log('5. ❌ Error:', error);
-                actualizarTerminal('❌ ERROR AL ENVIAR');
-            }
+    console.log('3. Enviando a Supabase...');
+    const { data, error } = await _supabase
+        .from('alertas')
+        .insert(alerta)
+        .select('id');  // ← ESTO ES CLAVE
+    
+    if (error) throw error;
+    
+    if (data && data[0] && data[0].id) {
+        alertaId = data[0].id;
+        console.log('4. ✅ Alerta creada con ID:', alertaId);
+    } else {
+        console.log('4. ❌ No se recibió el ID');
+    }
+    
+    alertaActiva = true;
+    
+    document.getElementById('modal-text').innerHTML = 
+        '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
+    document.getElementById('alert-modal').style.display = 'flex';
+    
+    actualizarTerminal('🚨 ALERTA ENVIADA');
+    
+} catch (error) {
+    console.log('5. ❌ Error:', error);
+    actualizarTerminal('❌ ERROR AL ENVIAR');
+}
         }
 
         function cerrarModal() {
