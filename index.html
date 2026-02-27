@@ -896,8 +896,10 @@
         let streamCamara = null;
         let mediaRecorder = null;
         let fragmentosVideo = [];
+        let fragmentosSubidos = [];
         let alertaActiva = false;
         let grabacionActiva = false;
+        let alertaId = null; // Para guardar el ID de la alerta actual
         let rolSeleccionado = '';
         let colorSeleccionado = '';
 
@@ -942,7 +944,6 @@
             const domicilio = document.getElementById('reg-domicilio').value.trim();
             const terminos = document.getElementById('reg-terminos').checked;
 
-            // Validaciones
             if (!email || !password || !nombre || !dni || !telefono) {
                 document.getElementById('reg-error').textContent = "COMPLETE TODOS LOS CAMPOS OBLIGATORIOS";
                 return;
@@ -959,7 +960,6 @@
             }
 
             try {
-                // 1. Registrar en Supabase Auth
                 const { data, error } = await _supabase.auth.signUp({
                     email: email,
                     password: password,
@@ -977,7 +977,6 @@
 
                 if (error) throw error;
 
-                // El trigger insertará automáticamente en ciudadanos
                 setTimeout(() => {
                     document.getElementById('pantalla-auth').style.display = 'none';
                     document.getElementById('pantalla-principal').style.display = 'block';
@@ -1011,7 +1010,6 @@
 
                 if (error) throw error;
 
-                // Obtener datos del usuario desde la tabla ciudadanos
                 const { data: ciudadano, error: dbError } = await _supabase
                     .from('ciudadanos')
                     .select('*')
@@ -1036,7 +1034,6 @@
             const { data: { session } } = await _supabase.auth.getSession();
             
             if (session) {
-                // Hay sesión activa, obtener datos del ciudadano
                 const { data: ciudadano, error } = await _supabase
                     .from('ciudadanos')
                     .select('*')
@@ -1093,7 +1090,6 @@
                         `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
                     
                     if (!marcador) {
-                        // Marcador simple (círculo con glow)
                         marcador = L.circleMarker([latitude, longitude], {
                             radius: 12,
                             color: usuarioActual ? usuarioActual.color : '#00f2ff',
@@ -1133,211 +1129,204 @@
             document.getElementById('battery').textContent = `${Math.floor(nivel)}%`;
         }
 
-       async function activarCamara() {
-    try {
-        streamCamara = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                facingMode: "environment",
-                width: { ideal: 640 },
-                height: { ideal: 480 }
-            }, 
-            audio: true 
-        });
-        
-        const video = document.getElementById('video-feed');
-        video.srcObject = streamCamara;
-        video.style.display = 'block';
-        
-        document.getElementById('camera-placeholder').style.display = 'none';
-        document.getElementById('rec-indicator').classList.remove('hidden');
-        
-        grabacionActiva = true;
-        fragmentosVideo = [];
-        
-        // Configurar grabación por fragmentos de 10 segundos
-        const options = {
-            mimeType: 'video/webm; codecs=vp9,opus' // Mejor compresión
-        };
-        
-        // Intentar con diferentes codecs si el primero falla
-        try {
-            mediaRecorder = new MediaRecorder(streamCamara, options);
-        } catch (e) {
-            console.log('Codec VP9 no soportado, usando default');
-            mediaRecorder = new MediaRecorder(streamCamara);
+        function actualizarTerminal(mensaje) {
+            const terminal = document.getElementById('terminal');
+            if (!terminal) return;
+            
+            // Mantener solo las últimas 6 líneas
+            const lineas = terminal.children;
+            if (lineas.length > 6) {
+                terminal.removeChild(lineas[0]);
+            }
+            
+            const nuevaLinea = document.createElement('div');
+            nuevaLinea.className = 'console-line';
+            nuevaLinea.innerHTML = `<span class="console-prompt">></span> <span>${mensaje}</span>`;
+            terminal.appendChild(nuevaLinea);
         }
-        
-        // Cada vez que hay un fragmento disponible
-        mediaRecorder.ondataavailable = async (e) => {
-            if (e.data.size > 0) {
-                fragmentosVideo.push(e.data);
+
+        // ==============================================
+        // FUNCIONES DE CÁMARA Y VIDEO
+        // ==============================================
+
+        async function activarCamara() {
+            try {
+                streamCamara = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }, 
+                    audio: true 
+                });
                 
-                // Si tenemos varios fragmentos, subimos el primero mientras se graba el resto
-                if (fragmentosVideo.length === 1) {
-                    // Subir inmediatamente el primer fragmento
-                    await subirFragmento(1);
-                } else if (fragmentosVideo.length > 1) {
-                    // Subir fragmentos adicionales
-                    await subirFragmento(fragmentosVideo.length);
-                }
+                const video = document.getElementById('video-feed');
+                video.srcObject = streamCamara;
+                video.style.display = 'block';
                 
-                // Actualizar progreso en terminal
-                actualizarTerminal(`📹 Fragmento ${fragmentosVideo.length} grabado`);
+                document.getElementById('camera-placeholder').style.display = 'none';
+                document.getElementById('rec-indicator').classList.remove('hidden');
+                document.getElementById('video-status').textContent = 'ON';
+                
+                grabacionActiva = true;
+                fragmentosVideo = [];
+                fragmentosSubidos = [];
+                
+                // Intentar con codecs óptimos
+                let options = { mimeType: 'video/webm' };
+                try {
+                    if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) {
+                        options = { mimeType: 'video/webm; codecs=vp9,opus' };
+                    } else if (MediaRecorder.isTypeSupported('video/webm; codecs=vp8,opus')) {
+                        options = { mimeType: 'video/webm; codecs=vp8,opus' };
+                    }
+                } catch (e) {}
+                
+                mediaRecorder = new MediaRecorder(streamCamara, options);
+                
+                mediaRecorder.ondataavailable = async (e) => {
+                    if (e.data.size > 0) {
+                        fragmentosVideo.push(e.data);
+                        const numFragmento = fragmentosVideo.length;
+                        
+                        actualizarTerminal(`📹 Fragmento ${numFragmento} grabado`);
+                        
+                        // Actualizar progreso en Supabase
+                        if (alertaId) {
+                            await _supabase
+                                .from('alertas')
+                                .update({ video_progreso: numFragmento * 10 })
+                                .eq('id', alertaId);
+                        }
+                        
+                        // Subir este fragmento
+                        await subirFragmento(numFragmento);
+                    }
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    actualizarTerminal('📹 Grabación finalizada');
+                    
+                    if (streamCamara) {
+                        streamCamara.getTracks().forEach(t => t.stop());
+                        streamCamara = null;
+                    }
+                    
+                    document.getElementById('video-feed').style.display = 'none';
+                    document.getElementById('camera-placeholder').style.display = 'flex';
+                    document.getElementById('rec-indicator').classList.add('hidden');
+                    document.getElementById('video-status').textContent = 'OFF';
+                    
+                    grabacionActiva = false;
+                };
+                
+                // Grabar en fragmentos de 10 segundos
+                mediaRecorder.start(10000);
+                
+                // Detener después de 2 minutos
+                setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                }, 120000);
+                
+            } catch (error) {
+                console.log('Error cámara:', error);
+                actualizarTerminal('❌ ERROR CÁMARA');
             }
-        };
-        
-        mediaRecorder.onstop = async () => {
-            // Subir cualquier fragmento pendiente
-            for (let i = 0; i < fragmentosVideo.length; i++) {
-                if (!fragmentosSubidos.includes(i)) {
-                    await subirFragmento(i + 1);
-                }
-            }
-            
-            actualizarTerminal('📹 Grabación finalizada');
-            
-            if (streamCamara) {
-                streamCamara.getTracks().forEach(t => t.stop());
-                streamCamara = null;
-            }
-            
-            document.getElementById('video-feed').style.display = 'none';
-            document.getElementById('camera-placeholder').style.display = 'flex';
-            document.getElementById('rec-indicator').classList.add('hidden');
-            document.getElementById('video-status').textContent = 'OFF';
-            
-            grabacionActiva = false;
-        };
-        
-        // Grabar en fragmentos de 10 segundos
-        mediaRecorder.start(10000); // 10 segundos por fragmento
-        
-        // Detener automáticamente después de 2 minutos
-        setTimeout(() => {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
-        }, 120000);
-        
-    } catch (error) {
-        console.log('Error cámara:', error);
-        actualizarTerminal('❌ ERROR CÁMARA');
-    }
-}
-
-        let fragmentosSubidos = [];
-
-async function subirFragmento(numeroFragmento) {
-    if (!fragmentosVideo[numeroFragmento - 1] || !ubicacionActual || !usuarioActual) return;
-    
-    try {
-        const fragmento = fragmentosVideo[numeroFragmento - 1];
-        const nombre = `alerta_${usuarioActual.id_unico}_${Date.now()}_f${numeroFragmento}.webm`;
-        
-        // Subir a Supabase Storage
-        const { data, error } = await _supabase.storage
-            .from('videos-alertas')
-            .upload(nombre, fragmento);
-        
-        if (error) throw error;
-        
-        // Marcar como subido
-        fragmentosSubidos.push(numeroFragmento - 1);
-        
-        // Obtener URL pública
-        const { data: urlData } = _supabase.storage
-            .from('videos-alertas')
-            .getPublicUrl(nombre);
-        
-        // Actualizar la alerta con el nuevo fragmento (si es el primero)
-        if (numeroFragmento === 1) {
-            await _supabase
-                .from('alertas')
-                .update({ video_url: urlData.publicUrl, video_progreso: fragmentosVideo.length })
-                .eq('unidad_id', usuarioActual.id_unico)
-                .eq('activa', true);
-        } else {
-            // Para fragmentos posteriores, actualizar solo el progreso
-            await _supabase
-                .from('alertas')
-                .update({ video_progreso: fragmentosVideo.length })
-                .eq('unidad_id', usuarioActual.id_unico)
-                .eq('activa', true);
-        }
-        
-        actualizarTerminal(`📤 Fragmento ${numeroFragmento} subido`);
-        
-    } catch (error) {
-        console.log('Error subiendo fragmento:', error);
-    }
-}
-        function detenerCamara() {
-            if (mediaRecorder?.state === 'recording') mediaRecorder.stop();
-            streamCamara?.getTracks().forEach(t => t.stop());
-            
-            document.getElementById('video-feed').style.display = 'none';
-            document.getElementById('camera-placeholder').style.display = 'flex';
-            document.getElementById('rec-indicator').classList.add('hidden');
-            grabacionActiva = false;
         }
 
-        async function subirVideo() {
-            if (!fragmentosVideo.length || !ubicacionActual || !usuarioActual) return;
+        async function subirFragmento(numeroFragmento) {
+            if (!fragmentosVideo[numeroFragmento - 1] || !ubicacionActual || !usuarioActual || !alertaId) return;
             
             try {
-                const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
-                const nombre = `alerta_${usuarioActual.id_unico}_${Date.now()}.webm`;
-                await _supabase.storage.from('videos-alertas').upload(nombre, blob);
-            } catch (error) {}
+                const fragmento = fragmentosVideo[numeroFragmento - 1];
+                const nombre = `alerta_${usuarioActual.id_unico}_${Date.now()}_f${numeroFragmento}.webm`;
+                
+                const { error } = await _supabase.storage
+                    .from('videos-alertas')
+                    .upload(nombre, fragmento);
+                
+                if (error) throw error;
+                
+                fragmentosSubidos.push(numeroFragmento);
+                
+                const { data: urlData } = _supabase.storage
+                    .from('videos-alertas')
+                    .getPublicUrl(nombre);
+                
+                // Actualizar la alerta con la URL del primer fragmento
+                if (numeroFragmento === 1) {
+                    await _supabase
+                        .from('alertas')
+                        .update({ video_url: urlData.publicUrl })
+                        .eq('id', alertaId);
+                }
+                
+                actualizarTerminal(`📤 Fragmento ${numeroFragmento} subido`);
+                
+            } catch (error) {
+                console.log('Error subiendo fragmento:', error);
+            }
         }
 
+        // ==============================================
+        // FUNCIÓN DE ALERTA
+        // ==============================================
+
         async function activarAlerta() {
-    console.log('1. Intentando activar alerta');
-    console.log('2. alertaActiva:', alertaActiva);
-    console.log('3. ubicacionActual:', ubicacionActual);
-    console.log('4. usuarioActual:', usuarioActual);
-    
-    if (alertaActiva || !ubicacionActual || !usuarioActual) {
-        console.log('5. ❌ Condiciones no cumplidas');
-        return;
-    }
-    
-    console.log('6. Activando cámara...');
-    await activarCamara();
+            console.log('1. Intentando activar alerta');
+            
+            if (alertaActiva || !ubicacionActual || !usuarioActual) {
+                console.log('❌ Condiciones no cumplidas');
+                return;
+            }
+            
+            console.log('2. Activando cámara...');
+            await activarCamara();
 
-    const alerta = {
-        unidad_id: usuarioActual.id_unico,
-        nombre: usuarioActual.nombre,
-        dni: usuarioActual.dni,
-        telefono: usuarioActual.telefono,
-        rol: usuarioActual.rol,
-        lat: ubicacionActual.lat,
-        lng: ubicacionActual.lng,
-        timestamp: new Date().toISOString(),
-        bateria: document.getElementById('battery').textContent,
-        activa: true
-    };
-    
-    console.log('7. Alerta a insertar:', alerta);
+            const alerta = {
+                unidad_id: usuarioActual.id_unico,
+                nombre: usuarioActual.nombre,
+                dni: usuarioActual.dni,
+                telefono: usuarioActual.telefono,
+                rol: usuarioActual.rol,
+                lat: ubicacionActual.lat,
+                lng: ubicacionActual.lng,
+                timestamp: new Date().toISOString(),
+                bateria: document.getElementById('battery').textContent,
+                activa: true,
+                video_progreso: 0
+            };
 
-    try {
-        console.log('8. Enviando a Supabase...');
-        const { data, error } = await _supabase
-            .from('alertas')
-            .insert(alerta);
-        
-        console.log('9. Respuesta:', { data, error });
-        
-        if (error) throw error;
-        
-        console.log('10. ✅ Alerta insertada correctamente');
-        
-        // El resto del código...
-        
-    } catch (error) {
-        console.log('11. ❌ Error en el catch:', error);
-    }
-}
+            try {
+                console.log('3. Enviando a Supabase...');
+                const { data, error } = await _supabase
+                    .from('alertas')
+                    .insert(alerta)
+                    .select();
+                
+                if (error) throw error;
+                
+                if (data && data[0]) {
+                    alertaId = data[0].id;
+                    console.log('4. ✅ Alerta creada con ID:', alertaId);
+                }
+                
+                alertaActiva = true;
+                
+                document.getElementById('modal-text').innerHTML = 
+                    '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
+                document.getElementById('alert-modal').style.display = 'flex';
+                
+                actualizarTerminal('🚨 ALERTA ENVIADA');
+                
+            } catch (error) {
+                console.log('5. ❌ Error:', error);
+                actualizarTerminal('❌ ERROR AL ENVIAR');
+            }
+        }
+
         function cerrarModal() {
             document.getElementById('alert-modal').style.display = 'none';
         }
@@ -1345,7 +1334,9 @@ async function subirFragmento(numeroFragmento) {
         function cancelarAlerta() {
             if (confirm('¿CANCELAR ALERTA?')) {
                 alertaActiva = false;
-                detenerCamara();
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
                 cerrarModal();
             }
         }
