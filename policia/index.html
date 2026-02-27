@@ -924,9 +924,9 @@
         </div>
         
         <div class="video-placeholder" id="videoPlaceholder">
-    <div id="videoProgreso">[ ESPERANDO VIDEO... ]</div>
-    <div id="videoMiniatura" style="display:none; width:100%; height:100%; object-fit:cover;"></div>
-    </div>
+            <div id="videoProgreso">[ ESPERANDO VIDEO... ]</div>
+            <div id="videoMiniatura" style="display:none; width:100%; height:100%; object-fit:cover;"></div>
+        </div>
         
         <div style="text-align: center; margin: 10px 0; font-size: 0.65rem; color: var(--secondary);" id="modalTimestamp">
             --
@@ -1163,8 +1163,8 @@
             const fecha = new Date(alerta.timestamp);
             document.getElementById('modalTimestamp').textContent = fecha.toLocaleString();
             
-            document.getElementById('videoPlaceholder').innerHTML = 
-                `[ VIDEO EN PROCESO - ${Math.floor(Math.random() * 50 + 50)}% ]`;
+            // Actualizar progreso del video si existe
+            actualizarProgresoVideo(alerta);
 
             document.getElementById('alert-modal').style.display = 'block';
             
@@ -1186,26 +1186,32 @@
             setTimeout(() => {
                 agregarTerminal('✅ RUTA CALCULADA: ETA 02:30 MIN', 'normal');
             }, 1500);
-
-            // Función para actualizar el progreso del video
-function actualizarProgresoVideo(alerta) {
-    const placeholder = document.getElementById('videoPlaceholder');
-    const progresoDiv = document.getElementById('videoProgreso');
-    const miniatura = document.getElementById('videoMiniatura');
-    
-    if (alerta.video_progreso) {
-        progresoDiv.innerHTML = `[ VIDEO: ${alerta.video_progreso * 10}% COMPLETADO ]`;
-        
-        if (alerta.video_url) {
-            // Si ya hay URL, mostramos un frame (simulado)
-            miniatura.style.display = 'block';
-            miniatura.innerHTML = `<img src="${alerta.video_url}" style="width:100%; height:100%; object-fit:cover;">`;
-            progresoDiv.style.display = 'none';
         }
-    } else {
-        progresoDiv.innerHTML = '[ ESPERANDO VIDEO... ]';
-    }
-}
+
+        // ==============================================
+        // FUNCIÓN PARA ACTUALIZAR PROGRESO DE VIDEO
+        // ==============================================
+        function actualizarProgresoVideo(alerta) {
+            const progresoDiv = document.getElementById('videoProgreso');
+            const miniatura = document.getElementById('videoMiniatura');
+            
+            if (alerta.video_progreso) {
+                progresoDiv.innerHTML = `[ VIDEO: ${alerta.video_progreso * 10}% COMPLETADO ]`;
+                
+                if (alerta.video_url) {
+                    miniatura.style.display = 'block';
+                    miniatura.innerHTML = `<img src="${alerta.video_url}" style="width:100%; height:100%; object-fit:cover;">`;
+                    progresoDiv.style.display = 'none';
+                } else {
+                    miniatura.style.display = 'none';
+                    progresoDiv.style.display = 'block';
+                }
+            } else {
+                progresoDiv.innerHTML = '[ ESPERANDO VIDEO... ]';
+                miniatura.style.display = 'none';
+                progresoDiv.style.display = 'block';
+            }
+        }
 
         // ==============================================
         // INICIO
