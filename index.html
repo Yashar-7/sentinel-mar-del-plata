@@ -1149,92 +1149,132 @@
         // FUNCIONES DE CÁMARA Y VIDEO
         // ==============================================
 
-        async function activarCamara() {
-            try {
-                streamCamara = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    }, 
-                    audio: true 
-                });
-                
-                const video = document.getElementById('video-feed');
-                video.srcObject = streamCamara;
-                video.style.display = 'block';
-                
-                document.getElementById('camera-placeholder').style.display = 'none';
-                document.getElementById('rec-indicator').classList.remove('hidden');
-                document.getElementById('video-status').textContent = 'ON';
-                
-                grabacionActiva = true;
-                fragmentosVideo = [];
-                fragmentosSubidos = [];
-                
-                // Intentar con codecs óptimos
-                let options = { mimeType: 'video/webm' };
-                try {
-                    if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) {
-                        options = { mimeType: 'video/webm; codecs=vp9,opus' };
-                    } else if (MediaRecorder.isTypeSupported('video/webm; codecs=vp8,opus')) {
-                        options = { mimeType: 'video/webm; codecs=vp8,opus' };
-                    }
-                } catch (e) {}
-                
-                mediaRecorder = new MediaRecorder(streamCamara, options);
-                
-                mediaRecorder.ondataavailable = async (e) => {
-                    if (e.data.size > 0) {
-                        fragmentosVideo.push(e.data);
-                        const numFragmento = fragmentosVideo.length;
-                        
-                        actualizarTerminal(`📹 Fragmento ${numFragmento} grabado`);
-                        
-                        // Actualizar progreso en Supabase
-                        if (alertaId) {
-                            await _supabase
-                                .from('alertas')
-                                .update({ video_progreso: numFragmento * 10 })
-                                .eq('id', alertaId);
-                        }
-                        
-                        // Subir este fragmento
-                        await subirFragmento(numFragmento);
-                    }
-                };
-                
-                mediaRecorder.onstop = async () => {
-                    actualizarTerminal('📹 Grabación finalizada');
-                    
-                    if (streamCamara) {
-                        streamCamara.getTracks().forEach(t => t.stop());
-                        streamCamara = null;
-                    }
-                    
-                    document.getElementById('video-feed').style.display = 'none';
-                    document.getElementById('camera-placeholder').style.display = 'flex';
-                    document.getElementById('rec-indicator').classList.add('hidden');
-                    document.getElementById('video-status').textContent = 'OFF';
-                    
-                    grabacionActiva = false;
-                };
-                
-                // Grabar en fragmentos de 10 segundos
-                mediaRecorder.start(10000);
-                
-                // Detener después de 2 minutos
-                setTimeout(() => {
-                    if (mediaRecorder && mediaRecorder.state === 'recording') {
-                        mediaRecorder.stop();
-                    }
-                }, 120000);
-                
-            } catch (error) {
-                console.log('Error cámara:', error);
-                actualizarTerminal('❌ ERROR CÁMARA');
-            }
+       async function activarCamara() {
+    console.log("🎥 Iniciando sistema de captura de video...");
+    try {
+        streamCamara = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: "environment",
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            }, 
+            audio: true 
+        });
+        
+        // VERIFICACIONES DE SEGURIDAD - Evitan errores de null
+        const video = document.getElementById('video-feed');
+        const placeholder = document.getElementById('camera-placeholder');
+        const recIndicator = document.getElementById('rec-indicator');
+        const videoStatus = document.getElementById('video-status');
+        
+        if (video) {
+            video.srcObject = streamCamara;
+            video.style.display = 'block';
+        } else {
+            console.warn("⚠️ Elemento video-feed no encontrado");
         }
+        
+        if (placeholder) placeholder.style.display = 'none';
+        if (recIndicator) recIndicator.classList.remove('hidden');
+        if (videoStatus) videoStatus.textContent = 'ON';
+        
+        grabacionActiva = true;
+        fragmentosVideo = [];
+        fragmentosSubidos = [];
+        
+        // Configuración de Codecs
+        let options = { mimeType: 'video/webm' };
+        try {
+            if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) {
+                options = { mimeType: 'video/webm; codecs=vp9,opus' };
+                console.log("✅ Usando codec VP9");
+            } else if (MediaRecorder.isTypeSupported('video/webm; codecs=vp8,opus')) {
+                options = { mimeType: 'video/webm; codecs=vp8,opus' };
+                console.log("✅ Usando codec VP8");
+            }
+        } catch (e) {
+            console.warn("⚠️ Codecs preferidos no soportados, usando defecto.");
+        }
+        
+        mediaRecorder = new MediaRecorder(streamCamara, options);
+        
+        mediaRecorder.ondataavailable = async (e) => {
+            if (e.data.size > 0) {
+                fragmentosVideo.push(e.data);
+                const numFragmento = fragmentosVideo.length;
+                
+                console.log(`📹 Fragmento ${numFragmento} capturado (${(e.data.size / 1024).toFixed(2)} KB)`);
+                actualizarTerminal(`📹 Fragmento ${numFragmento} grabado`);
+                
+                // PRIMERO: Subir el fragmento (lo más importante)
+                if (alertaId) {
+                    console.log(`📤 Enviando fragmento ${numFragmento} a Storage...`);
+                    await subirFragmento(numFragmento);
+                    
+                    // DESPUÉS: Actualizar progreso
+                    await _supabase
+                        .from('alertas')
+                        .update({ video_progreso: numFragmento * 10 })
+                        .eq('id', alertaId);
+                    
+                    console.log(`📊 Progreso actualizado: ${numFragmento * 10}%`);
+                } else {
+                    console.error("🚨 Error: No hay alertaId vinculado. Guardando fragmento localmente.");
+                    // Guardamos localmente por si aparece alertaId después
+                }
+            }
+        };
+        
+        mediaRecorder.onstop = async () => {
+            console.log("⏹️ Grabación finalizada. Total fragmentos:", fragmentosVideo.length);
+            actualizarTerminal('📹 Grabación finalizada');
+            
+            // Verificar que todos los fragmentos se subieron
+            if (fragmentosSubidos.length < fragmentosVideo.length) {
+                console.warn(`⚠️ Quedan ${fragmentosVideo.length - fragmentosSubidos.length} fragmentos por subir`);
+                // Intentar subir los pendientes
+                for (let i = 0; i < fragmentosVideo.length; i++) {
+                    if (!fragmentosSubidos.includes(i + 1)) {
+                        await subirFragmento(i + 1);
+                    }
+                }
+            }
+            
+            if (streamCamara) {
+                streamCamara.getTracks().forEach(t => t.stop());
+                streamCamara = null;
+            }
+            
+            // Actualizar interfaz con verificaciones
+            if (video) video.style.display = 'none';
+            if (placeholder) placeholder.style.display = 'flex';
+            if (recIndicator) recIndicator.classList.add('hidden');
+            if (videoStatus) videoStatus.textContent = 'OFF';
+            
+            grabacionActiva = false;
+        };
+        
+        // Grabar en fragmentos de 10 segundos
+        mediaRecorder.start(10000);
+        console.log("✅ Grabadora iniciada correctamente. Fragmentos cada 10 segundos.");
+        
+        // Detener después de 2 minutos
+        setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                console.log("⏱️ Tiempo máximo alcanzado (2 minutos). Deteniendo grabación.");
+                mediaRecorder.stop();
+            }
+        }, 120000);
+        
+    } catch (error) {
+        console.error('❌ Error crítico en activarCamara:', error);
+        actualizarTerminal('❌ ERROR CÁMARA');
+        
+        // Intentar recuperar interfaz
+        const recIndicator = document.getElementById('rec-indicator');
+        if (recIndicator) recIndicator.classList.add('hidden');
+    }
+}
 
         async function subirFragmento(numeroFragmento) {
     console.log('=================================');
