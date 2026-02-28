@@ -1237,39 +1237,67 @@
         }
 
         async function subirFragmento(numeroFragmento) {
-            if (!fragmentosVideo[numeroFragmento - 1] || !ubicacionActual || !usuarioActual || !alertaId) return;
-            
-            try {
-                const fragmento = fragmentosVideo[numeroFragmento - 1];
-                const nombre = `alerta_${usuarioActual.id_unico}_${Date.now()}_f${numeroFragmento}.webm`;
-                
-                const { error } = await _supabase.storage
-                    .from('videos-alertas')
-                    .upload(nombre, fragmento);
-                
-                if (error) throw error;
-                
-                fragmentosSubidos.push(numeroFragmento);
-                
-                const { data: urlData } = _supabase.storage
-                    .from('videos-alertas')
-                    .getPublicUrl(nombre);
-                
-                // Actualizar la alerta con la URL del primer fragmento
-                if (numeroFragmento === 1) {
-                    await _supabase
-                        .from('alertas')
-                        .update({ video_url: urlData.publicUrl })
-                        .eq('id', alertaId);
-                }
-                
-                actualizarTerminal(`📤 Fragmento ${numeroFragmento} subido`);
-                
-            } catch (error) {
-                console.log('Error subiendo fragmento:', error);
-            }
+    console.log('=================================');
+    console.log(`🔍 INICIO subirFragmento ${numeroFragmento}`);
+    console.log('alertaId:', alertaId);
+    
+    if (!fragmentosVideo[numeroFragmento - 1] || !ubicacionActual || !usuarioActual || !alertaId) {
+        console.log('❌ Condiciones no cumplidas');
+        return;
+    }
+    
+    try {
+        const fragmento = fragmentosVideo[numeroFragmento - 1];
+        const nombre = `alerta_${usuarioActual.id_unico}_${Date.now()}_f${numeroFragmento}.webm`;
+        
+        console.log('📤 Subiendo a Storage:', nombre);
+        
+        const { data: uploadData, error: uploadError } = await _supabase.storage
+            .from('videos-alertas')
+            .upload(nombre, fragmento);
+        
+        if (uploadError) {
+            console.log('❌ Error en Storage:', uploadError);
+            return;
         }
-
+        
+        console.log('✅ Subido a Storage:', uploadData);
+        
+        const { data: urlData } = _supabase.storage
+            .from('videos-alertas')
+            .getPublicUrl(nombre);
+        
+        console.log('🔗 URL generada:', urlData.publicUrl);
+        
+        // ==============================================
+        // ESTA ES LA PARTE CRÍTICA CON LOS NUEVOS LOGS
+        // ==============================================
+        console.log('💾 ANTES DE UPDATE - alertaId:', alertaId);
+        console.log('💾 ANTES DE UPDATE - url a guardar:', urlData.publicUrl);
+        
+        const { data: updateData, error: updateError } = await _supabase
+            .from('alertas')
+            .update({ video_url: urlData.publicUrl })
+            .eq('id', alertaId)
+            .select();
+        
+        console.log('💾 RESPUESTA DEL UPDATE:', { updateData, updateError });
+        
+        if (updateError) {
+            console.log('❌ ERROR ESPECÍFICO DEL UPDATE:', updateError);
+        } else {
+            console.log('✅ UPDATE EXITOSO');
+        }
+        // ==============================================
+        
+        fragmentosSubidos.push(numeroFragmento);
+        actualizarTerminal(`📤 Fragmento ${numeroFragmento} subido`);
+        
+    } catch (error) {
+        console.log('❌ Error general:', error);
+    }
+    console.log('=================================');
+}
         // ==============================================
         // FUNCIÓN DE ALERTA
         // ==============================================
