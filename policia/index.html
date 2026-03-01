@@ -1190,50 +1190,49 @@
         }
 
         function nuevaAlerta(alerta) {
-            if (alertas.some(a => a.id === alerta.id)) return;
-            
-            alertas.unshift(alerta);
-            agregarMarcador(alerta);
-            actualizarListaIncidentes();
-            actualizarEstadisticas();
-            document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
-            
-            // ==============================================
-            // ACTIVAR ALERTA VISUAL INMEDIATA (3 SEGUNDOS)
-            // ==============================================
-            mainContainer.classList.add('dashboard-pulse');
-            
-            setTimeout(() => {
-                mainContainer.classList.remove('dashboard-pulse');
-            }, 3000);
-            
-            // ZOOM AUTOMÁTICO AL LUGAR DEL EVENTO
-            if (mapa && !alerta.cancelada) {
-                mapa.flyTo([alerta.lat, alerta.lng], 18, {
-                    duration: 2,
-                    easeLinearity: 0.5
-                });
-            }
-            
-            // SELECCIONAR AUTOMÁTICAMENTE LA NUEVA ALERTA (después del zoom)
-            setTimeout(() => {
-                if (!alerta.cancelada) {
-                    verDetallePanel(alerta);
-                }
-            }, 500);
-            
-            // Sonido más intenso
-            reproducirAlertaIntenso();
-            
-            // Notificación push
-            if (!alerta.cancelada) {
-                notificarPush('🚨 NUEVA ALERTA', `${alerta.tipo || 'EMERGENCIA'} - ${alerta.nombre}`);
-            }
-            
-            agregarTerminal(`🚨 NUEVA ALERTA ${alerta.tipo || 'EMERGENCIA'}: ${alerta.nombre}`, 'alert');
-            
-            alerta.tiempoInicio = Date.now();
+    if (alertas.some(a => a.id === alerta.id)) return;
+    
+    alertas.unshift(alerta);
+    agregarMarcador(alerta);
+    
+    // Usar aplicarFiltros() en lugar de actualizarListaIncidentes()
+    aplicarFiltros();
+    
+    actualizarEstadisticas();
+    document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
+    
+    // ACTIVAR ALERTA VISUAL INMEDIATA (3 SEGUNDOS)
+    mainContainer.classList.add('dashboard-pulse');
+    
+    setTimeout(() => {
+        mainContainer.classList.remove('dashboard-pulse');
+    }, 3000);
+    
+    // ZOOM AUTOMÁTICO AL LUGAR DEL EVENTO
+    if (mapa && !alerta.cancelada) {
+        mapa.flyTo([alerta.lat, alerta.lng], 18, {
+            duration: 2,
+            easeLinearity: 0.5
+        });
+    }
+    
+    // SELECCIONAR AUTOMÁTICAMENTE LA NUEVA ALERTA
+    setTimeout(() => {
+        if (!alerta.cancelada) {
+            verDetallePanel(alerta);
         }
+    }, 500);
+    
+    reproducirAlertaIntenso();
+    
+    if (!alerta.cancelada) {
+        notificarPush('🚨 NUEVA ALERTA', `${alerta.tipo || 'EMERGENCIA'} - ${alerta.nombre}`);
+    }
+    
+    agregarTerminal(`🚨 NUEVA ALERTA ${alerta.tipo || 'EMERGENCIA'}: ${alerta.nombre}`, 'alert');
+    
+    alerta.tiempoInicio = Date.now();
+}
 
         function reproducirAlertaIntenso() {
             try {
