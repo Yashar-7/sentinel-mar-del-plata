@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL V5.0 | SMART TECH</title>
+    <title>SENTINEL V6.0 | SMART TECH</title>
     
     <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -149,6 +149,31 @@
 
         .logout-button:hover {
             background: rgba(255, 49, 49, 0.2);
+            box-shadow: 0 0 15px var(--neon-red);
+        }
+
+        /* BOTÓN MODO SIGILOSO */
+        .sigiloso-button {
+            background: rgba(255, 49, 49, 0.1);
+            border: 1px solid var(--neon-red);
+            color: var(--neon-red);
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            clip-path: polygon(
+                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
+                100% 85%, 85% 100%, 15% 100%, 0% 85%
+            );
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .sigiloso-button.active {
+            background: rgba(255, 49, 49, 0.3);
             box-shadow: 0 0 15px var(--neon-red);
         }
 
@@ -353,10 +378,6 @@
         .tactical-button:hover {
             background: rgba(0, 242, 255, 0.15);
             transform: scale(1.05);
-        }
-
-        .tactical-button.alert:hover {
-            background: rgba(255, 49, 49, 0.15);
         }
 
         .button-icon {
@@ -799,6 +820,13 @@
         </div>
     </div>
 
+    <!-- MODAL REGISTRO -->
+    <div id="modal-exito" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--bg-dark); border:2px solid var(--neon-cyan); padding:25px; text-align:center; z-index:20001; display:none; min-width:220px; clip-path: polygon(0% 10%, 5% 0%, 95% 0%, 100% 10%, 100% 90%, 95% 100%, 5% 100%, 0% 90%);">
+        <div style="font-size:2.5rem; color:var(--neon-cyan); margin-bottom:10px;">✓</div>
+        <div style="margin-bottom:15px;">REGISTRO EXITOSO</div>
+        <button class="auth-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
+    </div>
+
     <!-- PRINCIPAL -->
     <div id="pantalla-principal" style="display:none;">
         <header>
@@ -816,7 +844,10 @@
                     <span class="online-dot"></span>
                     <span>ONLINE</span>
                 </div>
-                <button class="logout-button" onclick="cerrarSesion()">CERRAR SESIÓN</button>
+                <button class="sigiloso-button" id="btn-sigiloso" onclick="toggleModoSigiloso()" title="MODO SIGILOSO">
+                    🔇
+                </button>
+                <button class="logout-button" onclick="cerrarSesion()">CERRAR</button>
             </div>
         </header>
 
@@ -899,9 +930,15 @@
         let fragmentosSubidos = [];
         let alertaActiva = false;
         let grabacionActiva = false;
-        let alertaId = null; // Para guardar el ID de la alerta actual
+        let alertaId = null;
         let rolSeleccionado = '';
         let colorSeleccionado = '';
+        
+        // ==============================================
+        // NUEVAS VARIABLES
+        // ==============================================
+        let modoSigiloso = false;
+        let intervaloGPS = null;
 
         // ==============================================
         // FUNCIONES DE AUTENTICACIÓN
@@ -991,6 +1028,13 @@
                     document.getElementById('reg-error').textContent = "ERROR: " + error.message;
                 }
             }
+        }
+
+        function cerrarModalRegistro() {
+            document.getElementById('modal-exito').style.display = 'none';
+            document.getElementById('pantalla-auth').style.display = 'none';
+            document.getElementById('pantalla-principal').style.display = 'block';
+            iniciarApp();
         }
 
         async function iniciarSesion() {
@@ -1133,7 +1177,6 @@
             const terminal = document.getElementById('terminal');
             if (!terminal) return;
             
-            // Mantener solo las últimas 6 líneas
             const lineas = terminal.children;
             if (lineas.length > 6) {
                 terminal.removeChild(lineas[0]);
@@ -1146,204 +1189,307 @@
         }
 
         // ==============================================
+        // MODO SIGILOSO
+        // ==============================================
+        function toggleModoSigiloso() {
+            modoSigiloso = !modoSigiloso;
+            
+            const btn = document.getElementById('btn-sigiloso');
+            if (btn) {
+                btn.classList.toggle('active', modoSigiloso);
+                btn.style.backgroundColor = modoSigiloso ? 'rgba(255, 49, 49, 0.3)' : '';
+            }
+            
+            if (modoSigiloso) {
+                console.log('🔇 MODO SIGILOSO ACTIVADO');
+                actualizarTerminal('🔇 MODO SIGILOSO ACTIVADO');
+                
+                const alertBtn = document.getElementById('btn-alerta');
+                if (alertBtn) alertBtn.style.opacity = '0.7';
+            } else {
+                console.log('🔊 MODO SIGILOSO DESACTIVADO');
+                actualizarTerminal('🔊 MODO SIGILOSO DESACTIVADO');
+                
+                const alertBtn = document.getElementById('btn-alerta');
+                if (alertBtn) alertBtn.style.opacity = '1';
+            }
+        }
+
+        // ==============================================
         // FUNCIONES DE CÁMARA Y VIDEO
         // ==============================================
 
-       async function activarCamara() {
-    console.log("🎥 Iniciando sistema de captura de video...");
-    try {
-        streamCamara = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                facingMode: "environment",
-                width: { ideal: 640 },
-                height: { ideal: 480 }
-            }, 
-            audio: true 
-        });
-        
-        // VERIFICACIONES DE SEGURIDAD - Evitan errores de null
-        const video = document.getElementById('video-feed');
-        const placeholder = document.getElementById('camera-placeholder');
-        const recIndicator = document.getElementById('rec-indicator');
-        const videoStatus = document.getElementById('video-status');
-        
-        if (video) {
-            video.srcObject = streamCamara;
-            video.style.display = 'block';
-        } else {
-            console.warn("⚠️ Elemento video-feed no encontrado");
-        }
-        
-        if (placeholder) placeholder.style.display = 'none';
-        if (recIndicator) recIndicator.classList.remove('hidden');
-        if (videoStatus) videoStatus.textContent = 'ON';
-        
-        grabacionActiva = true;
-        fragmentosVideo = [];
-        fragmentosSubidos = [];
-        
-        // Configuración de Codecs
-        let options = { mimeType: 'video/webm' };
-        try {
-            if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) {
-                options = { mimeType: 'video/webm; codecs=vp9,opus' };
-                console.log("✅ Usando codec VP9");
-            } else if (MediaRecorder.isTypeSupported('video/webm; codecs=vp8,opus')) {
-                options = { mimeType: 'video/webm; codecs=vp8,opus' };
-                console.log("✅ Usando codec VP8");
-            }
-        } catch (e) {
-            console.warn("⚠️ Codecs preferidos no soportados, usando defecto.");
-        }
-        
-        mediaRecorder = new MediaRecorder(streamCamara, options);
-        
-        mediaRecorder.ondataavailable = async (e) => {
-            if (e.data.size > 0) {
-                fragmentosVideo.push(e.data);
-                const numFragmento = fragmentosVideo.length;
+        async function activarCamara() {
+            console.log("🎥 Iniciando sistema de captura de video...");
+            try {
+                streamCamara = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }, 
+                    audio: true 
+                });
                 
-                console.log(`📹 Fragmento ${numFragmento} capturado (${(e.data.size / 1024).toFixed(2)} KB)`);
-                actualizarTerminal(`📹 Fragmento ${numFragmento} grabado`);
+                const video = document.getElementById('video-feed');
+                const placeholder = document.getElementById('camera-placeholder');
+                const recIndicator = document.getElementById('rec-indicator');
                 
-                // PRIMERO: Subir el fragmento (lo más importante)
-                if (alertaId) {
-                    console.log(`📤 Enviando fragmento ${numFragmento} a Storage...`);
-                    await subirFragmento(numFragmento);
-                    
-                    // DESPUÉS: Actualizar progreso
-                    await _supabase
-                        .from('alertas')
-                        .update({ video_progreso: numFragmento * 10 })
-                        .eq('id', alertaId);
-                    
-                    console.log(`📊 Progreso actualizado: ${numFragmento * 10}%`);
-                } else {
-                    console.error("🚨 Error: No hay alertaId vinculado. Guardando fragmento localmente.");
-                    // Guardamos localmente por si aparece alertaId después
+                if (video) {
+                    video.srcObject = streamCamara;
+                    video.style.display = 'block';
                 }
-            }
-        };
-        
-        mediaRecorder.onstop = async () => {
-            console.log("⏹️ Grabación finalizada. Total fragmentos:", fragmentosVideo.length);
-            actualizarTerminal('📹 Grabación finalizada');
-            
-            // Verificar que todos los fragmentos se subieron
-            if (fragmentosSubidos.length < fragmentosVideo.length) {
-                console.warn(`⚠️ Quedan ${fragmentosVideo.length - fragmentosSubidos.length} fragmentos por subir`);
-                // Intentar subir los pendientes
-                for (let i = 0; i < fragmentosVideo.length; i++) {
-                    if (!fragmentosSubidos.includes(i + 1)) {
-                        await subirFragmento(i + 1);
+                
+                if (placeholder) placeholder.style.display = 'none';
+                
+                // MODO SIGILOSO: No mostrar indicador de grabación
+                if (!modoSigiloso) {
+                    if (recIndicator) recIndicator.classList.remove('hidden');
+                }
+                
+                grabacionActiva = true;
+                fragmentosVideo = [];
+                fragmentosSubidos = [];
+                
+                // Configuración de Codecs
+                let options = { mimeType: 'video/webm' };
+                try {
+                    if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) {
+                        options = { mimeType: 'video/webm; codecs=vp9,opus' };
+                        console.log("✅ Usando codec VP9");
+                    } else if (MediaRecorder.isTypeSupported('video/webm; codecs=vp8,opus')) {
+                        options = { mimeType: 'video/webm; codecs=vp8,opus' };
+                        console.log("✅ Usando codec VP8");
                     }
+                } catch (e) {
+                    console.warn("⚠️ Codecs preferidos no soportados, usando defecto.");
                 }
+                
+                mediaRecorder = new MediaRecorder(streamCamara, options);
+                
+                mediaRecorder.ondataavailable = async (e) => {
+                    if (e.data.size > 0) {
+                        fragmentosVideo.push(e.data);
+                        const numFragmento = fragmentosVideo.length;
+                        
+                        console.log(`📹 Fragmento ${numFragmento} capturado (${(e.data.size / 1024).toFixed(2)} KB)`);
+                        actualizarTerminal(`📹 Fragmento ${numFragmento} grabado`);
+                        
+                        if (alertaId) {
+                            console.log(`📤 Enviando fragmento ${numFragmento} a Storage...`);
+                            await subirFragmento(numFragmento);
+                            
+                            await _supabase
+                                .from('alertas')
+                                .update({ video_progreso: numFragmento * 10 })
+                                .eq('id', alertaId);
+                            
+                            console.log(`📊 Progreso actualizado: ${numFragmento * 10}%`);
+                        }
+                    }
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    console.log("⏹️ Grabación finalizada. Total fragmentos:", fragmentosVideo.length);
+                    actualizarTerminal('📹 Grabación finalizada');
+                    
+                    if (fragmentosSubidos.length < fragmentosVideo.length) {
+                        console.warn(`⚠️ Quedan ${fragmentosVideo.length - fragmentosSubidos.length} fragmentos por subir`);
+                        for (let i = 0; i < fragmentosVideo.length; i++) {
+                            if (!fragmentosSubidos.includes(i + 1)) {
+                                await subirFragmento(i + 1);
+                            }
+                        }
+                    }
+                    
+                    if (streamCamara) {
+                        streamCamara.getTracks().forEach(t => t.stop());
+                        streamCamara = null;
+                    }
+                    
+                    if (video) video.style.display = 'none';
+                    if (placeholder) placeholder.style.display = 'flex';
+                    if (recIndicator) recIndicator.classList.add('hidden');
+                    
+                    grabacionActiva = false;
+                };
+                
+                // Fragmentos de 1 segundo para baja latencia
+                mediaRecorder.start(1000);
+                console.log("✅ Grabadora iniciada. Fragmentos cada 1 segundo.");
+                
+                // Primer fragmento rápido a los 500ms
+                setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.requestData();
+                        console.log("⚡ Primer fragmento forzado");
+                    }
+                }, 500);
+                
+                setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        console.log("⏱️ Tiempo máximo alcanzado (2 minutos). Deteniendo grabación.");
+                        mediaRecorder.stop();
+                    }
+                }, 120000);
+                
+            } catch (error) {
+                console.error('❌ Error crítico en activarCamara:', error);
+                actualizarTerminal('❌ ERROR CÁMARA');
             }
-            
-            if (streamCamara) {
-                streamCamara.getTracks().forEach(t => t.stop());
-                streamCamara = null;
-            }
-            
-            // Actualizar interfaz con verificaciones
-            if (video) video.style.display = 'none';
-            if (placeholder) placeholder.style.display = 'flex';
-            if (recIndicator) recIndicator.classList.add('hidden');
-            if (videoStatus) videoStatus.textContent = 'OFF';
-            
-            grabacionActiva = false;
-        };
-        
-        // Grabar en fragmentos de 10 segundos
-        mediaRecorder.start(10000);
-        console.log("✅ Grabadora iniciada correctamente. Fragmentos cada 10 segundos.");
-        
-        // Detener después de 2 minutos
-        setTimeout(() => {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                console.log("⏱️ Tiempo máximo alcanzado (2 minutos). Deteniendo grabación.");
-                mediaRecorder.stop();
-            }
-        }, 120000);
-        
-    } catch (error) {
-        console.error('❌ Error crítico en activarCamara:', error);
-        actualizarTerminal('❌ ERROR CÁMARA');
-        
-        // Intentar recuperar interfaz
-        const recIndicator = document.getElementById('rec-indicator');
-        if (recIndicator) recIndicator.classList.add('hidden');
-    }
-}
+        }
 
         async function subirFragmento(numeroFragmento) {
-    console.log('=================================');
-    console.log(`🔍 INICIO subirFragmento ${numeroFragmento}`);
-    console.log('alertaId:', alertaId);
-    
-    if (!fragmentosVideo[numeroFragmento - 1] || !ubicacionActual || !usuarioActual || !alertaId) {
-        console.log('❌ Condiciones no cumplidas');
-        return;
-    }
-    
-    try {
-        const fragmento = fragmentosVideo[numeroFragmento - 1];
-        const nombre = `alerta_${usuarioActual.id_unico}_${Date.now()}_f${numeroFragmento}.webm`;
-        
-        console.log('📤 Subiendo a Storage:', nombre);
-        
-        const { data: uploadData, error: uploadError } = await _supabase.storage
-            .from('videos-alertas')
-            .upload(nombre, fragmento);
-        
-        if (uploadError) {
-            console.log('❌ Error en Storage:', uploadError);
-            return;
+            console.log(`=================================`);
+            console.log(`🔍 INICIO subirFragmento ${numeroFragmento}`);
+            console.log('alertaId:', alertaId);
+            
+            if (!fragmentosVideo[numeroFragmento - 1] || !ubicacionActual || !usuarioActual || !alertaId) {
+                console.log('❌ Condiciones no cumplidas');
+                return;
+            }
+            
+            try {
+                const fragmento = fragmentosVideo[numeroFragmento - 1];
+                const nombre = `alerta_${usuarioActual.id_unico}_${Date.now()}_f${numeroFragmento}.webm`;
+                
+                console.log('📤 Subiendo a Storage:', nombre);
+                
+                const { data: uploadData, error: uploadError } = await _supabase.storage
+                    .from('videos-alertas')
+                    .upload(nombre, fragmento);
+                
+                if (uploadError) {
+                    console.log('❌ Error en Storage:', uploadError);
+                    return;
+                }
+                
+                console.log('✅ Subido a Storage:', uploadData);
+                
+                const { data: urlData } = _supabase.storage
+                    .from('videos-alertas')
+                    .getPublicUrl(nombre);
+                
+                console.log('🔗 URL generada:', urlData.publicUrl);
+                
+                console.log('💾 ANTES DE UPDATE - alertaId:', alertaId);
+                console.log('💾 ANTES DE UPDATE - url a guardar:', urlData.publicUrl);
+                
+                const { data: updateData, error: updateError } = await _supabase
+                    .from('alertas')
+                    .update({ video_url: urlData.publicUrl })
+                    .eq('id', alertaId)
+                    .select();
+                
+                console.log('💾 RESPUESTA DEL UPDATE:', { updateData, updateError });
+                
+                if (updateError) {
+                    console.log('❌ ERROR ESPECÍFICO DEL UPDATE:', updateError);
+                } else {
+                    console.log('✅ UPDATE EXITOSO');
+                }
+                
+                fragmentosSubidos.push(numeroFragmento);
+                actualizarTerminal(`📤 Fragmento ${numeroFragmento} subido`);
+                
+            } catch (error) {
+                console.log('❌ Error general:', error);
+            }
+            console.log('=================================');
         }
-        
-        console.log('✅ Subido a Storage:', uploadData);
-        
-        const { data: urlData } = _supabase.storage
-            .from('videos-alertas')
-            .getPublicUrl(nombre);
-        
-        console.log('🔗 URL generada:', urlData.publicUrl);
-        
+
         // ==============================================
-        // ESTA ES LA PARTE CRÍTICA CON LOS NUEVOS LOGS
+        // NOTIFICAR A PATRULLA MÁS CERCANA (MODELO HÍBRIDO)
         // ==============================================
-        console.log('💾 ANTES DE UPDATE - alertaId:', alertaId);
-        console.log('💾 ANTES DE UPDATE - url a guardar:', urlData.publicUrl);
-        
-        const { data: updateData, error: updateError } = await _supabase
-            .from('alertas')
-            .update({ video_url: urlData.publicUrl })
-            .eq('id', alertaId)
-            .select();
-        
-        console.log('💾 RESPUESTA DEL UPDATE:', { updateData, updateError });
-        
-        if (updateError) {
-            console.log('❌ ERROR ESPECÍFICO DEL UPDATE:', updateError);
-        } else {
-            console.log('✅ UPDATE EXITOSO');
+        async function notificarPatrullaMasCercana(idAlerta, lat, lng) {
+            try {
+                console.log('🚔 Buscando patrulla más cercana...');
+                
+                const { data: unidades, error } = await _supabase
+                    .from('unidades_respuesta')
+                    .select('*')
+                    .eq('estado', 'disponible');
+                
+                if (error) throw error;
+                
+                if (!unidades || unidades.length === 0) {
+                    console.log('⚠️ No hay unidades disponibles');
+                    return;
+                }
+                
+                let unidadCercana = unidades[0];
+                let minDist = Math.hypot(unidades[0].lat - lat, unidades[0].lng - lng);
+                
+                unidades.forEach(u => {
+                    let dist = Math.hypot(u.lat - lat, u.lng - lng);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        unidadCercana = u;
+                    }
+                });
+                
+                console.log(`✅ Patrulla más cercana: ${unidadCercana.codigo} (${minDist.toFixed(2)} km)`);
+                
+                _supabase
+                    .channel(`patrulla-${unidadCercana.id}`)
+                    .send({
+                        type: 'broadcast',
+                        event: 'alerta-inmediata',
+                        payload: { 
+                            alertaId: idAlerta,
+                            lat,
+                            lng,
+                            nombre: usuarioActual.nombre,
+                            rol: usuarioActual.rol,
+                            timestamp: new Date().toISOString()
+                        }
+                    });
+                    
+                await _supabase
+                    .from('alertas')
+                    .update({ 
+                        unidad_asignada: unidadCercana.codigo,
+                        distancia_unidad: minDist.toFixed(2)
+                    })
+                    .eq('id', idAlerta);
+                    
+                console.log('📡 Notificación enviada a patrulla');
+                
+            } catch (error) {
+                console.error('❌ Error notificando a patrulla:', error);
+            }
         }
+
         // ==============================================
-        
-        fragmentosSubidos.push(numeroFragmento);
-        actualizarTerminal(`📤 Fragmento ${numeroFragmento} subido`);
-        
-    } catch (error) {
-        console.log('❌ Error general:', error);
-    }
-    console.log('=================================');
-}
+        // SEGUIMIENTO GPS CONTINUO
         // ==============================================
-        // FUNCIÓN DE ALERTA
+        function iniciarSeguimientoContinuo(idAlerta) {
+            console.log('📍 Iniciando seguimiento continuo para alerta:', idAlerta);
+            
+            if (intervaloGPS) clearInterval(intervaloGPS);
+            
+            intervaloGPS = setInterval(async () => {
+                if (!ubicacionActual || !alertaActiva) return;
+                
+                await _supabase
+                    .from('alertas')
+                    .update({ 
+                        lat: ubicacionActual.lat,
+                        lng: ubicacionActual.lng,
+                        ultima_actualizacion: new Date().toISOString()
+                    })
+                    .eq('id', idAlerta);
+                    
+                console.log('📍 Posición actualizada:', ubicacionActual.lat, ubicacionActual.lng);
+            }, 3000);
+        }
+
+        // ==============================================
+        // FUNCIÓN DE ALERTA (ACTUALIZADA)
         // ==============================================
 
         async function activarAlerta() {
-            console.log('1. Intentando activar alerta');
+            console.log('1. 🚨 Intentando activar alerta');
             
             if (alertaActiva || !ubicacionActual || !usuarioActual) {
                 console.log('❌ Condiciones no cumplidas');
@@ -1364,37 +1510,40 @@
                 timestamp: new Date().toISOString(),
                 bateria: document.getElementById('battery').textContent,
                 activa: true,
-                video_progreso: 0
+                video_progreso: 0,
+                modo_sigiloso: modoSigiloso || false
             };
 
             try {
-    console.log('3. Enviando a Supabase...');
-    const { data, error } = await _supabase
-        .from('alertas')
-        .insert(alerta)
-        .select('id');  // ← ESTO ES CLAVE
-    
-    if (error) throw error;
-    
-    if (data && data[0] && data[0].id) {
-        alertaId = data[0].id;
-        console.log('4. ✅ Alerta creada con ID:', alertaId);
-    } else {
-        console.log('4. ❌ No se recibió el ID');
-    }
-    
-    alertaActiva = true;
-    
-    document.getElementById('modal-text').innerHTML = 
-        '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
-    document.getElementById('alert-modal').style.display = 'flex';
-    
-    actualizarTerminal('🚨 ALERTA ENVIADA');
-    
-} catch (error) {
-    console.log('5. ❌ Error:', error);
-    actualizarTerminal('❌ ERROR AL ENVIAR');
-}
+                console.log('3. Enviando a Supabase...');
+                const { data, error } = await _supabase
+                    .from('alertas')
+                    .insert(alerta)
+                    .select();
+                
+                if (error) throw error;
+                
+                if (data && data[0]) {
+                    alertaId = data[0].id;
+                    console.log('4. ✅ Alerta creada con ID:', alertaId);
+                    
+                    await notificarPatrullaMasCercana(alertaId, ubicacionActual.lat, ubicacionActual.lng);
+                    
+                    iniciarSeguimientoContinuo(alertaId);
+                }
+                
+                alertaActiva = true;
+                
+                document.getElementById('modal-text').innerHTML = 
+                    '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
+                document.getElementById('alert-modal').style.display = 'flex';
+                
+                actualizarTerminal('🚨 ALERTA ENVIADA');
+                
+            } catch (error) {
+                console.log('5. ❌ Error:', error);
+                actualizarTerminal('❌ ERROR AL ENVIAR');
+            }
         }
 
         function cerrarModal() {
@@ -1404,6 +1553,7 @@
         function cancelarAlerta() {
             if (confirm('¿CANCELAR ALERTA?')) {
                 alertaActiva = false;
+                if (intervaloGPS) clearInterval(intervaloGPS);
                 if (mediaRecorder && mediaRecorder.state === 'recording') {
                     mediaRecorder.stop();
                 }
