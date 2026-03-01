@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL V6.0 | SMART TECH</title>
+    <title>SENTINEL V8.0 | SMART TECH</title>
     
     <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -39,6 +39,26 @@
             position: relative;
             text-transform: uppercase;
             letter-spacing: 0.1em;
+        }
+
+        /* EFECTO MATRIZ */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(0, 242, 255, 0.02) 0px,
+                    transparent 1px,
+                    transparent 3px
+                ),
+                radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.7) 100%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* HEADER CON LOGO */
@@ -273,6 +293,26 @@
             );
         }
 
+        /* CONTADOR DE USUARIOS ACTIVOS */
+        .user-counter {
+            position: fixed;
+            top: 140px;
+            left: 15px;
+            background: rgba(0, 5, 10, 0.6);
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--neon-cyan);
+            padding: 5px 12px;
+            z-index: 800;
+            font-size: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            clip-path: polygon(
+                0% 15%, 10% 0%, 90% 0%, 100% 15%,
+                100% 85%, 90% 100%, 10% 100%, 0% 85%
+            );
+        }
+
         /* VISOR DE CÁMARA */
         .camera-container {
             position: fixed;
@@ -424,6 +464,84 @@
             border-top: 1px solid rgba(0, 242, 255, 0.2);
             font-size: 0.55rem;
             color: var(--neon-cyan);
+        }
+
+        /* OVERLAY DE CANCELACIÓN */
+        #cancelar-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-dark);
+            border: 3px solid var(--neon-red);
+            padding: 25px;
+            z-index: 30000;
+            text-align: center;
+            min-width: 300px;
+            backdrop-filter: blur(10px);
+            clip-path: polygon(0% 5%, 2% 0%, 98% 0%, 100% 5%, 100% 95%, 98% 100%, 2% 100%, 0% 95%);
+            box-shadow: 0 0 50px rgba(255,49,49,0.5);
+            display: none;
+        }
+
+        #cancelar-overlay h2 {
+            color: var(--neon-red);
+            margin-bottom: 15px;
+        }
+
+        #cancelar-overlay p {
+            margin-bottom: 20px;
+        }
+
+        #btn-cancelar-alerta {
+            background: transparent;
+            border: 2px solid var(--neon-red);
+            color: var(--neon-red);
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-bottom: 15px;
+            width: 100%;
+            font-family: 'JetBrains Mono', monospace;
+            clip-path: polygon(0% 15%, 10% 0%, 90% 0%, 100% 15%, 100% 85%, 90% 100%, 10% 100%, 0% 85%);
+        }
+
+        #btn-cancelar-alerta:hover {
+            background: rgba(255,49,49,0.2);
+        }
+
+        #contador-cancelar {
+            color: var(--secondary);
+        }
+
+        /* TOAST DE NOTIFICACIÓN */
+        #toast-notificacion {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: var(--bg-panel);
+            border-left: 4px solid var(--neon-red);
+            padding: 15px;
+            box-shadow: 0 0 30px rgba(255,49,49,0.3);
+            z-index: 10000;
+            display: none;
+            min-width: 250px;
+            clip-path: polygon(0% 15%, 3% 0%, 97% 0%, 100% 15%, 100% 85%, 97% 100%, 3% 100%, 0% 85%);
+        }
+
+        .toast-titulo {
+            font-weight: bold;
+            color: var(--neon-red);
+            margin-bottom: 5px;
+        }
+
+        .toast-mensaje {
+            font-size: 0.7rem;
+        }
+
+        /* ESTILO PARA PUNTOS ANÓNIMOS */
+        .punto-anonimo {
+            filter: drop-shadow(0 0 3px rgba(255,255,255,0.3));
         }
 
         /* MODAL */
@@ -743,13 +861,11 @@
                 <div class="auth-sub">SMART TECH</div>
             </div>
             
-            <!-- Pestañas: REGISTRO / INICIAR SESIÓN -->
             <div class="tab-buttons">
                 <button class="tab-button active" id="tab-registro" onclick="mostrarFormulario('registro')">REGISTRO</button>
                 <button class="tab-button" id="tab-login" onclick="mostrarFormulario('login')">INGRESAR</button>
             </div>
 
-            <!-- FORMULARIO DE REGISTRO -->
             <div id="form-registro" class="auth-form">
                 <div class="form-group">
                     <label>EMAIL</label>
@@ -802,7 +918,6 @@
                 <div id="reg-error" class="error-message"></div>
             </div>
 
-            <!-- FORMULARIO DE INICIO DE SESIÓN -->
             <div id="form-login" class="auth-form hidden">
                 <div class="form-group">
                     <label>EMAIL</label>
@@ -858,6 +973,13 @@
             <span>UNID: <span id="unid">--</span></span>
         </div>
 
+        <!-- CONTADOR DE USUARIOS ACTIVOS -->
+        <div class="user-counter">
+            <span>👥</span>
+            <span id="contador-usuarios">0</span>
+            <span>usuarios activos</span>
+        </div>
+
         <!-- VISOR DE CÁMARA -->
         <div class="camera-container">
             <div class="camera-frame">
@@ -880,7 +1002,7 @@
         </div>
 
         <!-- CONSOLA INFERIOR -->
-        <div class="console">
+        <div class="console" id="terminal">
             <div class="console-line">
                 <span class="console-prompt">></span>
                 <span>SISTEMA: CONEXIÓN ESTABLE</span>
@@ -914,6 +1036,21 @@
         </div>
     </div>
 
+    <!-- OVERLAY DE CANCELACIÓN -->
+    <div id="cancelar-overlay">
+        <div style="font-size: 2rem; color: var(--neon-red); margin-bottom: 15px;">⚡</div>
+        <h2>ALERTA ACTIVADA</h2>
+        <p>¿FUE UN ERROR?<br>Puedes cancelar en los próximos segundos.</p>
+        <button id="btn-cancelar-alerta">🚫 CANCELAR</button>
+        <div id="contador-cancelar">10 segundos restantes</div>
+    </div>
+
+    <!-- TOAST DE NOTIFICACIÓN -->
+    <div id="toast-notificacion">
+        <div class="toast-titulo" id="toast-titulo"></div>
+        <div class="toast-mensaje" id="toast-mensaje"></div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
@@ -934,11 +1071,11 @@
         let rolSeleccionado = '';
         let colorSeleccionado = '';
         
-        // ==============================================
         // NUEVAS VARIABLES
-        // ==============================================
         let modoSigiloso = false;
         let intervaloGPS = null;
+        let timeoutCancelacion = null;
+        let puntosAnonimos = {};
 
         // ==============================================
         // FUNCIONES DE AUTENTICACIÓN
@@ -1120,6 +1257,8 @@
 
             iniciarGPS();
             obtenerBateria();
+            cargarUsuariosActivos();
+            iniciarActualizacionPresencia();
         }
 
         function iniciarGPS() {
@@ -1136,9 +1275,9 @@
                     if (!marcador) {
                         marcador = L.circleMarker([latitude, longitude], {
                             radius: 12,
-                            color: usuarioActual ? usuarioActual.color : '#00f2ff',
+                            color: '#00f2ff',
                             weight: 3,
-                            fillColor: usuarioActual ? usuarioActual.color : '#00f2ff',
+                            fillColor: '#00f2ff',
                             fillOpacity: 0.3,
                             className: 'simple-marker'
                         }).addTo(mapa);
@@ -1147,6 +1286,8 @@
                     } else {
                         marcador.setLatLng([latitude, longitude]);
                     }
+                    
+                    actualizarPresencia();
                 },
                 null,
                 { enableHighAccuracy: true }
@@ -1186,6 +1327,106 @@
             nuevaLinea.className = 'console-line';
             nuevaLinea.innerHTML = `<span class="console-prompt">></span> <span>${mensaje}</span>`;
             terminal.appendChild(nuevaLinea);
+        }
+
+        function mostrarToast(titulo, mensaje, tipo = 'alert') {
+            const toast = document.getElementById('toast-notificacion');
+            document.getElementById('toast-titulo').textContent = titulo;
+            document.getElementById('toast-mensaje').textContent = mensaje;
+            
+            toast.style.borderLeftColor = tipo === 'alert' ? 'var(--neon-red)' : 'var(--neon-cyan)';
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // ==============================================
+        // PUNTOS ANÓNIMOS DE COMUNIDAD
+        // ==============================================
+        function cargarUsuariosActivos() {
+            // Cargar usuarios activos iniciales
+            _supabase
+                .from('usuarios_activos')
+                .select('*')
+                .then(({ data }) => {
+                    if (data) {
+                        document.getElementById('contador-usuarios').textContent = data.length;
+                        data.forEach(usuario => {
+                            agregarPuntoAnonimo(usuario);
+                        });
+                    }
+                });
+            
+            // Suscribirse a nuevos usuarios
+            _supabase
+                .channel('usuarios-activos')
+                .on('postgres_changes', 
+                    { event: 'INSERT', schema: 'public', table: 'usuarios_activos' }, 
+                    (payload) => {
+                        agregarPuntoAnonimo(payload.new);
+                        actualizarContadorUsuarios();
+                    })
+                .on('postgres_changes',
+                    { event: 'DELETE', schema: 'public', table: 'usuarios_activos' },
+                    (payload) => {
+                        removerPuntoAnonimo(payload.old.id);
+                        actualizarContadorUsuarios();
+                    })
+                .subscribe();
+        }
+
+        function agregarPuntoAnonimo(usuario) {
+            // No mostrar el propio usuario
+            if (usuario.usuario_id === usuarioActual?.id_usuario) return;
+            
+            // Puntos grises anónimos - TODOS IGUALES
+            const punto = L.circleMarker([usuario.lat, usuario.lng], {
+                radius: 5,
+                color: '#888888',
+                weight: 1,
+                fillColor: '#aaaaaa',
+                fillOpacity: 0.3,
+                className: 'punto-anonimo'
+            }).addTo(mapa);
+            
+            punto.bindPopup('👤 Usuario activo');
+            
+            puntosAnonimos[usuario.id] = punto;
+        }
+
+        function removerPuntoAnonimo(id) {
+            if (puntosAnonimos[id]) {
+                mapa.removeLayer(puntosAnonimos[id]);
+                delete puntosAnonimos[id];
+            }
+        }
+
+        function actualizarContadorUsuarios() {
+            _supabase
+                .from('usuarios_activos')
+                .select('*', { count: 'exact', head: true })
+                .then(({ count }) => {
+                    document.getElementById('contador-usuarios').textContent = count || 0;
+                });
+        }
+
+        async function actualizarPresencia() {
+            if (!usuarioActual || !ubicacionActual || !usuarioActual.id_usuario) return;
+            
+            await _supabase
+                .from('usuarios_activos')
+                .upsert({
+                    usuario_id: usuarioActual.id_usuario,
+                    lat: ubicacionActual.lat,
+                    lng: ubicacionActual.lng,
+                    ultima_actualizacion: new Date().toISOString()
+                }, { onConflict: 'usuario_id' });
+        }
+
+        function iniciarActualizacionPresencia() {
+            setInterval(actualizarPresencia, 30000);
         }
 
         // ==============================================
@@ -1242,7 +1483,6 @@
                 
                 if (placeholder) placeholder.style.display = 'none';
                 
-                // MODO SIGILOSO: No mostrar indicador de grabación
                 if (!modoSigiloso) {
                     if (recIndicator) recIndicator.classList.remove('hidden');
                 }
@@ -1251,7 +1491,6 @@
                 fragmentosVideo = [];
                 fragmentosSubidos = [];
                 
-                // Configuración de Codecs
                 let options = { mimeType: 'video/webm' };
                 try {
                     if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) {
@@ -1314,11 +1553,9 @@
                     grabacionActiva = false;
                 };
                 
-                // Fragmentos de 1 segundo para baja latencia
                 mediaRecorder.start(1000);
                 console.log("✅ Grabadora iniciada. Fragmentos cada 1 segundo.");
                 
-                // Primer fragmento rápido a los 500ms
                 setTimeout(() => {
                     if (mediaRecorder && mediaRecorder.state === 'recording') {
                         mediaRecorder.requestData();
@@ -1399,7 +1636,7 @@
         }
 
         // ==============================================
-        // NOTIFICAR A PATRULLA MÁS CERCANA (MODELO HÍBRIDO)
+        // NOTIFICAR A PATRULLA MÁS CERCANA
         // ==============================================
         async function notificarPatrullaMasCercana(idAlerta, lat, lng) {
             try {
@@ -1485,7 +1722,7 @@
         }
 
         // ==============================================
-        // FUNCIÓN DE ALERTA (ACTUALIZADA)
+        // FUNCIÓN DE ALERTA (CON CANCELACIÓN)
         // ==============================================
 
         async function activarAlerta() {
@@ -1527,8 +1764,9 @@
                     alertaId = data[0].id;
                     console.log('4. ✅ Alerta creada con ID:', alertaId);
                     
-                    await notificarPatrullaMasCercana(alertaId, ubicacionActual.lat, ubicacionActual.lng);
+                    mostrarOpcionCancelar(alertaId);
                     
+                    await notificarPatrullaMasCercana(alertaId, ubicacionActual.lat, ubicacionActual.lng);
                     iniciarSeguimientoContinuo(alertaId);
                 }
                 
@@ -1546,6 +1784,63 @@
             }
         }
 
+        function mostrarOpcionCancelar(idAlerta) {
+            const cancelOverlay = document.getElementById('cancelar-overlay');
+            let tiempoRestante = 10;
+            
+            cancelOverlay.style.display = 'block';
+            
+            document.getElementById('btn-cancelar-alerta').onclick = () => {
+                cancelarAlertaEmergencia(idAlerta);
+            };
+            
+            const intervalo = setInterval(() => {
+                tiempoRestante--;
+                const contador = document.getElementById('contador-cancelar');
+                if (contador) contador.textContent = `${tiempoRestante} segundos restantes`;
+                
+                if (tiempoRestante <= 0) {
+                    clearInterval(intervalo);
+                    cancelOverlay.style.display = 'none';
+                }
+            }, 1000);
+            
+            timeoutCancelacion = setTimeout(() => {
+                clearInterval(intervalo);
+                cancelOverlay.style.display = 'none';
+            }, 10000);
+        }
+
+        async function cancelarAlertaEmergencia(idAlerta) {
+            if (!idAlerta) return;
+            
+            const cancelOverlay = document.getElementById('cancelar-overlay');
+            cancelOverlay.style.display = 'none';
+            
+            if (timeoutCancelacion) clearTimeout(timeoutCancelacion);
+            
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            
+            if (intervaloGPS) clearInterval(intervaloGPS);
+            
+            await _supabase
+                .from('alertas')
+                .update({ 
+                    activa: false, 
+                    cancelada: true,
+                    motivo_cancelacion: 'usuario'
+                })
+                .eq('id', idAlerta);
+            
+            alertaActiva = false;
+            
+            mostrarToast('✅ ALERTA CANCELADA', 'La alerta ha sido cancelada correctamente', 'success');
+            
+            actualizarTerminal('✅ ALERTA CANCELADA POR USUARIO');
+        }
+
         function cerrarModal() {
             document.getElementById('alert-modal').style.display = 'none';
         }
@@ -1558,6 +1853,16 @@
                     mediaRecorder.stop();
                 }
                 cerrarModal();
+                
+                const cancelOverlay = document.getElementById('cancelar-overlay');
+                if (cancelOverlay) cancelOverlay.style.display = 'none';
+                
+                if (alertaId) {
+                    _supabase
+                        .from('alertas')
+                        .update({ activa: false, cancelada: true })
+                        .eq('id', alertaId);
+                }
             }
         }
 
