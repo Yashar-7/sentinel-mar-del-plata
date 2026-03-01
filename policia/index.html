@@ -1169,13 +1169,18 @@
     const videoPlaceholder = document.getElementById('videoPlaceholder');
     
     if (alerta.video_url) {
-        // Si ya hay URL, mostrar el video
+        // Si hay URL (primer fragmento), mostrar el video
         videoPlaceholder.innerHTML = `
             <video controls style="width:100%; height:100%; background: black; object-fit: contain;">
                 <source src="${alerta.video_url}" type="video/webm">
                 Tu navegador no soporta video.
             </video>
         `;
+        
+        // Forzar la carga del video
+        const video = videoPlaceholder.querySelector('video');
+        video.load();
+        
     } else if (alerta.video_progreso) {
         // Si hay progreso pero no URL, mostrar porcentaje
         videoPlaceholder.innerHTML = `
@@ -1195,8 +1200,12 @@
     // ==============================================
 
     document.getElementById('alert-modal').style.display = 'block';
-    mapa.setView([alerta.lat, alerta.lng], 17);
+    
+    // Centrar mapa en la alerta
+    if (mapa) {
+        mapa.setView([alerta.lat, alerta.lng], 17);
     }
+}
         function cerrarModal() {
             document.getElementById('alert-modal').style.display = 'none';
         }
