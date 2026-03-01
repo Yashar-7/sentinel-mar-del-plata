@@ -27,6 +27,8 @@
             --secondary: #0066ff;
             --alert: #ff3131;
             --alert-dark: #cc0000;
+            --success: #39ff14;
+            --warning: #ffaa00;
             --bg: #050a0f;
             --bg-panel: rgba(8, 15, 22, 0.95);
             --glass: rgba(0, 20, 40, 0.85);
@@ -258,7 +260,7 @@
             right: 0;
             bottom: 0;
             display: grid;
-            grid-template-columns: 380px 1fr 320px;
+            grid-template-columns: 380px 1fr;
             gap: 10px;
             padding: 10px;
             z-index: 10;
@@ -294,12 +296,45 @@
             letter-spacing: 2px;
         }
 
+        /* FILTROS MEJORADOS */
+        .filtros-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--primary);
+            clip-path: polygon(
+                0% 10%, 2% 0%, 98% 0%, 100% 10%,
+                100% 90%, 98% 100%, 2% 100%, 0% 90%
+            );
+        }
+
+        .filtro-select, .filtro-input {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            padding: 6px;
+            clip-path: polygon(
+                0% 15%, 8% 0%, 92% 0%, 100% 15%,
+                100% 85%, 92% 100%, 8% 100%, 0% 85%
+            );
+        }
+
+        .filtro-select option {
+            background: var(--bg);
+            color: var(--primary);
+        }
+
         .incident-list {
             flex: 1;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .incident-card {
@@ -313,6 +348,7 @@
                 100% 92%, 97% 100%, 3% 100%, 0% 92%
             );
             animation: cardPulse 2s infinite;
+            position: relative;
         }
 
         .incident-card:hover {
@@ -321,10 +357,33 @@
             box-shadow: 0 0 20px var(--alert);
         }
 
-        @keyframes cardPulse {
-            0% { border-color: var(--alert); }
-            50% { border-color: #ff8800; }
-            100% { border-color: var(--alert); }
+        .incident-card.resuelto {
+            background: rgba(57,255,20,0.05);
+            border-color: var(--success);
+            animation: none;
+            opacity: 0.7;
+        }
+
+        .incident-card.critico {
+            border-color: #ff8800;
+            animation: cardPulseCritico 1s infinite;
+        }
+
+        @keyframes cardPulseCritico {
+            0% { border-color: #ff8800; }
+            50% { border-color: var(--alert); }
+            100% { border-color: #ff8800; }
+        }
+
+        .prioridad-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 0.55rem;
+            padding: 2px 5px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid;
+            border-radius: 2px;
         }
 
         .incident-time {
@@ -360,9 +419,10 @@
             font-weight: bold;
         }
 
+        /* ESTADÍSTICAS AVANZADAS */
         .stats-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 8px;
             margin-top: 10px;
         }
@@ -370,7 +430,7 @@
         .stat-box {
             background: rgba(0,255,170,0.05);
             border: 1px solid var(--primary);
-            padding: 10px;
+            padding: 8px;
             text-align: center;
             clip-path: polygon(
                 0% 15%, 10% 0%, 90% 0%, 100% 15%,
@@ -379,14 +439,14 @@
         }
 
         .stat-value {
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             font-weight: bold;
             color: var(--primary);
             text-shadow: var(--text-glow);
         }
 
         .stat-label {
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             color: var(--secondary);
         }
 
@@ -452,218 +512,71 @@
         }
 
         /* ============================================== */
-        /* PANEL DERECHO - UNIDAD Y PERSECUCIÓN */
+        /* PANEL LATERAL DE DETALLE (REEMPLAZA AL MODAL) */
         /* ============================================== */
-        .right-panel {
-            background: var(--bg-panel);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--primary);
-            box-shadow: var(--border-glow);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding: 15px;
-            clip-path: polygon(
-                0% 1%, 1% 0%, 99% 0%, 100% 1%,
-                100% 99%, 99% 100%, 1% 100%, 0% 99%
-            );
-        }
-
-        .unit-section {
-            background: rgba(0,102,255,0.05);
-            border: 1px solid var(--secondary);
-            padding: 15px;
-            clip-path: polygon(
-                0% 8%, 3% 0%, 97% 0%, 100% 8%,
-                100% 92%, 97% 100%, 3% 100%, 0% 92%
-            );
-        }
-
-        .unit-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--secondary);
-            padding-bottom: 8px;
-        }
-
-        .unit-name {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--secondary);
-            text-shadow: 0 0 8px var(--secondary);
-        }
-
-        .unit-status {
-            font-size: 0.7rem;
-            color: var(--primary);
-            background: rgba(0,255,170,0.1);
-            padding: 4px 8px;
-            clip-path: polygon(
-                0% 15%, 20% 0%, 80% 0%, 100% 15%,
-                100% 85%, 80% 100%, 20% 100%, 0% 85%
-            );
-        }
-
-        .unit-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .unit-info {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.65rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding: 4px 0;
-        }
-
-        .persecution-section {
-            background: rgba(255,49,49,0.05);
-            border: 1px solid var(--alert);
-            padding: 15px;
-            clip-path: polygon(
-                0% 8%, 3% 0%, 97% 0%, 100% 8%,
-                100% 92%, 97% 100%, 3% 100%, 0% 92%
-            );
-        }
-
-        .persecution-header {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--alert);
-            margin-bottom: 15px;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .persecution-data {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .data-block {
-            text-align: center;
-        }
-
-        .data-big {
-            font-size: 2rem;
-            font-weight: 900;
-            color: var(--alert);
-            text-shadow: 0 0 15px var(--alert);
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .data-label {
-            font-size: 0.6rem;
-            color: var(--secondary);
-        }
-
-        .terminal-section {
-            flex: 1;
-            background: #000;
-            border: 1px solid var(--primary);
-            padding: 12px;
-            font-size: 0.65rem;
-            line-height: 1.6;
-            overflow-y: auto;
-            font-family: 'JetBrains Mono', monospace;
-            clip-path: polygon(
-                0% 3%, 1% 0%, 99% 0%, 100% 3%,
-                100% 97%, 99% 100%, 1% 100%, 0% 97%
-            );
-        }
-
-        .terminal-line {
-            display: flex;
-            gap: 8px;
-            border-bottom: 1px solid rgba(0,255,170,0.1);
-            padding: 4px 0;
-        }
-
-        .terminal-prompt {
-            color: var(--primary);
-            opacity: 0.7;
-        }
-
-        .terminal-text {
-            color: var(--primary);
-        }
-
-        .terminal-text.alert {
-            color: var(--alert);
-            font-weight: bold;
-        }
-
-        /* MODAL DE DETALLE MEJORADO */
-        #alert-modal {
+        #panel-detalle-alerta {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            max-width: 450px;
+            top: 90px;
+            right: 20px;
+            width: 380px;
             background: var(--bg-panel);
             backdrop-filter: blur(20px);
             border: 2px solid var(--alert);
             box-shadow: 0 0 50px rgba(255,49,49,0.5);
-            z-index: 10000;
-            display: none;
-            padding: 25px;
+            z-index: 2000;
+            padding: 20px;
             clip-path: polygon(
                 0% 2%, 1% 0%, 99% 0%, 100% 2%,
                 100% 98%, 99% 100%, 1% 100%, 0% 98%
             );
+            display: none;
         }
 
-        .modal-header {
+        .panel-detalle-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border-bottom: 1px solid var(--alert);
             padding-bottom: 10px;
         }
 
-        .modal-close {
+        .panel-detalle-titulo {
+            font-size: 1.1rem;
+            color: var(--alert);
+            font-weight: bold;
+        }
+
+        .panel-detalle-close {
             font-size: 1.5rem;
             cursor: pointer;
             color: var(--alert);
             transition: all 0.3s;
         }
 
-        .modal-close:hover {
+        .panel-detalle-close:hover {
             text-shadow: 0 0 15px var(--alert);
             transform: scale(1.2);
         }
 
-        .modal-grid {
+        .detalle-grid {
             display: grid;
             grid-template-columns: 1fr 2fr;
-            gap: 12px;
-            margin-bottom: 20px;
-            font-size: 0.8rem;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 0.75rem;
         }
 
-        .modal-label {
+        .detalle-label {
             color: rgba(255,255,255,0.5);
         }
 
-        .modal-value {
+        .detalle-value {
             color: var(--primary);
             font-weight: bold;
         }
 
-        .modal-value.alert {
+        .detalle-value.alert {
             color: var(--alert);
         }
 
@@ -722,19 +635,54 @@
             text-align: center;
         }
 
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
+        /* HISTORIAL DEL INCIDENTE */
+        .historial-timeline {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--alert);
+            max-height: 150px;
+            overflow-y: auto;
+            clip-path: polygon(
+                0% 5%, 2% 0%, 98% 0%, 100% 5%,
+                100% 95%, 98% 100%, 2% 100%, 0% 95%
+            );
         }
 
-        .modal-button {
+        .timeline-item {
+            display: flex;
+            gap: 10px;
+            font-size: 0.6rem;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,49,49,0.2);
+        }
+
+        .timeline-time {
+            color: var(--secondary);
+            min-width: 70px;
+        }
+
+        .timeline-event {
+            color: var(--primary);
+        }
+
+        .timeline-event.alert {
+            color: var(--alert);
+        }
+
+        .panel-detalle-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-button {
             flex: 1;
-            padding: 12px;
+            padding: 10px;
             background: transparent;
             border: 1px solid;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             cursor: pointer;
             transition: all 0.3s;
             clip-path: polygon(
@@ -743,24 +691,34 @@
             );
         }
 
-        .modal-button.primary {
+        .action-button.primary {
             border-color: var(--alert);
             color: var(--alert);
         }
 
-        .modal-button.primary:hover {
+        .action-button.primary:hover {
             background: rgba(255,49,49,0.2);
             box-shadow: 0 0 20px var(--alert);
         }
 
-        .modal-button.secondary {
+        .action-button.secondary {
             border-color: var(--primary);
             color: var(--primary);
         }
 
-        .modal-button.secondary:hover {
+        .action-button.secondary:hover {
             background: rgba(0,255,170,0.1);
             box-shadow: 0 0 20px var(--primary);
+        }
+
+        .action-button.success {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .action-button.success:hover {
+            background: rgba(57,255,20,0.1);
+            box-shadow: 0 0 20px var(--success);
         }
 
         /* PANEL DE EMERGENCIA PARA EL POLICÍA (INTERCEPCIÓN) */
@@ -773,6 +731,34 @@
             max-width: 400px;
             z-index: 20000;
             display: none;
+        }
+
+        /* NOTIFICACIÓN TOAST */
+        #toast-notificacion {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: var(--bg-panel);
+            border-left: 4px solid var(--alert);
+            padding: 15px;
+            box-shadow: 0 0 30px rgba(255,49,49,0.3);
+            z-index: 10000;
+            display: none;
+            min-width: 250px;
+            clip-path: polygon(
+                0% 15%, 3% 0%, 97% 0%, 100% 15%,
+                100% 85%, 97% 100%, 3% 100%, 0% 85%
+            );
+        }
+
+        .toast-titulo {
+            font-weight: bold;
+            color: var(--alert);
+            margin-bottom: 5px;
+        }
+
+        .toast-mensaje {
+            font-size: 0.7rem;
         }
 
         .hidden {
@@ -821,8 +807,8 @@
                     <span class="indicator-value" id="unidadesDisponibles">0</span>
                 </div>
                 <div class="indicator">
-                    <span class="indicator-label">COBERTURA</span>
-                    <span class="indicator-value">98%</span>
+                    <span class="indicator-label">RESPUESTA</span>
+                    <span class="indicator-value" id="tiempoPromedio">0s</span>
                 </div>
             </div>
         </div>
@@ -832,35 +818,74 @@
         </div>
     </div>
 
+    <!-- NOTIFICACIÓN TOAST -->
+    <div id="toast-notificacion">
+        <div class="toast-titulo" id="toast-titulo">🚨 NUEVA ALERTA</div>
+        <div class="toast-mensaje" id="toast-mensaje">Esperando detalles...</div>
+    </div>
+
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="main-container">
         <!-- PANEL IZQUIERDO - INCIDENTES -->
         <div class="left-panel">
             <div class="panel-header">
                 <span>🚨 INCIDENTES ACTIVOS</span>
-                <span>PRIORIDAD 1</span>
+                <span>PRIORIDAD</span>
+            </div>
+            
+            <!-- FILTROS MEJORADOS -->
+            <div class="filtros-panel">
+                <select class="filtro-select" id="filtro-prioridad" onchange="aplicarFiltros()">
+                    <option value="todas">TODAS LAS PRIORIDADES</option>
+                    <option value="critica">CRÍTICA</option>
+                    <option value="alta">ALTA</option>
+                    <option value="media">MEDIA</option>
+                    <option value="normal">NORMAL</option>
+                </select>
+                <select class="filtro-select" id="filtro-rol" onchange="aplicarFiltros()">
+                    <option value="todos">TODOS LOS ROLES</option>
+                    <option value="civil">CIVIL</option>
+                    <option value="patrulla">PATRULLA</option>
+                    <option value="emergencia">EMERGENCIA</option>
+                    <option value="delivery">DELIVERY</option>
+                </select>
+                <input type="text" class="filtro-input" id="filtro-busqueda" placeholder="BUSCAR POR NOMBRE..." onkeyup="aplicarFiltros()">
+                <select class="filtro-select" id="filtro-estado" onchange="aplicarFiltros()">
+                    <option value="activos">ACTIVOS</option>
+                    <option value="resueltos">RESUELTOS</option>
+                    <option value="todos">TODOS</option>
+                </select>
             </div>
             
             <div class="incident-list" id="incidentList">
                 <div style="color: rgba(255,255,255,0.3); text-align:center; padding:20px;">ESPERANDO ALERTAS...</div>
             </div>
 
+            <!-- ESTADÍSTICAS AVANZADAS -->
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-value" id="statsHoy">0</div>
-                    <div class="stat-label">INCIDENTES/HOY</div>
+                    <div class="stat-label">HOY</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-value" id="statsActivas">0</div>
                     <div class="stat-label">ACTIVAS</div>
                 </div>
                 <div class="stat-box">
+                    <div class="stat-value" id="statsResueltas">0</div>
+                    <div class="stat-label">RESUELTAS</div>
+                </div>
+                <div class="stat-box">
                     <div class="stat-value" id="statsPendientes">0</div>
                     <div class="stat-label">PENDIENTES</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value" id="statsRespuesta">0%</div>
-                    <div class="stat-label">RESPUESTA</div>
+                    <div class="stat-value" id="statsCriticas">0</div>
+                    <div class="stat-label">CRÍTICAS</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="statsTiempo">0s</div>
+                    <div class="stat-label">TTR PROM</div>
                 </div>
             </div>
         </div>
@@ -873,109 +898,39 @@
             </div>
             <div class="range-ring"></div>
         </div>
-
-        <!-- PANEL DERECHO - UNIDAD Y PERSECUCIÓN -->
-        <div class="right-panel">
-            <div class="unit-section">
-                <div class="unit-header">
-                    <span class="unit-name">UNIDAD <span id="nombreUnidad">K-9</span></span>
-                    <span class="unit-status" id="estadoUnidad">● EN SERVICIO</span>
-                </div>
-                <div class="unit-grid">
-                    <div class="unit-info">
-                        <div class="info-row">
-                            <span>COMANDANTE:</span>
-                            <span>SUBCOM. RODRÍGUEZ</span>
-                        </div>
-                        <div class="info-row">
-                            <span>VEHÍCULO:</span>
-                            <span>FORD RANGER 4X4</span>
-                        </div>
-                        <div class="info-row">
-                            <span>COMBUSTIBLE:</span>
-                            <span>78%</span>
-                        </div>
-                    </div>
-                    <div class="unit-info">
-                        <div class="info-row">
-                            <span>SECTOR:</span>
-                            <span>MDQ-CENTRO</span>
-                        </div>
-                        <div class="info-row">
-                            <span>TURNO:</span>
-                            <span>NOCTURNO</span>
-                        </div>
-                        <div class="info-row">
-                            <span>RADIO:</span>
-                            <span>CH-7</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="persecution-section">
-                <div class="persecution-header">MODO PERSECUCIÓN</div>
-                <div class="persecution-data">
-                    <div class="data-block">
-                        <div class="data-big">80</div>
-                        <div class="data-label">VELOCIDAD (KM/H)</div>
-                    </div>
-                    <div class="data-block">
-                        <div class="data-big">1.2</div>
-                        <div class="data-label">DISTANCIA (KM)</div>
-                    </div>
-                    <div class="data-block">
-                        <div class="data-big">NE</div>
-                        <div class="data-label">RUMBO</div>
-                    </div>
-                    <div class="data-block">
-                        <div class="data-big">02:30</div>
-                        <div class="data-label">ETA</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="terminal-section" id="terminal">
-                <div class="terminal-line">
-                    <span class="terminal-prompt">></span>
-                    <span class="terminal-text">SISTEMA INICIALIZADO</span>
-                </div>
-                <div class="terminal-line">
-                    <span class="terminal-prompt">></span>
-                    <span class="terminal-text">CONEXIÓN SATELITAL ESTABLE</span>
-                </div>
-                <div class="terminal-line">
-                    <span class="terminal-prompt">></span>
-                    <span class="terminal-text">ESPERANDO ALERTAS...</span>
-                </div>
-            </div>
-        </div>
     </div>
 
-    <!-- MODAL DE DETALLE DE ALERTA -->
-    <div id="alert-modal">
-        <div class="modal-header">
-            <span style="color: var(--alert); font-size: 1.2rem;">🚨 ALERTA PRIORIDAD 1</span>
-            <span class="modal-close" onclick="cerrarModal()">✖</span>
+    <!-- PANEL LATERAL DE DETALLE (REEMPLAZA AL MODAL) -->
+    <div id="panel-detalle-alerta">
+        <div class="panel-detalle-header">
+            <span class="panel-detalle-titulo" id="panel-titulo">🚨 ALERTA PRIORIDAD</span>
+            <span class="panel-detalle-close" onclick="cerrarPanelDetalle()">✖</span>
         </div>
-        <div class="modal-grid">
-            <span class="modal-label">CIUDADANO:</span>
-            <span class="modal-value" id="modalNombre">--</span>
+        
+        <div class="detalle-grid">
+            <span class="detalle-label">CIUDADANO:</span>
+            <span class="detalle-value" id="panelNombre">--</span>
             
-            <span class="modal-label">DNI:</span>
-            <span class="modal-value" id="modalDni">--</span>
+            <span class="detalle-label">DNI:</span>
+            <span class="detalle-value" id="panelDni">--</span>
             
-            <span class="modal-label">TELÉFONO:</span>
-            <span class="modal-value" id="modalTel">--</span>
+            <span class="detalle-label">TELÉFONO:</span>
+            <span class="detalle-value" id="panelTel">--</span>
             
-            <span class="modal-label">ROL:</span>
-            <span class="modal-value" id="modalRol">--</span>
+            <span class="detalle-label">ROL:</span>
+            <span class="detalle-value" id="panelRol">--</span>
             
-            <span class="modal-label">UBICACIÓN:</span>
-            <span class="modal-value" id="modalUbicacion">--</span>
+            <span class="detalle-label">UBICACIÓN:</span>
+            <span class="detalle-value" id="panelUbicacion">--</span>
             
-            <span class="modal-label">BATERÍA:</span>
-            <span class="modal-value alert" id="modalBateria">--</span>
+            <span class="detalle-label">BATERÍA:</span>
+            <span class="detalle-value alert" id="panelBateria">--</span>
+            
+            <span class="detalle-label">PRIORIDAD:</span>
+            <span class="detalle-value" id="panelPrioridad">--</span>
+            
+            <span class="detalle-label">ESTADO:</span>
+            <span class="detalle-value" id="panelEstado">ACTIVA</span>
         </div>
         
         <!-- CONTENEDOR DE VIDEO EN VIVO -->
@@ -995,14 +950,22 @@
             </div>
         </div>
         
-        <div style="text-align: center; margin: 10px 0; font-size: 0.65rem; color: var(--secondary);" id="modalTimestamp">
+        <!-- HISTORIAL DEL INCIDENTE -->
+        <div class="historial-timeline" id="historial-timeline">
+            <div class="timeline-item">
+                <span class="timeline-time">--:--:--</span>
+                <span class="timeline-event">SIN HISTORIAL</span>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin: 10px 0; font-size: 0.65rem; color: var(--secondary);" id="panelTimestamp">
             --
         </div>
         
-        <div class="modal-actions">
-            <button class="modal-button primary" onclick="asignarUnidad()">🚔 ASIGNAR UNIDAD</button>
-            <button class="modal-button secondary" onclick="verRuta()">🗺️ VER RUTA</button>
-            <button class="modal-button secondary" onclick="cerrarModal()">✖ CERRAR</button>
+        <div class="panel-detalle-actions">
+            <button class="action-button primary" onclick="asignarUnidadDesdePanel()">🚔 ASIGNAR</button>
+            <button class="action-button secondary" onclick="verRutaDesdePanel()">🗺️ RUTA</button>
+            <button class="action-button success" onclick="cerrarIncidenteActual()">✅ CERRAR</button>
         </div>
     </div>
 
@@ -1017,6 +980,7 @@
         let mapa;
         let marcadores = {};
         let alertas = [];
+        let alertaSeleccionada = null;
         
         // VARIABLES DE CONTROL TÁCTICO
         let markerCiudadano = null;
@@ -1024,7 +988,7 @@
         let lineaRuta = null;
         
         // VARIABLES DE ESTADO DEL PATRULLERO
-        let miUnidadId = "K-9"; // Este ID debe coincidir con el de la tabla unidades_respuesta
+        let miUnidadId = "K-9";
         let emergenciaActiva = null;
         
         // VARIABLES DE CONTROL DE VIDEO
@@ -1035,6 +999,14 @@
         const videoPlayer = document.getElementById('video-feed');
         const fuenteVideo = videoPlayer ? videoPlayer.querySelector('source') : null;
         const textoEspera = document.getElementById('esperando-texto');
+
+        // Variables para tiempos de respuesta
+        let tiemposRespuesta = [];
+
+        // Solicitar permiso para notificaciones al inicio
+        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
 
         // ==============================================
         // INICIALIZACIÓN
@@ -1077,7 +1049,7 @@
             // Suscribirse a nuevas alertas
             suscribirAlertas();
             
-            // Activar receptor de órdenes (el patrullero escucha asignaciones)
+            // Activar receptor de órdenes
             activarReceptorDeOrdenes();
             
             console.log("✅ Sistema listo. Esperando alertas...");
@@ -1095,6 +1067,46 @@
             const centro = mapa.getCenter();
             document.getElementById('mapCoords').innerHTML = 
                 `LAT: ${centro.lat.toFixed(5)} | LNG: ${centro.lng.toFixed(5)}`;
+        }
+
+        // ==============================================
+        // NOTIFICACIONES TOAST
+        // ==============================================
+        function mostrarToast(titulo, mensaje, tipo = 'alert') {
+            const toast = document.getElementById('toast-notificacion');
+            document.getElementById('toast-titulo').textContent = titulo;
+            document.getElementById('toast-mensaje').textContent = mensaje;
+            
+            toast.style.borderLeftColor = tipo === 'alert' ? 'var(--alert)' : 'var(--primary)';
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+
+        // ==============================================
+        // NOTIFICACIONES PUSH
+        // ==============================================
+        function notificarPush(titulo, mensaje) {
+            if (Notification.permission === 'granted') {
+                new Notification(titulo, {
+                    body: mensaje,
+                    icon: 'logo.png',
+                    requireInteraction: true
+                });
+            }
+            mostrarToast(titulo, mensaje);
+        }
+
+        // ==============================================
+        // CÁLCULO DE PRIORIDAD
+        // ==============================================
+        function calcularPrioridad(alerta) {
+            if (alerta.rol === 'emergencia') return 'CRÍTICA';
+            if (alerta.bateria && parseInt(alerta.bateria) < 15) return 'ALTA';
+            if (alerta.rol === 'patrulla') return 'MEDIA';
+            return 'NORMAL';
         }
 
         // ==============================================
@@ -1129,7 +1141,6 @@
             const { data, error } = await _supabase
                 .from('alertas')
                 .select('*')
-                .eq('activa', true)
                 .order('timestamp', { ascending: false });
 
             if (!error && data) {
@@ -1138,8 +1149,8 @@
                     agregarMarcador(alerta);
                 });
                 actualizarListaIncidentes();
-                document.getElementById('alertCount').textContent = alertas.length;
-                document.getElementById('statsActivas').textContent = alertas.length;
+                actualizarEstadisticas();
+                document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false).length;
             }
         }
 
@@ -1160,21 +1171,35 @@
             alertas.unshift(alerta);
             agregarMarcador(alerta);
             actualizarListaIncidentes();
-            document.getElementById('alertCount').textContent = alertas.length;
-            document.getElementById('statsActivas').textContent = alertas.length;
+            actualizarEstadisticas();
+            document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false).length;
             reproducirAlerta();
             agregarTerminal(`🚨 NUEVA ALERTA: ${alerta.nombre}`, 'alert');
+            
+            // Notificación push
+            notificarPush('🚨 NUEVA ALERTA', `${alerta.nombre} - ${alerta.rol || 'CIVIL'}`);
+            
+            // Centrar mapa en la nueva alerta
+            if (mapa) {
+                mapa.flyTo([alerta.lat, alerta.lng], 16, {
+                    duration: 1.5
+                });
+            }
+            
+            // Registrar tiempo de inicio
+            alerta.tiempoInicio = Date.now();
         }
 
         function agregarMarcador(alerta) {
+            const color = alerta.activa === false ? '#39ff14' : '#ff3131';
             const marcador = L.circleMarker([alerta.lat, alerta.lng], {
                 radius: 12,
-                color: '#ff3131',
+                color: color,
                 weight: 3,
-                fillColor: '#ff3131',
+                fillColor: color,
                 fillOpacity: 0.6
             }).addTo(mapa).bindPopup(`
-                <b>🚨 ALERTA</b><br>
+                <b>${alerta.activa === false ? '✅ RESUELTA' : '🚨 ALERTA'}</b><br>
                 ${alerta.nombre}<br>
                 ${new Date(alerta.timestamp).toLocaleTimeString()}
             `);
@@ -1183,26 +1208,68 @@
         }
 
         function actualizarListaIncidentes() {
+            aplicarFiltros();
+        }
+
+        function aplicarFiltros() {
+            const filtroPrioridad = document.getElementById('filtro-prioridad').value;
+            const filtroRol = document.getElementById('filtro-rol').value;
+            const filtroBusqueda = document.getElementById('filtro-busqueda').value.toLowerCase();
+            const filtroEstado = document.getElementById('filtro-estado').value;
+            
+            let alertasFiltradas = alertas.filter(alerta => {
+                // Filtro por estado
+                if (filtroEstado === 'activos' && alerta.activa === false) return false;
+                if (filtroEstado === 'resueltos' && alerta.activa !== false) return false;
+                
+                // Filtro por prioridad
+                if (filtroPrioridad !== 'todas') {
+                    const prioridad = calcularPrioridad(alerta).toLowerCase();
+                    if (prioridad !== filtroPrioridad) return false;
+                }
+                
+                // Filtro por rol
+                if (filtroRol !== 'todos') {
+                    if (alerta.rol !== filtroRol) return false;
+                }
+                
+                // Filtro por búsqueda
+                if (filtroBusqueda) {
+                    const nombre = (alerta.nombre || '').toLowerCase();
+                    if (!nombre.includes(filtroBusqueda)) return false;
+                }
+                
+                return true;
+            });
+            
+            renderizarListaIncidentes(alertasFiltradas);
+        }
+
+        function renderizarListaIncidentes(alertasFiltradas) {
             const contenedor = document.getElementById('incidentList');
             
-            if (alertas.length === 0) {
-                contenedor.innerHTML = '<div style="color: rgba(255,255,255,0.3); text-align:center; padding:20px;">ESPERANDO ALERTAS...</div>';
+            if (alertasFiltradas.length === 0) {
+                contenedor.innerHTML = '<div style="color: rgba(255,255,255,0.3); text-align:center; padding:20px;">NO HAY INCIDENTES</div>';
                 return;
             }
 
             let html = '';
-            alertas.slice(0, 5).forEach(alerta => {
+            alertasFiltradas.slice(0, 10).forEach(alerta => {
                 const fecha = new Date(alerta.timestamp);
                 const hora = fecha.toLocaleTimeString();
+                const prioridad = calcularPrioridad(alerta);
+                const prioridadClass = prioridad === 'CRÍTICA' ? 'critico' : (alerta.activa === false ? 'resuelto' : '');
+                const prioridadColor = prioridad === 'CRÍTICA' ? '#ff8800' : (alerta.activa === false ? '#39ff14' : '#ff3131');
                 
                 html += `
-                    <div class="incident-card" onclick='verDetalle(${JSON.stringify(alerta)})'>
+                    <div class="incident-card ${prioridadClass}" onclick='verDetallePanel(${JSON.stringify(alerta)})'>
+                        <div class="prioridad-badge" style="border-color: ${prioridadColor}; color: ${prioridadColor};">${prioridad}</div>
                         <div class="incident-time">${hora}</div>
-                        <div class="incident-title">EMERGENCIA</div>
+                        <div class="incident-title">${alerta.nombre}</div>
                         <div class="incident-location">${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}</div>
                         <div class="incident-meta">
-                            <span class="meta-label">CIUDADANO:</span>
-                            <span class="meta-value">${alerta.nombre}</span>
+                            <span class="meta-label">ROL:</span>
+                            <span class="meta-value">${alerta.rol || 'CIVIL'}</span>
                             <span class="meta-label">BATERÍA:</span>
                             <span class="meta-value">${alerta.bateria}</span>
                         </div>
@@ -1211,6 +1278,27 @@
             });
 
             contenedor.innerHTML = html;
+        }
+
+        function actualizarEstadisticas() {
+            const hoy = new Date().toDateString();
+            const alertasHoy = alertas.filter(a => new Date(a.timestamp).toDateString() === hoy).length;
+            const activas = alertas.filter(a => a.activa !== false).length;
+            const resueltas = alertas.filter(a => a.activa === false).length;
+            const criticas = alertas.filter(a => calcularPrioridad(a) === 'CRÍTICA' && a.activa !== false).length;
+            
+            document.getElementById('statsHoy').textContent = alertasHoy;
+            document.getElementById('statsActivas').textContent = activas;
+            document.getElementById('statsResueltas').textContent = resueltas;
+            document.getElementById('statsPendientes').textContent = activas;
+            document.getElementById('statsCriticas').textContent = criticas;
+            
+            // Calcular tiempo promedio de respuesta
+            if (tiemposRespuesta.length > 0) {
+                const promedio = tiemposRespuesta.reduce((a, b) => a + b, 0) / tiemposRespuesta.length;
+                document.getElementById('statsTiempo').textContent = promedio.toFixed(1) + 's';
+                document.getElementById('tiempoPromedio').textContent = promedio.toFixed(1) + 's';
+            }
         }
 
         function reproducirAlerta() {
@@ -1245,6 +1333,8 @@
 
         function agregarTerminal(mensaje, tipo = 'normal') {
             const terminal = document.getElementById('terminal');
+            if (!terminal) return;
+            
             const linea = document.createElement('div');
             linea.className = 'terminal-line';
             
@@ -1260,7 +1350,7 @@
             linea.appendChild(texto);
             terminal.appendChild(linea);
             
-            while (terminal.children.length > 12) {
+            while (terminal.children.length > 8) {
                 terminal.removeChild(terminal.firstChild);
             }
             
@@ -1268,40 +1358,123 @@
         }
 
         // ==============================================
-        // FUNCIONES DE INTERFAZ - MODAL DE ALERTA
+        // FUNCIONES DE INTERFAZ - PANEL LATERAL
         // ==============================================
-        function verDetalle(alerta) {
-            document.getElementById('modalNombre').textContent = alerta.nombre;
-            document.getElementById('modalDni').textContent = alerta.dni;
-            document.getElementById('modalTel').textContent = alerta.telefono;
-            document.getElementById('modalRol').textContent = alerta.rol ? alerta.rol.toUpperCase() : 'CIVIL';
-            document.getElementById('modalUbicacion').textContent = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
-            document.getElementById('modalBateria').textContent = alerta.bateria;
+        function verDetallePanel(alerta) {
+            alertaSeleccionada = alerta;
+            
+            document.getElementById('panel-titulo').textContent = `🚨 ALERTA ${calcularPrioridad(alerta)}`;
+            document.getElementById('panelNombre').textContent = alerta.nombre;
+            document.getElementById('panelDni').textContent = alerta.dni;
+            document.getElementById('panelTel').textContent = alerta.telefono;
+            document.getElementById('panelRol').textContent = alerta.rol ? alerta.rol.toUpperCase() : 'CIVIL';
+            document.getElementById('panelUbicacion').textContent = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
+            document.getElementById('panelBateria').textContent = alerta.bateria;
+            document.getElementById('panelPrioridad').textContent = calcularPrioridad(alerta);
+            document.getElementById('panelEstado').textContent = alerta.activa === false ? 'RESUELTA' : 'ACTIVA';
             
             const fecha = new Date(alerta.timestamp);
-            document.getElementById('modalTimestamp').textContent = fecha.toLocaleString();
+            document.getElementById('panelTimestamp').textContent = fecha.toLocaleString();
+            
+            // Actualizar historial (simulado por ahora)
+            const historial = document.getElementById('historial-timeline');
+            historial.innerHTML = `
+                <div class="timeline-item">
+                    <span class="timeline-time">${fecha.toLocaleTimeString()}</span>
+                    <span class="timeline-event">🚨 Alerta creada</span>
+                </div>
+                ${alerta.unidad_asignada ? `
+                <div class="timeline-item">
+                    <span class="timeline-time">${new Date().toLocaleTimeString()}</span>
+                    <span class="timeline-event">🚔 Unidad ${alerta.unidad_asignada} asignada</span>
+                </div>
+                ` : ''}
+                ${alerta.activa === false ? `
+                <div class="timeline-item">
+                    <span class="timeline-time">${new Date().toLocaleTimeString()}</span>
+                    <span class="timeline-event">✅ Incidente resuelto</span>
+                </div>
+                ` : ''}
+            `;
             
             // Resetear el contenedor de video
             if (videoPlayer) videoPlayer.style.display = 'none';
             if (textoEspera) textoEspera.style.display = 'flex';
             fragmentoActual = null;
             
-            // Iniciar streaming en tiempo real para esta alerta
+            // Iniciar streaming
             conectarStreamingRealtime(alerta.id);
-
-            document.getElementById('alert-modal').style.display = 'block';
             
-            // Centrar mapa en la alerta
+            document.getElementById('panel-detalle-alerta').style.display = 'block';
+            
+            // Centrar mapa con animación suave
             if (mapa) {
-                mapa.setView([alerta.lat, alerta.lng], 17);
+                mapa.flyTo([alerta.lat, alerta.lng], 17, {
+                    duration: 1.2,
+                    easeLinearity: 0.5
+                });
             }
             
             // Activar seguimiento táctico
             activarSeguimientoRealtime(alerta.id);
         }
 
-        function cerrarModal() {
-            document.getElementById('alert-modal').style.display = 'none';
+        function cerrarPanelDetalle() {
+            document.getElementById('panel-detalle-alerta').style.display = 'none';
+            alertaSeleccionada = null;
+        }
+
+        // ==============================================
+        // CIERRE DE INCIDENTES
+        // ==============================================
+        async function cerrarIncidenteActual() {
+            if (!alertaSeleccionada) return;
+            
+            if (confirm(`¿CERRAR INCIDENTE #${alertaSeleccionada.id}?`)) {
+                await cerrarIncidente(alertaSeleccionada.id);
+                cerrarPanelDetalle();
+            }
+        }
+
+        async function cerrarIncidente(idAlerta) {
+            const alerta = alertas.find(a => a.id === idAlerta);
+            if (!alerta) return;
+            
+            // Registrar tiempo de respuesta
+            if (alerta.tiempoInicio) {
+                const tiempoRespuesta = (Date.now() - alerta.tiempoInicio) / 1000;
+                tiemposRespuesta.push(tiempoRespuesta);
+                agregarTerminal(`⏱️ Tiempo de respuesta: ${tiempoRespuesta.toFixed(1)} segundos`);
+            }
+            
+            await _supabase
+                .from('alertas')
+                .update({ 
+                    activa: false, 
+                    estado: 'resuelto',
+                    fecha_resolucion: new Date().toISOString()
+                })
+                .eq('id', idAlerta);
+            
+            // Actualizar array local
+            alertas = alertas.map(a => {
+                if (a.id === idAlerta) {
+                    return { ...a, activa: false };
+                }
+                return a;
+            });
+            
+            // Actualizar marcador en mapa
+            if (marcadores[idAlerta]) {
+                marcadores[idAlerta].setStyle({ color: '#39ff14', fillColor: '#39ff14' });
+            }
+            
+            actualizarListaIncidentes();
+            actualizarEstadisticas();
+            document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false).length;
+            
+            agregarTerminal(`✅ Incidente #${idAlerta} cerrado y archivado`, 'normal');
+            notificarPush('✅ INCIDENTE RESUELTO', `Alerta #${idAlerta} ha sido cerrada`);
         }
 
         // ==============================================
@@ -1377,18 +1550,14 @@
         // ==============================================
         // FUNCIONES DE ASIGNACIÓN DE UNIDAD
         // ==============================================
-        async function asignarUnidad() {
-            agregarTerminal('🚔 BUSCANDO UNIDAD MÁS CERCANA...', 'normal');
-            
-            if (alertas.length === 0) return;
-            
-            const alertaActual = alertas[0];
-            await asignarUnidadMasCercana(alertaActual.id);
+        async function asignarUnidadDesdePanel() {
+            if (!alertaSeleccionada) return;
+            await asignarUnidadMasCercana(alertaSeleccionada.id);
         }
 
         async function asignarUnidadMasCercana(idAlerta) {
-            console.log("🚔 Buscando unidad de respuesta inmediata...");
-
+            agregarTerminal('🚔 BUSCANDO UNIDAD MÁS CERCANA...', 'normal');
+            
             const { data: alerta } = await _supabase
                 .from('alertas')
                 .select('lat, lng')
@@ -1423,19 +1592,32 @@
                 
                 await _supabase
                     .from('alertas')
-                    .update({ estado: 'en_proceso', unidad_asignada: unidadCercana.codigo })
+                    .update({ 
+                        estado: 'en_proceso', 
+                        unidad_asignada: unidadCercana.codigo,
+                        tiempo_asignacion: new Date().toISOString()
+                    })
                     .eq('id', idAlerta);
-                    
-                cerrarModal();
+                
+                // Actualizar panel si está abierto
+                if (alertaSeleccionada && alertaSeleccionada.id === idAlerta) {
+                    alertaSeleccionada.unidad_asignada = unidadCercana.codigo;
+                    verDetallePanel(alertaSeleccionada);
+                }
+                
+                notificarPush('🚔 UNIDAD ASIGNADA', `Unidad ${unidadCercana.codigo} en camino`);
+                
             } else {
                 agregarTerminal('❌ NO HAY UNIDADES DISPONIBLES', 'alert');
             }
         }
 
-        function verRuta() {
+        function verRutaDesdePanel() {
+            if (!alertaSeleccionada) return;
             agregarTerminal('🗺️ CALCULANDO RUTA ÓPTIMA...', 'normal');
             setTimeout(() => {
                 agregarTerminal('✅ RUTA CALCULADA: ETA 02:30 MIN', 'normal');
+                notificarPush('🗺️ RUTA CALCULADA', 'ETA estimada: 2 minutos 30 segundos');
             }, 1500);
         }
 
@@ -1470,11 +1652,15 @@
                             markerCiudadano.setLatLng(nuevaPos);
                         }
                         
-                        mapa.flyTo(nuevaPos, 17); 
+                        mapa.flyTo(nuevaPos, 17, { duration: 1 }); 
                     }
 
                     if (data.bateria) {
-                        document.getElementById('modalBateria').textContent = data.bateria;
+                        document.getElementById('panelBateria').textContent = data.bateria;
+                    }
+                    
+                    if (data.unidad_asignada && !data.tiempo_llegada) {
+                        agregarTerminal(`🚔 Unidad ${data.unidad_asignada} en camino`, 'alert');
                     }
                 })
                 .subscribe();
@@ -1500,7 +1686,8 @@
                         console.log(`🚨 ALERTA ASIGNADA A MI UNIDAD: ${alerta.id}`);
                         emergenciaActiva = alerta;
                         mostrarAlertaEnPantalla(alerta);
-                        reproducirAlerta(); // Usar el mismo sonido
+                        reproducirAlerta();
+                        notificarPush('🚨 MISIÓN ASIGNADA', `Acuda a ${alerta.lat}, ${alerta.lng}`);
                     }
                 })
                 .subscribe();
@@ -1533,12 +1720,17 @@
         async function confirmarLlegada(idAlerta) {
             const { error } = await _supabase
                 .from('alertas')
-                .update({ estado: 'finalizado', activa: false })
+                .update({ 
+                    estado: 'finalizado', 
+                    activa: false,
+                    tiempo_llegada: new Date().toISOString()
+                })
                 .eq('id', idAlerta);
 
             if (!error) {
-                alert("🚨 Estatus actualizado: En el lugar.");
+                await cerrarIncidente(idAlerta);
                 document.getElementById('panel-emergencia').style.display = 'none';
+                notificarPush('✅ MISIÓN COMPLETADA', 'Ha llegado al lugar del incidente');
             }
         }
 
