@@ -664,21 +664,61 @@
             color: var(--alert);
         }
 
-        .video-placeholder {
+        /* ============================================== */
+        /* CONTENEDOR DE VIDEO EN VIVO (ESTILO PELÍCULA) */
+        /* ============================================== */
+        #contenedor-video-alerta {
+            position: relative;
             width: 100%;
-            height: 180px;
+            height: 300px;
+            border: 2px solid #ff4444;
+            box-shadow: 0 0 15px #ff4444;
             background: #000;
-            border: 1px solid var(--alert);
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            border-radius: 8px;
             margin: 15px 0;
-            clip-path: polygon(
-                0% 5%, 2% 0%, 98% 0%, 100% 5%,
-                100% 95%, 98% 100%, 2% 100%, 0% 95%
-            );
-            color: rgba(255,49,49,0.5);
-            font-size: 0.8rem;
+        }
+        
+        #status-live {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+        }
+        
+        #video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+        
+        #esperando-texto {
+            color: #ff4444;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        
+        @keyframes pulse-red {
+            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            70% { opacity: 0.5; box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+        }
+        
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: #ff4444;
+            border-radius: 50%;
+            animation: pulse-red 1.5s infinite;
         }
 
         .modal-actions {
@@ -722,6 +762,18 @@
             box-shadow: 0 0 20px var(--primary);
         }
 
+        /* PANEL DE EMERGENCIA PARA EL POLICÍA (INTERCEPCIÓN) */
+        #panel-emergencia {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            z-index: 20000;
+            display: none;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -763,7 +815,7 @@
                 </div>
                 <div class="indicator">
                     <span class="indicator-label">UNIDADES</span>
-                    <span class="indicator-value">4</span>
+                    <span class="indicator-value" id="unidadesDisponibles">0</span>
                 </div>
                 <div class="indicator">
                     <span class="indicator-label">COBERTURA</span>
@@ -773,7 +825,7 @@
         </div>
         <div class="header-right">
             <div class="time-display" id="reloj">22:47:03</div>
-            <div class="unit-badge">UNIDAD K-9</div>
+            <div class="unit-badge" id="unidadId">UNIDAD K-9</div>
         </div>
     </div>
 
@@ -823,8 +875,8 @@
         <div class="right-panel">
             <div class="unit-section">
                 <div class="unit-header">
-                    <span class="unit-name">UNIDAD K-9</span>
-                    <span class="unit-status">● EN SERVICIO</span>
+                    <span class="unit-name">UNIDAD <span id="nombreUnidad">K-9</span></span>
+                    <span class="unit-status" id="estadoUnidad">● EN SERVICIO</span>
                 </div>
                 <div class="unit-grid">
                     <div class="unit-info">
@@ -897,7 +949,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE DETALLE -->
+    <!-- MODAL DE DETALLE DE ALERTA -->
     <div id="alert-modal">
         <div class="modal-header">
             <span style="color: var(--alert); font-size: 1.2rem;">🚨 ALERTA PRIORIDAD 1</span>
@@ -923,9 +975,21 @@
             <span class="modal-value alert" id="modalBateria">--</span>
         </div>
         
-        <div class="video-placeholder" id="videoPlaceholder">
-            <div id="videoProgreso">[ ESPERANDO VIDEO... ]</div>
-            <div id="videoMiniatura" style="display:none; width:100%; height:100%; object-fit:cover;"></div>
+        <!-- CONTENEDOR DE VIDEO EN VIVO (NUEVO) -->
+        <div id="contenedor-video-alerta">
+            <div id="status-live">
+                <div class="pulse-dot"></div>
+                <span style="color: #ff4444; font-family: 'Courier New', monospace; font-weight: bold; font-size: 0.8rem; text-shadow: 0 0 5px #ff4444;">REC / EN VIVO</span>
+            </div>
+
+            <video id="video-feed" autoplay muted playsinline>
+                <source src="" type="video/webm">
+                Tu navegador no soporta el video de Sentinel.
+            </video>
+
+            <div id="esperando-texto">
+                [ ESPERANDO VIDEO... ]
+            </div>
         </div>
         
         <div style="text-align: center; margin: 10px 0; font-size: 0.65rem; color: var(--secondary);" id="modalTimestamp">
@@ -939,6 +1003,9 @@
         </div>
     </div>
 
+    <!-- PANEL DE EMERGENCIA PARA EL POLICÍA (INTERCEPCIÓN) -->
+    <div id="panel-emergencia"></div>
+
     <script>
         const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
@@ -947,6 +1014,20 @@
         let mapa;
         let marcadores = {};
         let alertas = [];
+        
+        // VARIABLES DE CONTROL TÁCTICO
+        let markerCiudadano = null;
+        let markerPatrulleroCercano = null;
+        let lineaRuta = null;
+        
+        // VARIABLES DE ESTADO DEL PATRULLERO
+        let miUnidadId = "K-9"; // Este ID debe venir del login del policía
+        let emergenciaActiva = null;
+        
+        // Elementos de video
+        const videoPlayer = document.getElementById('video-feed');
+        const fuenteVideo = videoPlayer.querySelector('source');
+        const textoEspera = document.getElementById('esperando-texto');
 
         // ==============================================
         // INICIALIZACIÓN
@@ -970,7 +1051,7 @@
                 weight: 4,
                 fillColor: '#0066ff',
                 fillOpacity: 0.3
-            }).addTo(mapa).bindPopup('🚓 UNIDAD K-9');
+            }).addTo(mapa).bindPopup(`🚓 UNIDAD ${miUnidadId}`);
 
             // Iniciar reloj
             actualizarReloj();
@@ -980,11 +1061,17 @@
             mapa.on('move', actualizarCoordenadas);
             actualizarCoordenadas();
 
+            // Cargar unidades disponibles
+            cargarUnidadesDisponibles();
+            
             // Cargar alertas activas existentes
             cargarAlertasActivas();
             
             // Suscribirse a nuevas alertas
             suscribirAlertas();
+            
+            // Activar receptor de órdenes (el patrullero escucha asignaciones)
+            activarReceptorDeOrdenes();
         }
 
         function actualizarReloj() {
@@ -999,6 +1086,31 @@
             const centro = mapa.getCenter();
             document.getElementById('mapCoords').innerHTML = 
                 `LAT: ${centro.lat.toFixed(5)} | LNG: ${centro.lng.toFixed(5)}`;
+        }
+
+        // ==============================================
+        // UNIDADES DISPONIBLES
+        // ==============================================
+        async function cargarUnidadesDisponibles() {
+            const { data, error } = await _supabase
+                .from('unidades_respuesta')
+                .select('*')
+                .eq('estado', 'disponible');
+                
+            if (!error && data) {
+                document.getElementById('unidadesDisponibles').textContent = data.length;
+                
+                // Agregar marcadores de unidades disponibles
+                data.forEach(unidad => {
+                    L.circleMarker([unidad.lat, unidad.lng], {
+                        radius: 10,
+                        color: '#0066ff',
+                        weight: 2,
+                        fillColor: '#0066ff',
+                        fillOpacity: 0.5
+                    }).addTo(mapa).bindPopup(`🚔 UNIDAD ${unidad.codigo}<br>${unidad.tipo}`);
+                });
+            }
         }
 
         // ==============================================
@@ -1150,69 +1262,101 @@
         }
 
         // ==============================================
-        // FUNCIONES DE INTERFAZ
+        // FUNCIONES DE INTERFAZ - MODAL DE ALERTA
         // ==============================================
-       function verDetalle(alerta) {
-    document.getElementById('modalNombre').textContent = alerta.nombre;
-    document.getElementById('modalDni').textContent = alerta.dni;
-    document.getElementById('modalTel').textContent = alerta.telefono;
-    document.getElementById('modalRol').textContent = alerta.rol ? alerta.rol.toUpperCase() : 'CIVIL';
-    document.getElementById('modalUbicacion').textContent = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
-    document.getElementById('modalBateria').textContent = alerta.bateria;
-    
-    const fecha = new Date(alerta.timestamp);
-    document.getElementById('modalTimestamp').textContent = fecha.toLocaleString();
-    
-    // ==============================================
-    // NUEVA LÓGICA PARA MOSTRAR EL VIDEO
-    // ==============================================
-    const videoPlaceholder = document.getElementById('videoPlaceholder');
-    
-    if (alerta.video_url) {
-        // Si hay URL (primer fragmento), mostrar el video
-        videoPlaceholder.innerHTML = `
-            <video controls style="width:100%; height:100%; background: black; object-fit: contain;">
-                <source src="${alerta.video_url}" type="video/webm">
-                Tu navegador no soporta video.
-            </video>
-        `;
-        
-        // Forzar la carga del video
-        const video = videoPlaceholder.querySelector('video');
-        video.load();
-        
-    } else if (alerta.video_progreso) {
-        // Si hay progreso pero no URL, mostrar porcentaje
-        videoPlaceholder.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                <div style="font-size: 1.2rem; color: var(--alert);">⏳</div>
-                <div style="margin-top: 10px;">[ VIDEO: ${alerta.video_progreso}% COMPLETADO ]</div>
-            </div>
-        `;
-    } else {
-        videoPlaceholder.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                <div style="font-size: 1.2rem; color: var(--secondary);">📹</div>
-                <div style="margin-top: 10px;">[ ESPERANDO VIDEO... ]</div>
-            </div>
-        `;
-    }
-    // ==============================================
+        function verDetalle(alerta) {
+            document.getElementById('modalNombre').textContent = alerta.nombre;
+            document.getElementById('modalDni').textContent = alerta.dni;
+            document.getElementById('modalTel').textContent = alerta.telefono;
+            document.getElementById('modalRol').textContent = alerta.rol ? alerta.rol.toUpperCase() : 'CIVIL';
+            document.getElementById('modalUbicacion').textContent = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
+            document.getElementById('modalBateria').textContent = alerta.bateria;
+            
+            const fecha = new Date(alerta.timestamp);
+            document.getElementById('modalTimestamp').textContent = fecha.toLocaleString();
+            
+            // Resetear el contenedor de video
+            videoPlayer.style.display = 'none';
+            textoEspera.style.display = 'flex';
+            
+            // Iniciar streaming en tiempo real para esta alerta
+            conectarStreamingRealtime(alerta.id);
 
-    document.getElementById('alert-modal').style.display = 'block';
-    
-    // Centrar mapa en la alerta
-    if (mapa) {
-        mapa.setView([alerta.lat, alerta.lng], 17);
-    }
-}
+            document.getElementById('alert-modal').style.display = 'block';
+            
+            // Centrar mapa en la alerta
+            mapa.setView([alerta.lat, alerta.lng], 17);
+            
+            // Activar seguimiento táctico
+            activarSeguimientoRealtime(alerta.id);
+        }
+
         function cerrarModal() {
             document.getElementById('alert-modal').style.display = 'none';
         }
 
-        function asignarUnidad() {
-            agregarTerminal('🚔 UNIDAD K-9 ASIGNADA A ALERTA PRIORIDAD 1', 'alert');
-            cerrarModal();
+        // ==============================================
+        // FUNCIONES DE ASIGNACIÓN DE UNIDAD
+        // ==============================================
+        async function asignarUnidad() {
+            agregarTerminal('🚔 BUSCANDO UNIDAD MÁS CERCANA...', 'normal');
+            
+            // Obtener la alerta más reciente (la que está abierta en el modal)
+            if (alertas.length === 0) return;
+            
+            const alertaActual = alertas[0];
+            await asignarUnidadMasCercana(alertaActual.id);
+        }
+
+        async function asignarUnidadMasCercana(idAlerta) {
+            console.log("🚔 Buscando unidad de respuesta inmediata...");
+
+            // 1. Obtener ubicación de la alerta actual
+            const { data: alerta } = await _supabase
+                .from('alertas')
+                .select('lat, lng')
+                .eq('id', idAlerta)
+                .single();
+
+            // 2. Obtener todas las unidades disponibles
+            const { data: unidades } = await _supabase
+                .from('unidades_respuesta')
+                .select('*')
+                .eq('estado', 'disponible');
+
+            if (unidades && unidades.length > 0) {
+                // Lógica de cercanía simple (Pitágoras)
+                let unidadCercana = unidades[0];
+                let minElem = Math.hypot(unidades[0].lat - alerta.lat, unidades[0].lng - alerta.lng);
+
+                unidades.forEach(u => {
+                    let dist = Math.hypot(u.lat - alerta.lat, u.lng - alerta.lng);
+                    if (dist < minElem) {
+                        minElem = dist;
+                        unidadCercana = u;
+                    }
+                });
+
+                // 3. Dibujar la ruta de intercepción en el mapa
+                if (lineaRuta) mapa.removeLayer(lineaRuta);
+                
+                lineaRuta = L.polyline([
+                    [unidadCercana.lat, unidadCercana.lng],
+                    [alerta.lat, alerta.lng]
+                ], { color: '#00f2ff', weight: 4, dashArray: '10, 10', opacity: 0.8 }).addTo(mapa);
+
+                agregarTerminal(`🚔 Unidad ${unidadCercana.codigo} asignada. ETA: 4 min.`, 'alert');
+                
+                // Notificar a la base de datos que la unidad está en camino
+                await _supabase
+                    .from('alertas')
+                    .update({ estado: 'en_proceso', unidad_asignada: unidadCercana.codigo })
+                    .eq('id', idAlerta);
+                    
+                cerrarModal();
+            } else {
+                agregarTerminal('❌ NO HAY UNIDADES DISPONIBLES', 'alert');
+            }
         }
 
         function verRuta() {
@@ -1223,28 +1367,175 @@
         }
 
         // ==============================================
-        // FUNCIÓN PARA ACTUALIZAR PROGRESO DE VIDEO
+        // FUNCIONES DE STREAMING DE VIDEO (EN VIVO)
         // ==============================================
-        function actualizarProgresoVideo(alerta) {
-            const progresoDiv = document.getElementById('videoProgreso');
-            const miniatura = document.getElementById('videoMiniatura');
-            
-            if (alerta.video_progreso) {
-                progresoDiv.innerHTML = `[ VIDEO: ${alerta.video_progreso * 10}% COMPLETADO ]`;
-                
-                if (alerta.video_url) {
-                    miniatura.style.display = 'block';
-                    miniatura.innerHTML = `<img src="${alerta.video_url}" style="width:100%; height:100%; object-fit:cover;">`;
-                    progresoDiv.style.display = 'none';
-                } else {
-                    miniatura.style.display = 'none';
-                    progresoDiv.style.display = 'block';
-                }
-            } else {
-                progresoDiv.innerHTML = '[ ESPERANDO VIDEO... ]';
-                miniatura.style.display = 'none';
-                progresoDiv.style.display = 'block';
+        function conectarStreamingRealtime(idDeLaAlerta) {
+            console.log(`📡 Conectando streaming para Alerta: ${idDeLaAlerta}`);
+
+            _supabase
+                .channel(`streaming-${idDeLaAlerta}`)
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'alertas',
+                    filter: `id=eq.${idDeLaAlerta}` 
+                }, payload => {
+                    const nuevaUrl = payload.new.video_url;
+                    
+                    if (nuevaUrl) {
+                        console.log("🎥 Nuevo fragmento recibido:", nuevaUrl);
+                        
+                        // Actualizar la fuente del video
+                        fuenteVideo.src = nuevaUrl;
+                        videoPlayer.load();
+                        
+                        // Mostrar el video y ocultar el texto de espera
+                        videoPlayer.style.display = "block";
+                        textoEspera.style.display = "none";
+                        
+                        // Reproducir automáticamente
+                        videoPlayer.play().catch(e => console.warn("Error autoplay:", e));
+                    }
+                })
+                .subscribe();
+        }
+
+        // ==============================================
+        // FUNCIONES DE SEGUIMIENTO TÁCTICO
+        // ==============================================
+        function activarSeguimientoRealtime(idAlerta) {
+            console.log(`🚀 Sentinel: Iniciando seguimiento táctico para Alerta ${idAlerta}`);
+
+            _supabase
+                .channel(`war-room-${idAlerta}`)
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'alertas', 
+                    filter: `id=eq.${idAlerta}` 
+                }, payload => {
+                    const data = payload.new;
+
+                    // 1. ACTUALIZAR POSICIÓN EN MAPA (Punto Blanco)
+                    if (data.lat && data.lng) {
+                        const nuevaPos = [data.lat, data.lng];
+                        
+                        if (!markerCiudadano) {
+                            // Crear icono blanco si no existe
+                            const iconoBlanco = L.divIcon({
+                                html: '<div style="width: 16px; height: 16px; background: white; border-radius: 50%; box-shadow: 0 0 20px white;"></div>',
+                                className: '',
+                                iconSize: [16, 16],
+                                iconAnchor: [8, 8]
+                            });
+                            markerCiudadano = L.marker(nuevaPos, { icon: iconoBlanco }).addTo(mapa);
+                        } else {
+                            markerCiudadano.setLatLng(nuevaPos);
+                        }
+                        
+                        // Auto-centrar mapa en la víctima para no perderla de vista
+                        mapa.flyTo(nuevaPos, 17); 
+                    }
+
+                    // 2. ACTUALIZAR VIDEO (Si hay nuevo fragmento) - Ya lo hace conectarStreamingRealtime
+                    
+                    // 3. ACTUALIZAR TELEMETRÍA (Batería y Datos)
+                    if (data.bateria) {
+                        document.getElementById('modalBateria').textContent = data.bateria;
+                    }
+                })
+                .subscribe();
+        }
+
+        // ==============================================
+        // FUNCIONES DE RECEPTOR DE ÓRDENES (PATRULLERO)
+        // ==============================================
+        function activarReceptorDeOrdenes() {
+            console.log("🚔 Unidad en servicio. Esperando asignaciones...");
+
+            _supabase
+                .channel(`patrullero-${miUnidadId}`)
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'alertas',
+                    filter: `unidad_asignada=eq.${miUnidadId}` 
+                }, async (payload) => {
+                    const alerta = payload.new;
+                    
+                    if (alerta.estado === 'en_proceso') {
+                        emergenciaActiva = alerta;
+                        mostrarAlertaEnPantalla(alerta);
+                        reproducirSonidoSirena();
+                    }
+                })
+                .subscribe();
+        }
+
+        function mostrarAlertaEnPantalla(alerta) {
+            const panel = document.getElementById('panel-emergencia');
+            panel.innerHTML = `
+                <div style="background: #001529; border: 3px solid #00f2ff; padding: 20px; color: white; border-radius: 8px; box-shadow: 0 0 30px #00f2ff;">
+                    <h2 style="color: #ff4444; animation: pulse-red 1s infinite; text-align: center;">🚨 INTERCEPCIÓN EN CURSO</h2>
+                    <p><strong>CIUDADANO:</strong> ${alerta.nombre || 'Desconocido'}</p>
+                    <p><strong>UBICACIÓN:</strong> ${alerta.lat}, ${alerta.lng}</p>
+                    <hr>
+                    <button onclick="abrirWaze(${alerta.lat}, ${alerta.lng})" style="background: #00f2ff; color: black; padding: 15px; width: 100%; font-weight: bold; border: none; cursor: pointer; margin-bottom: 10px; border-radius: 4px;">
+                        🗺️ ABRIR NAVEGADOR (WAZE/MAPS)
+                    </button>
+                    <br>
+                    <button onclick="confirmarLlegada(${alerta.id})" style="background: #39ff14; color: black; padding: 15px; width: 100%; font-weight: bold; border: none; cursor: pointer; border-radius: 4px;">
+                        ✅ LLEGUÉ AL LUGAR
+                    </button>
+                </div>
+            `;
+            panel.style.display = 'block';
+        }
+
+        function abrirWaze(lat, lng) {
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`, '_blank');
+        }
+
+        async function confirmarLlegada(idAlerta) {
+            const { error } = await _supabase
+                .from('alertas')
+                .update({ estado: 'finalizado', activa: false })
+                .eq('id', idAlerta);
+
+            if (!error) {
+                alert("🚨 Estatus actualizado: En el lugar.");
+                document.getElementById('panel-emergencia').style.display = 'none';
             }
+        }
+
+        function reproducirSonidoSirena() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'sawtooth';
+                osc.frequency.value = 880;
+                gain.gain.value = 0.1;
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+                
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.type = 'sawtooth';
+                    osc2.frequency.value = 440;
+                    gain2.gain.value = 0.1;
+                    osc2.start();
+                    osc2.stop(audioCtx.currentTime + 0.3);
+                }, 400);
+            } catch (e) {}
         }
 
         // ==============================================
