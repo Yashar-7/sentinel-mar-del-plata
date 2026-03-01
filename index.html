@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL V8.0 | SMART TECH</title>
+    <title>SENTINEL V8.1 | SMART TECH</title>
     
     <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -834,7 +834,7 @@
             display: none !important;
         }
 
-        /* MARCADOR SIMPLE (círculo con glow) */
+        /* MARCADOR SIMPLE */
         .simple-marker {
             filter: drop-shadow(0 0 8px var(--neon-cyan)) 
                     drop-shadow(0 0 15px var(--neon-cyan));
@@ -977,7 +977,7 @@
         <div class="user-counter">
             <span>👥</span>
             <span id="contador-usuarios">0</span>
-            <span>usuarios activos</span>
+            <span>activos</span>
         </div>
 
         <!-- VISOR DE CÁMARA -->
@@ -1071,7 +1071,7 @@
         let rolSeleccionado = '';
         let colorSeleccionado = '';
         
-        // NUEVAS VARIABLES
+        // VARIABLES
         let modoSigiloso = false;
         let intervaloGPS = null;
         let timeoutCancelacion = null;
@@ -1343,15 +1343,19 @@
         }
 
         // ==============================================
-        // PUNTOS ANÓNIMOS DE COMUNIDAD
+        // PUNTOS ANÓNIMOS DE COMUNIDAD (CORREGIDO)
         // ==============================================
         function cargarUsuariosActivos() {
-            // Cargar usuarios activos iniciales
             _supabase
                 .from('usuarios_activos')
                 .select('*')
-                .then(({ data }) => {
+                .then(({ data, error }) => {
+                    if (error) {
+                        console.error("❌ Error cargando usuarios activos:", error);
+                        return;
+                    }
                     if (data) {
+                        console.log(`👥 ${data.length} usuarios activos cargados`);
                         document.getElementById('contador-usuarios').textContent = data.length;
                         data.forEach(usuario => {
                             agregarPuntoAnonimo(usuario);
@@ -1359,18 +1363,19 @@
                     }
                 });
             
-            // Suscribirse a nuevos usuarios
             _supabase
                 .channel('usuarios-activos')
                 .on('postgres_changes', 
                     { event: 'INSERT', schema: 'public', table: 'usuarios_activos' }, 
                     (payload) => {
+                        console.log("➕ Nuevo usuario activo");
                         agregarPuntoAnonimo(payload.new);
                         actualizarContadorUsuarios();
                     })
                 .on('postgres_changes',
                     { event: 'DELETE', schema: 'public', table: 'usuarios_activos' },
                     (payload) => {
+                        console.log("➖ Usuario desconectado");
                         removerPuntoAnonimo(payload.old.id);
                         actualizarContadorUsuarios();
                     })
@@ -1378,10 +1383,8 @@
         }
 
         function agregarPuntoAnonimo(usuario) {
-            // No mostrar el propio usuario
             if (usuario.usuario_id === usuarioActual?.id_usuario) return;
             
-            // Puntos grises anónimos - TODOS IGUALES
             const punto = L.circleMarker([usuario.lat, usuario.lng], {
                 radius: 5,
                 color: '#888888',
@@ -1407,22 +1410,50 @@
             _supabase
                 .from('usuarios_activos')
                 .select('*', { count: 'exact', head: true })
-                .then(({ count }) => {
-                    document.getElementById('contador-usuarios').textContent = count || 0;
+                .then(({ count, error }) => {
+                    if (!error) {
+                        document.getElementById('contador-usuarios').textContent = count || 0;
+                    }
                 });
         }
 
+        // ==============================================
+        // ACTUALIZACIÓN DE PRESENCIA (CORREGIDA)
+        // ==============================================
         async function actualizarPresencia() {
             if (!usuarioActual || !ubicacionActual || !usuarioActual.id_usuario) return;
             
-            await _supabase
-                .from('usuarios_activos')
-                .upsert({
-                    usuario_id: usuarioActual.id_usuario,
-                    lat: ubicacionActual.lat,
-                    lng: ubicacionActual.lng,
-                    ultima_actualizacion: new Date().toISOString()
-                }, { onConflict: 'usuario_id' });
+            try {
+                const { data: existe } = await _supabase
+                    .from('usuarios_activos')
+                    .select('id')
+                    .eq('usuario_id', usuarioActual.id_usuario)
+                    .maybeSingle();
+                
+                if (existe) {
+                    await _supabase
+                        .from('usuarios_activos')
+                        .update({
+                            lat: ubicacionActual.lat,
+                            lng: ubicacionActual.lng,
+                            ultima_actualizacion: new Date().toISOString()
+                        })
+                        .eq('usuario_id', usuarioActual.id_usuario);
+                } else {
+                    await _supabase
+                        .from('usuarios_activos')
+                        .insert({
+                            usuario_id: usuarioActual.id_usuario,
+                            lat: ubicacionActual.lat,
+                            lng: ubicacionActual.lng,
+                            ultima_actualizacion: new Date().toISOString()
+                        });
+                }
+                
+                console.log("📍 Presencia actualizada correctamente");
+            } catch (error) {
+                console.error("❌ Error actualizando presencia:", error);
+            }
         }
 
         function iniciarActualizacionPresencia() {
@@ -1457,7 +1488,7 @@
         }
 
         // ==============================================
-        // FUNCIONES DE CÁMARA Y VIDEO
+        // FUNCIONES DE CÁMARA Y VIDEO (MEJORADAS)
         // ==============================================
 
         async function activarCamara() {
@@ -1722,7 +1753,7 @@
         }
 
         // ==============================================
-        // FUNCIÓN DE ALERTA (CON CANCELACIÓN)
+        // FUNCIÓN DE ALERTA
         // ==============================================
 
         async function activarAlerta() {
@@ -1866,7 +1897,6 @@
             }
         }
 
-        // Iniciar verificando si hay sesión activa
         verificarSesion();
     </script>
 </body>
