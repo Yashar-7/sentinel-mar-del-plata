@@ -107,7 +107,7 @@
         }
 
         /* ============================================== */
-        /* HEADER TÁCTICO MEJORADO */
+        /* HEADER TÁCTICO CON LOGO SMART TECH */
         /* ============================================== */
         .tactical-header {
             position: fixed;
@@ -149,11 +149,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 1.2rem;
-            color: #000;
+            overflow: hidden;
             box-shadow: 0 0 20px var(--primary);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .title-block {
@@ -664,13 +667,11 @@
             color: var(--alert);
         }
 
-        /* ============================================== */
-        /* CONTENEDOR DE VIDEO EN VIVO (ESTILO PELÍCULA) */
-        /* ============================================== */
+        /* CONTENEDOR DE VIDEO EN VIVO */
         #contenedor-video-alerta {
             position: relative;
             width: 100%;
-            height: 300px;
+            height: 200px;
             border: 2px solid #ff4444;
             box-shadow: 0 0 15px #ff4444;
             background: #000;
@@ -684,8 +685,8 @@
         
         #status-live {
             position: absolute;
-            top: 15px;
-            left: 15px;
+            top: 10px;
+            left: 10px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -798,14 +799,16 @@
     <div class="grid-overlay"></div>
     <div class="scanline"></div>
 
-    <!-- HEADER TÁCTICO -->
+    <!-- HEADER TÁCTICO CON LOGO SMART TECH -->
     <div class="tactical-header">
         <div class="header-left">
             <div class="logo-area">
-                <div class="logo">ST</div>
+                <div class="logo">
+                    <img src="logo.png" alt="SMART TECH">
+                </div>
                 <div class="title-block">
                     <div class="title-main">SENTINEL</div>
-                    <div class="title-sub">CENTRO DE MANDO TÁCTICO</div>
+                    <div class="title-sub">SMART TECH · POLICIAL</div>
                 </div>
             </div>
             <div class="status-indicators">
@@ -824,7 +827,7 @@
             </div>
         </div>
         <div class="header-right">
-            <div class="time-display" id="reloj">22:47:03</div>
+            <div class="time-display" id="reloj">--:--:--</div>
             <div class="unit-badge" id="unidadId">UNIDAD K-9</div>
         </div>
     </div>
@@ -975,7 +978,7 @@
             <span class="modal-value alert" id="modalBateria">--</span>
         </div>
         
-        <!-- CONTENEDOR DE VIDEO EN VIVO (NUEVO) -->
+        <!-- CONTENEDOR DE VIDEO EN VIVO -->
         <div id="contenedor-video-alerta">
             <div id="status-live">
                 <div class="pulse-dot"></div>
@@ -1021,11 +1024,10 @@
         let lineaRuta = null;
         
         // VARIABLES DE ESTADO DEL PATRULLERO
-        let miUnidadId = "K-9";
+        let miUnidadId = "K-9"; // Este ID debe coincidir con el de la tabla unidades_respuesta
         let emergenciaActiva = null;
         
         // VARIABLES DE CONTROL DE VIDEO
-        let isPlaying = false;
         let fragmentoActual = null;
         let canalStreamingActivo = null;
 
@@ -1038,13 +1040,13 @@
         // INICIALIZACIÓN
         // ==============================================
         function iniciar() {
-            // Inicializar mapa
+            console.log("🚔 Iniciando Centro de Mando Táctico...");
+            
             mapa = L.map('map', { 
                 zoomControl: false, 
                 attributionControl: false 
             }).setView([-38.0055, -57.5426], 14);
             
-            // Capa de mapa estilo Iron Man
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 filter: 'invert(1) hue-rotate(160deg) saturate(3) brightness(0.8) contrast(1.5)'
             }).addTo(mapa);
@@ -1075,8 +1077,10 @@
             // Suscribirse a nuevas alertas
             suscribirAlertas();
             
-            // Activar receptor de órdenes
+            // Activar receptor de órdenes (el patrullero escucha asignaciones)
             activarReceptorDeOrdenes();
+            
+            console.log("✅ Sistema listo. Esperando alertas...");
         }
 
         function actualizarReloj() {
@@ -1190,12 +1194,11 @@
             alertas.slice(0, 5).forEach(alerta => {
                 const fecha = new Date(alerta.timestamp);
                 const hora = fecha.toLocaleTimeString();
-                const tipo = alerta.tipo || 'EMERGENCIA';
                 
                 html += `
                     <div class="incident-card" onclick='verDetalle(${JSON.stringify(alerta)})'>
                         <div class="incident-time">${hora}</div>
-                        <div class="incident-title">${tipo}</div>
+                        <div class="incident-title">EMERGENCIA</div>
                         <div class="incident-location">${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}</div>
                         <div class="incident-meta">
                             <span class="meta-label">CIUDADANO:</span>
@@ -1302,7 +1305,7 @@
         }
 
         // ==============================================
-        // FUNCIONES DE VIDEO EN VIVO (MEJORADAS)
+        // FUNCIONES DE VIDEO EN VIVO
         // ==============================================
         async function cargarNuevoFragmento(nuevaUrl) {
             console.log("🎥 Intentando cargar fragmento:", nuevaUrl);
@@ -1478,7 +1481,7 @@
         }
 
         // ==============================================
-        // FUNCIONES DE RECEPTOR DE ÓRDENES (PATRULLERO)
+        // RECEPTOR DE ÓRDENES (MODELO HÍBRIDO)
         // ==============================================
         function activarReceptorDeOrdenes() {
             console.log("🚔 Unidad en servicio. Esperando asignaciones...");
@@ -1494,9 +1497,10 @@
                     const alerta = payload.new;
                     
                     if (alerta.estado === 'en_proceso') {
+                        console.log(`🚨 ALERTA ASIGNADA A MI UNIDAD: ${alerta.id}`);
                         emergenciaActiva = alerta;
                         mostrarAlertaEnPantalla(alerta);
-                        reproducirSonidoSirena();
+                        reproducirAlerta(); // Usar el mismo sonido
                     }
                 })
                 .subscribe();
@@ -1536,36 +1540,6 @@
                 alert("🚨 Estatus actualizado: En el lugar.");
                 document.getElementById('panel-emergencia').style.display = 'none';
             }
-        }
-
-        function reproducirSonidoSirena() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.type = 'sawtooth';
-                osc.frequency.value = 880;
-                gain.gain.value = 0.1;
-                
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-                
-                setTimeout(() => {
-                    const osc2 = audioCtx.createOscillator();
-                    const gain2 = audioCtx.createGain();
-                    osc2.connect(gain2);
-                    gain2.connect(audioCtx.destination);
-                    osc2.type = 'sawtooth';
-                    osc2.frequency.value = 440;
-                    gain2.gain.value = 0.1;
-                    osc2.start();
-                    osc2.stop(audioCtx.currentTime + 0.3);
-                }, 400);
-            } catch (e) {}
         }
 
         // ==============================================
