@@ -692,6 +692,20 @@
             z-index: 10;
         }
         
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: #ff4444;
+            border-radius: 50%;
+            animation: pulse-red 1.5s infinite;
+        }
+        
+        @keyframes pulse-red {
+            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            70% { opacity: 0.5; box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+        }
+        
         #video-feed {
             width: 100%;
             height: 100%;
@@ -705,20 +719,6 @@
             letter-spacing: 2px;
             text-transform: uppercase;
             text-align: center;
-        }
-        
-        @keyframes pulse-red {
-            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
-            70% { opacity: 0.5; box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
-            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
-        }
-        
-        .pulse-dot {
-            width: 10px;
-            height: 10px;
-            background: #ff4444;
-            border-radius: 50%;
-            animation: pulse-red 1.5s infinite;
         }
 
         .modal-actions {
@@ -1021,12 +1021,17 @@
         let lineaRuta = null;
         
         // VARIABLES DE ESTADO DEL PATRULLERO
-        let miUnidadId = "K-9"; // Este ID debe venir del login del policía
+        let miUnidadId = "K-9";
         let emergenciaActiva = null;
         
+        // VARIABLES DE CONTROL DE VIDEO
+        let isPlaying = false;
+        let fragmentoActual = null;
+        let canalStreamingActivo = null;
+
         // Elementos de video
         const videoPlayer = document.getElementById('video-feed');
-        const fuenteVideo = videoPlayer.querySelector('source');
+        const fuenteVideo = videoPlayer ? videoPlayer.querySelector('source') : null;
         const textoEspera = document.getElementById('esperando-texto');
 
         // ==============================================
@@ -1070,7 +1075,7 @@
             // Suscribirse a nuevas alertas
             suscribirAlertas();
             
-            // Activar receptor de órdenes (el patrullero escucha asignaciones)
+            // Activar receptor de órdenes
             activarReceptorDeOrdenes();
         }
 
@@ -1146,7 +1151,6 @@
         }
 
         function nuevaAlerta(alerta) {
-            // Evitar duplicados
             if (alertas.some(a => a.id === alerta.id)) return;
             
             alertas.unshift(alerta);
@@ -1253,7 +1257,6 @@
             linea.appendChild(texto);
             terminal.appendChild(linea);
             
-            // Mantener solo últimas 12 líneas
             while (terminal.children.length > 12) {
                 terminal.removeChild(terminal.firstChild);
             }
@@ -1276,8 +1279,9 @@
             document.getElementById('modalTimestamp').textContent = fecha.toLocaleString();
             
             // Resetear el contenedor de video
-            videoPlayer.style.display = 'none';
-            textoEspera.style.display = 'flex';
+            if (videoPlayer) videoPlayer.style.display = 'none';
+            if (textoEspera) textoEspera.style.display = 'flex';
+            fragmentoActual = null;
             
             // Iniciar streaming en tiempo real para esta alerta
             conectarStreamingRealtime(alerta.id);
@@ -1285,7 +1289,9 @@
             document.getElementById('alert-modal').style.display = 'block';
             
             // Centrar mapa en la alerta
-            mapa.setView([alerta.lat, alerta.lng], 17);
+            if (mapa) {
+                mapa.setView([alerta.lat, alerta.lng], 17);
+            }
             
             // Activar seguimiento táctico
             activarSeguimientoRealtime(alerta.id);
@@ -1296,12 +1302,81 @@
         }
 
         // ==============================================
+        // FUNCIONES DE VIDEO EN VIVO (MEJORADAS)
+        // ==============================================
+        async function cargarNuevoFragmento(nuevaUrl) {
+            console.log("🎥 Intentando cargar fragmento:", nuevaUrl);
+
+            if (fragmentoActual === nuevaUrl) {
+                console.log("🔄 Fragmento ya cargado, ignorando");
+                return;
+            }
+            fragmentoActual = nuevaUrl;
+
+            if (!videoPlayer || !fuenteVideo || !textoEspera) {
+                console.error("❌ Elementos de video no encontrados");
+                return;
+            }
+
+            textoEspera.style.display = 'none';
+            videoPlayer.style.display = 'block';
+
+            videoPlayer.oncanplay = null;
+            fuenteVideo.src = nuevaUrl;
+
+            try {
+                videoPlayer.load();
+
+                videoPlayer.oncanplay = async () => {
+                    videoPlayer.oncanplay = null;
+                    
+                    try {
+                        await videoPlayer.play();
+                        console.log("✅ Reproducción iniciada correctamente");
+                    } catch (err) {
+                        if (err.name === 'AbortError') {
+                            console.log("🔄 Fragmento interrumpido por nueva carga (normal)");
+                        } else {
+                            console.error("❌ Error real en reproducción:", err);
+                        }
+                    }
+                };
+            } catch (e) {
+                console.warn("⚠️ Fallo en la carga del fragmento:", e);
+            }
+        }
+
+        function conectarStreamingRealtime(idDeLaAlerta) {
+            console.log(`📡 Conectando streaming para Alerta: ${idDeLaAlerta}`);
+
+            if (canalStreamingActivo) {
+                _supabase.removeChannel(canalStreamingActivo);
+            }
+
+            canalStreamingActivo = _supabase
+                .channel(`streaming-${idDeLaAlerta}`)
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'alertas',
+                    filter: `id=eq.${idDeLaAlerta}` 
+                }, payload => {
+                    const nuevaUrl = payload.new.video_url;
+                    
+                    if (nuevaUrl) {
+                        console.log("🎥 Nuevo fragmento recibido:", nuevaUrl);
+                        cargarNuevoFragmento(nuevaUrl);
+                    }
+                })
+                .subscribe();
+        }
+
+        // ==============================================
         // FUNCIONES DE ASIGNACIÓN DE UNIDAD
         // ==============================================
         async function asignarUnidad() {
             agregarTerminal('🚔 BUSCANDO UNIDAD MÁS CERCANA...', 'normal');
             
-            // Obtener la alerta más reciente (la que está abierta en el modal)
             if (alertas.length === 0) return;
             
             const alertaActual = alertas[0];
@@ -1311,21 +1386,18 @@
         async function asignarUnidadMasCercana(idAlerta) {
             console.log("🚔 Buscando unidad de respuesta inmediata...");
 
-            // 1. Obtener ubicación de la alerta actual
             const { data: alerta } = await _supabase
                 .from('alertas')
                 .select('lat, lng')
                 .eq('id', idAlerta)
                 .single();
 
-            // 2. Obtener todas las unidades disponibles
             const { data: unidades } = await _supabase
                 .from('unidades_respuesta')
                 .select('*')
                 .eq('estado', 'disponible');
 
             if (unidades && unidades.length > 0) {
-                // Lógica de cercanía simple (Pitágoras)
                 let unidadCercana = unidades[0];
                 let minElem = Math.hypot(unidades[0].lat - alerta.lat, unidades[0].lng - alerta.lng);
 
@@ -1337,7 +1409,6 @@
                     }
                 });
 
-                // 3. Dibujar la ruta de intercepción en el mapa
                 if (lineaRuta) mapa.removeLayer(lineaRuta);
                 
                 lineaRuta = L.polyline([
@@ -1347,7 +1418,6 @@
 
                 agregarTerminal(`🚔 Unidad ${unidadCercana.codigo} asignada. ETA: 4 min.`, 'alert');
                 
-                // Notificar a la base de datos que la unidad está en camino
                 await _supabase
                     .from('alertas')
                     .update({ estado: 'en_proceso', unidad_asignada: unidadCercana.codigo })
@@ -1367,40 +1437,6 @@
         }
 
         // ==============================================
-        // FUNCIONES DE STREAMING DE VIDEO (EN VIVO)
-        // ==============================================
-        function conectarStreamingRealtime(idDeLaAlerta) {
-            console.log(`📡 Conectando streaming para Alerta: ${idDeLaAlerta}`);
-
-            _supabase
-                .channel(`streaming-${idDeLaAlerta}`)
-                .on('postgres_changes', { 
-                    event: 'UPDATE', 
-                    schema: 'public', 
-                    table: 'alertas',
-                    filter: `id=eq.${idDeLaAlerta}` 
-                }, payload => {
-                    const nuevaUrl = payload.new.video_url;
-                    
-                    if (nuevaUrl) {
-                        console.log("🎥 Nuevo fragmento recibido:", nuevaUrl);
-                        
-                        // Actualizar la fuente del video
-                        fuenteVideo.src = nuevaUrl;
-                        videoPlayer.load();
-                        
-                        // Mostrar el video y ocultar el texto de espera
-                        videoPlayer.style.display = "block";
-                        textoEspera.style.display = "none";
-                        
-                        // Reproducir automáticamente
-                        videoPlayer.play().catch(e => console.warn("Error autoplay:", e));
-                    }
-                })
-                .subscribe();
-        }
-
-        // ==============================================
         // FUNCIONES DE SEGUIMIENTO TÁCTICO
         // ==============================================
         function activarSeguimientoRealtime(idAlerta) {
@@ -1416,12 +1452,10 @@
                 }, payload => {
                     const data = payload.new;
 
-                    // 1. ACTUALIZAR POSICIÓN EN MAPA (Punto Blanco)
                     if (data.lat && data.lng) {
                         const nuevaPos = [data.lat, data.lng];
                         
                         if (!markerCiudadano) {
-                            // Crear icono blanco si no existe
                             const iconoBlanco = L.divIcon({
                                 html: '<div style="width: 16px; height: 16px; background: white; border-radius: 50%; box-shadow: 0 0 20px white;"></div>',
                                 className: '',
@@ -1433,13 +1467,9 @@
                             markerCiudadano.setLatLng(nuevaPos);
                         }
                         
-                        // Auto-centrar mapa en la víctima para no perderla de vista
                         mapa.flyTo(nuevaPos, 17); 
                     }
 
-                    // 2. ACTUALIZAR VIDEO (Si hay nuevo fragmento) - Ya lo hace conectarStreamingRealtime
-                    
-                    // 3. ACTUALIZAR TELEMETRÍA (Batería y Datos)
                     if (data.bateria) {
                         document.getElementById('modalBateria').textContent = data.bateria;
                     }
