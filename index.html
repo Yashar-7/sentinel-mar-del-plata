@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL V8.1 | SMART TECH</title>
+    <title>SENTINEL V9.0 | SMART TECH</title>
     
     <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -25,6 +25,9 @@
             --neon-cyan: #00f2ff;
             --neon-red: #ff3131;
             --neon-green: #39ff14;
+            --neon-yellow: #ffaa00;
+            --neon-purple: #ff00ff;
+            --neon-orange: #ff6600;
             --civil-white: #ffffff;
             --bg-dark: #00050a;
             --bg-gradient: radial-gradient(circle, #001a26 0%, #00050a 100%);
@@ -544,6 +547,47 @@
             filter: drop-shadow(0 0 3px rgba(255,255,255,0.3));
         }
 
+        /* SELECTOR DE TIPO DE ALERTA */
+        .tipo-alerta-selector {
+            margin: 15px 0;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border: 1px solid var(--neon-red);
+            clip-path: polygon(0% 8%, 3% 0%, 97% 0%, 100% 8%, 100% 92%, 97% 100%, 3% 100%, 0% 92%);
+        }
+
+        .tipo-alerta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .tipo-alerta-btn {
+            background: transparent;
+            border: 2px solid var(--neon-red);
+            color: var(--neon-red);
+            padding: 10px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            clip-path: polygon(0% 15%, 10% 0%, 90% 0%, 100% 15%, 100% 85%, 90% 100%, 10% 100%, 0% 85%);
+            opacity: 0.7;
+        }
+
+        .tipo-alerta-btn:hover {
+            opacity: 1;
+            transform: scale(1.02);
+        }
+
+        .tipo-alerta-btn.seleccionado {
+            opacity: 1;
+            border-width: 3px;
+            box-shadow: 0 0 15px currentColor;
+        }
+
         /* MODAL */
         #alert-modal {
             position: fixed;
@@ -1021,17 +1065,32 @@
         </div>
     </div>
 
-    <!-- MODAL ALERTA -->
+    <!-- MODAL ALERTA (con selector de tipo) -->
     <div id="alert-modal">
         <div class="modal-content">
             <div class="modal-title">🚨 ALERTA</div>
+            
+            <!-- SELECTOR DE TIPO DE ALERTA -->
+            <div class="tipo-alerta-selector">
+                <label style="color: var(--secondary); font-size: 0.7rem; display: block; margin-bottom: 8px;">TIPO DE EMERGENCIA:</label>
+                <div class="tipo-alerta-grid">
+                    <button class="tipo-alerta-btn" data-tipo="ROBO" onclick="seleccionarTipoAlerta('ROBO')" style="border-color: var(--neon-red); color: var(--neon-red);">🚨 ROBO</button>
+                    <button class="tipo-alerta-btn" data-tipo="ACCIDENTE" onclick="seleccionarTipoAlerta('ACCIDENTE')" style="border-color: #ffaa00; color: #ffaa00;">🚗 ACCIDENTE</button>
+                    <button class="tipo-alerta-btn" data-tipo="INCENDIO" onclick="seleccionarTipoAlerta('INCENDIO')" style="border-color: #ff6600; color: #ff6600;">🔥 INCENDIO</button>
+                    <button class="tipo-alerta-btn" data-tipo="MEDICA" onclick="seleccionarTipoAlerta('MEDICA')" style="border-color: #39ff14; color: #39ff14;">🚑 MÉDICA</button>
+                    <button class="tipo-alerta-btn" data-tipo="VIOLENCIA" onclick="seleccionarTipoAlerta('VIOLENCIA')" style="border-color: #ff00ff; color: #ff00ff;">👊 VIOLENCIA</button>
+                    <button class="tipo-alerta-btn" data-tipo="OTRO" onclick="seleccionarTipoAlerta('OTRO')" style="border-color: var(--neon-cyan); color: var(--neon-cyan);">❓ OTRO</button>
+                </div>
+                <input type="hidden" id="tipo-alerta" value="ROBO">
+            </div>
+            
             <div class="modal-text" id="modal-text">
                 UNIDADES NOTIFICADAS<br>
                 GRABANDO VIDEO
             </div>
             <div class="modal-buttons">
-                <button class="modal-button primary" onclick="cerrarModal()">OK</button>
-                <button class="modal-button secondary" onclick="cancelarAlerta()">CANCELAR</button>
+                <button class="modal-button primary" onclick="activarAlerta()">ENVIAR</button>
+                <button class="modal-button secondary" onclick="cerrarModal()">CANCELAR</button>
             </div>
         </div>
     </div>
@@ -1076,6 +1135,7 @@
         let intervaloGPS = null;
         let timeoutCancelacion = null;
         let puntosAnonimos = {};
+        let tipoAlertaSeleccionado = 'ROBO'; // Por defecto
 
         // ==============================================
         // FUNCIONES DE AUTENTICACIÓN
@@ -1253,12 +1313,13 @@
                 alert('RESPALDO SOLICITADO');
             });
 
-            document.getElementById('btn-alerta').addEventListener('click', activarAlerta);
+            document.getElementById('btn-alerta').addEventListener('click', mostrarModalAlerta);
 
             iniciarGPS();
             obtenerBateria();
             cargarUsuariosActivos();
             iniciarActualizacionPresencia();
+            suscribirDetenerGrabacion();
         }
 
         function iniciarGPS() {
@@ -1343,7 +1404,36 @@
         }
 
         // ==============================================
-        // PUNTOS ANÓNIMOS DE COMUNIDAD (CORREGIDO)
+        // SELECCIÓN DE TIPO DE ALERTA
+        // ==============================================
+        function seleccionarTipoAlerta(tipo) {
+            tipoAlertaSeleccionado = tipo;
+            document.getElementById('tipo-alerta').value = tipo;
+            
+            document.querySelectorAll('.tipo-alerta-btn').forEach(btn => {
+                btn.classList.remove('seleccionado');
+                btn.style.opacity = '0.7';
+                btn.style.borderWidth = '2px';
+            });
+            
+            const btnSeleccionado = document.querySelector(`.tipo-alerta-btn[data-tipo="${tipo}"]`);
+            if (btnSeleccionado) {
+                btnSeleccionado.classList.add('seleccionado');
+                btnSeleccionado.style.opacity = '1';
+                btnSeleccionado.style.borderWidth = '3px';
+            }
+            
+            console.log(`📋 Tipo de alerta seleccionado: ${tipo}`);
+        }
+
+        function mostrarModalAlerta() {
+            // Resetear selección a ROBO por defecto
+            seleccionarTipoAlerta('ROBO');
+            document.getElementById('alert-modal').style.display = 'flex';
+        }
+
+        // ==============================================
+        // PUNTOS ANÓNIMOS DE COMUNIDAD
         // ==============================================
         function cargarUsuariosActivos() {
             _supabase
@@ -1418,7 +1508,7 @@
         }
 
         // ==============================================
-        // ACTUALIZACIÓN DE PRESENCIA (CORREGIDA)
+        // ACTUALIZACIÓN DE PRESENCIA
         // ==============================================
         async function actualizarPresencia() {
             if (!usuarioActual || !ubicacionActual || !usuarioActual.id_usuario) return;
@@ -1488,7 +1578,7 @@
         }
 
         // ==============================================
-        // FUNCIONES DE CÁMARA Y VIDEO (MEJORADAS)
+        // FUNCIONES DE CÁMARA Y VIDEO
         // ==============================================
 
         async function activarCamara() {
@@ -1753,7 +1843,7 @@
         }
 
         // ==============================================
-        // FUNCIÓN DE ALERTA
+        // FUNCIÓN DE ALERTA (CON TIPO)
         // ==============================================
 
         async function activarAlerta() {
@@ -1763,6 +1853,9 @@
                 console.log('❌ Condiciones no cumplidas');
                 return;
             }
+            
+            // Cerrar el modal de alerta
+            cerrarModal();
             
             console.log('2. Activando cámara...');
             await activarCamara();
@@ -1779,7 +1872,8 @@
                 bateria: document.getElementById('battery').textContent,
                 activa: true,
                 video_progreso: 0,
-                modo_sigiloso: modoSigiloso || false
+                modo_sigiloso: modoSigiloso || false,
+                tipo: tipoAlertaSeleccionado // NUEVO
             };
 
             try {
@@ -1805,9 +1899,8 @@
                 
                 document.getElementById('modal-text').innerHTML = 
                     '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>GRABANDO VIDEO';
-                document.getElementById('alert-modal').style.display = 'flex';
                 
-                actualizarTerminal('🚨 ALERTA ENVIADA');
+                actualizarTerminal(`🚨 ALERTA ${tipoAlertaSeleccionado} ENVIADA`);
                 
             } catch (error) {
                 console.log('5. ❌ Error:', error);
@@ -1870,6 +1963,26 @@
             mostrarToast('✅ ALERTA CANCELADA', 'La alerta ha sido cancelada correctamente', 'success');
             
             actualizarTerminal('✅ ALERTA CANCELADA POR USUARIO');
+        }
+
+        // ==============================================
+        // DETENER GRABACIÓN REMOTA (CUANDO LA UNIDAD LLEGA)
+        // ==============================================
+        function suscribirDetenerGrabacion() {
+            _supabase
+                .channel('detener-grabacion')
+                .on('postgres_changes', 
+                    { event: 'UPDATE', schema: 'public', table: 'alertas' },
+                    (payload) => {
+                        if (payload.new.detener_grabacion && payload.new.id === alertaId && mediaRecorder && mediaRecorder.state === 'recording') {
+                            console.log("⏹️ Orden recibida: detener grabación por llegada de unidad");
+                            mediaRecorder.stop();
+                            actualizarTerminal('⏹️ GRABACIÓN DETENIDA POR UNIDAD');
+                            
+                            mostrarToast('✅ UNIDAD EN LUGAR', 'La unidad ha llegado. Grabación detenida.', 'success');
+                        }
+                    })
+                .subscribe();
         }
 
         function cerrarModal() {
