@@ -1161,22 +1161,25 @@
         // ==============================================
         // ALERTAS
         // ==============================================
-        async function cargarAlertasActivas() {
-            const { data, error } = await _supabase
-                .from('alertas')
-                .select('*')
-                .order('timestamp', { ascending: false });
+       async function cargarAlertasActivas() {
+    const { data, error } = await _supabase
+        .from('alertas')
+        .select('*')
+        .order('timestamp', { ascending: false });
 
-            if (!error && data) {
-                data.forEach(alerta => {
-                    alertas.push(alerta);
-                    agregarMarcador(alerta);
-                });
-                actualizarListaIncidentes();
-                actualizarEstadisticas();
-                document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
-            }
-        }
+    if (!error && data) {
+        data.forEach(alerta => {
+            alertas.push(alerta);
+            agregarMarcador(alerta);
+        });
+        
+        // Usar aplicarFiltros() en lugar de actualizarListaIncidentes()
+        aplicarFiltros();
+        
+        actualizarEstadisticas();
+        document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
+    }
+}
 
         function suscribirAlertas() {
             _supabase
