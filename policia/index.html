@@ -109,6 +109,17 @@
             100% { transform: translateY(100%); }
         }
 
+        /* ANIMACIÓN DE PULSO PARA NUEVAS ALERTAS */
+        @keyframes dashboard-pulse {
+            0% { filter: drop-shadow(0 0 5px var(--alert)); }
+            50% { filter: drop-shadow(0 0 30px var(--alert)) drop-shadow(0 0 60px var(--alert)); }
+            100% { filter: drop-shadow(0 0 5px var(--alert)); }
+        }
+
+        .dashboard-pulse {
+            animation: dashboard-pulse 0.5s 6; /* 3 segundos (6 veces a 0.5s) */
+        }
+
         /* ============================================== */
         /* HEADER TÁCTICO CON LOGO SMART TECH */
         /* ============================================== */
@@ -297,7 +308,7 @@
             letter-spacing: 2px;
         }
 
-        /* FILTROS MEJORADOS CON CANCELADAS */
+        /* FILTROS */
         .filtros-panel {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -395,6 +406,15 @@
             margin-bottom: 5px;
         }
 
+        .incident-tipo {
+            font-size: 0.55rem;
+            padding: 2px 5px;
+            background: rgba(0,0,0,0.3);
+            display: inline-block;
+            margin-bottom: 5px;
+            border-radius: 3px;
+        }
+
         .incident-location {
             font-size: 0.65rem;
             color: var(--secondary);
@@ -417,7 +437,7 @@
             font-weight: bold;
         }
 
-        /* ESTADÍSTICAS AVANZADAS CON CANCELADAS */
+        /* ESTADÍSTICAS */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -727,6 +747,16 @@
             box-shadow: 0 0 20px var(--success);
         }
 
+        .action-button.warning {
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .action-button.warning:hover {
+            background: rgba(255,170,0,0.1);
+            box-shadow: 0 0 20px var(--warning);
+        }
+
         /* PANEL DE EMERGENCIA PARA EL POLICÍA */
         #panel-emergencia {
             position: fixed;
@@ -765,11 +795,6 @@
 
         .toast-mensaje {
             font-size: 0.7rem;
-        }
-
-        /* ESTILO PARA PUNTOS ANÓNIMOS */
-        .punto-anonimo {
-            filter: drop-shadow(0 0 3px rgba(255,255,255,0.3));
         }
 
         .hidden {
@@ -836,7 +861,7 @@
     </div>
 
     <!-- CONTENEDOR PRINCIPAL -->
-    <div class="main-container">
+    <div class="main-container" id="main-container">
         <!-- PANEL IZQUIERDO - INCIDENTES -->
         <div class="left-panel">
             <div class="panel-header">
@@ -844,7 +869,7 @@
                 <span>CRÍTICOS</span>
             </div>
             
-            <!-- FILTROS CON CANCELADAS -->
+            <!-- FILTROS -->
             <div class="filtros-panel">
                 <select class="filtro-select" id="filtro-rol" onchange="aplicarFiltros()">
                     <option value="todos">TODOS LOS ROLES</option>
@@ -865,7 +890,7 @@
                 <div style="color: rgba(255,255,255,0.3); text-align:center; padding:20px;">ESPERANDO ALERTAS...</div>
             </div>
 
-            <!-- ESTADÍSTICAS CON CANCELADAS -->
+            <!-- ESTADÍSTICAS -->
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-value" id="statsHoy">0</div>
@@ -907,11 +932,14 @@
     <!-- PANEL LATERAL DE DETALLE -->
     <div id="panel-detalle-alerta">
         <div class="panel-detalle-header">
-            <span class="panel-detalle-titulo" id="panel-titulo">🚨 ALERTA CRÍTICA</span>
+            <span class="panel-detalle-titulo" id="panel-titulo">🚨 ALERTA</span>
             <span class="panel-detalle-close" onclick="cerrarPanelDetalle()">✖</span>
         </div>
         
         <div class="detalle-grid">
+            <span class="detalle-label">TIPO:</span>
+            <span class="detalle-value" id="panelTipo">--</span>
+            
             <span class="detalle-label">CIUDADANO:</span>
             <span class="detalle-value" id="panelNombre">--</span>
             
@@ -967,6 +995,7 @@
             <button class="action-button primary" onclick="asignarUnidadDesdePanel()">🚔 ASIGNAR</button>
             <button class="action-button secondary" onclick="verRutaDesdePanel()">🗺️ RUTA</button>
             <button class="action-button success" onclick="cerrarIncidenteActual()">✅ CERRAR</button>
+            <button class="action-button warning" onclick="detenerGrabacionRemota()">⏹️ DETENER GRABACIÓN</button>
         </div>
     </div>
 
@@ -1003,6 +1032,9 @@
 
         // Variables para tiempos de respuesta
         let tiemposRespuesta = [];
+
+        // Referencia al contenedor principal para el efecto de pulso
+        const mainContainer = document.getElementById('main-container');
 
         // Solicitar permiso para notificaciones al inicio
         if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
@@ -1088,10 +1120,18 @@
         }
 
         // ==============================================
-        // CALCULAR PRIORIDAD (TODAS CRÍTICAS)
+        // FUNCIÓN DE COLOR POR TIPO DE ALERTA
         // ==============================================
-        function calcularPrioridad(alerta) {
-            return 'CRÍTICA';
+        function colorPorTipo(tipo) {
+            const colores = {
+                'ROBO': '#ff3131',
+                'ACCIDENTE': '#ffaa00',
+                'INCENDIO': '#ff6600',
+                'MEDICA': '#39ff14',
+                'VIOLENCIA': '#ff00ff',
+                'OTRO': '#00f2ff'
+            };
+            return colores[tipo] || '#ff3131';
         }
 
         // ==============================================
@@ -1157,20 +1197,83 @@
             actualizarListaIncidentes();
             actualizarEstadisticas();
             document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
-            reproducirAlerta();
-            agregarTerminal(`🚨 NUEVA ALERTA: ${alerta.nombre}`, 'alert');
             
-            if (!alerta.cancelada) {
-                notificarPush('🚨 NUEVA ALERTA', `${alerta.nombre} - ${alerta.rol || 'CIVIL'}`);
-            }
+            // ==============================================
+            // ACTIVAR ALERTA VISUAL INMEDIATA (3 SEGUNDOS)
+            // ==============================================
+            mainContainer.classList.add('dashboard-pulse');
             
+            setTimeout(() => {
+                mainContainer.classList.remove('dashboard-pulse');
+            }, 3000);
+            
+            // ZOOM AUTOMÁTICO AL LUGAR DEL EVENTO
             if (mapa && !alerta.cancelada) {
-                mapa.flyTo([alerta.lat, alerta.lng], 16, {
-                    duration: 1.5
+                mapa.flyTo([alerta.lat, alerta.lng], 18, {
+                    duration: 2,
+                    easeLinearity: 0.5
                 });
             }
             
+            // SELECCIONAR AUTOMÁTICAMENTE LA NUEVA ALERTA (después del zoom)
+            setTimeout(() => {
+                if (!alerta.cancelada) {
+                    verDetallePanel(alerta);
+                }
+            }, 500);
+            
+            // Sonido más intenso
+            reproducirAlertaIntenso();
+            
+            // Notificación push
+            if (!alerta.cancelada) {
+                notificarPush('🚨 NUEVA ALERTA', `${alerta.tipo || 'EMERGENCIA'} - ${alerta.nombre}`);
+            }
+            
+            agregarTerminal(`🚨 NUEVA ALERTA ${alerta.tipo || 'EMERGENCIA'}: ${alerta.nombre}`, 'alert');
+            
             alerta.tiempoInicio = Date.now();
+        }
+
+        function reproducirAlertaIntenso() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.type = 'sawtooth';
+                osc1.frequency.value = 880;
+                gain1.gain.value = 0.3;
+                osc1.start();
+                osc1.stop(audioCtx.currentTime + 0.2);
+                
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.type = 'sawtooth';
+                    osc2.frequency.value = 440;
+                    gain2.gain.value = 0.3;
+                    osc2.start();
+                    osc2.stop(audioCtx.currentTime + 0.2);
+                }, 300);
+                
+                setTimeout(() => {
+                    const osc3 = audioCtx.createOscillator();
+                    const gain3 = audioCtx.createGain();
+                    osc3.connect(gain3);
+                    gain3.connect(audioCtx.destination);
+                    osc3.type = 'sawtooth';
+                    osc3.frequency.value = 660;
+                    gain3.gain.value = 0.3;
+                    osc3.start();
+                    osc3.stop(audioCtx.currentTime + 0.2);
+                }, 600);
+                
+            } catch (e) {}
         }
 
         function agregarMarcador(alerta) {
@@ -1183,6 +1286,7 @@
                 fillOpacity: 0.6
             }).addTo(mapa).bindPopup(`
                 <b>${alerta.cancelada ? '❌ CANCELADA' : (alerta.activa === false ? '✅ RESUELTA' : '🚨 ALERTA')}</b><br>
+                ${alerta.tipo || 'EMERGENCIA'}<br>
                 ${alerta.nombre}<br>
                 ${new Date(alerta.timestamp).toLocaleTimeString()}
             `);
@@ -1190,8 +1294,34 @@
             marcadores[alerta.id] = marcador;
         }
 
+        function agregarTerminal(mensaje, tipo = 'normal') {
+            const terminal = document.getElementById('terminal');
+            if (!terminal) return;
+            
+            const linea = document.createElement('div');
+            linea.className = 'terminal-line';
+            
+            const prompt = document.createElement('span');
+            prompt.className = 'terminal-prompt';
+            prompt.textContent = '>';
+            
+            const texto = document.createElement('span');
+            texto.className = `terminal-text ${tipo === 'alert' ? 'alert' : ''}`;
+            texto.textContent = mensaje;
+            
+            linea.appendChild(prompt);
+            linea.appendChild(texto);
+            terminal.appendChild(linea);
+            
+            while (terminal.children.length > 8) {
+                terminal.removeChild(terminal.firstChild);
+            }
+            
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
         // ==============================================
-        // FILTROS Y LISTA DE INCIDENTES (CON CANCELADAS)
+        // FILTROS Y LISTA DE INCIDENTES
         // ==============================================
         function aplicarFiltros() {
             const filtroRol = document.getElementById('filtro-rol').value;
@@ -1231,11 +1361,13 @@
                 const hora = fecha.toLocaleTimeString();
                 const canceladaClass = alerta.cancelada ? 'cancelada' : '';
                 const canceladaBadge = alerta.cancelada ? '<span class="cancelada-badge">❌ CANCELADA</span>' : '';
+                const colorTipo = colorPorTipo(alerta.tipo);
                 
                 html += `
                     <div class="incident-card ${canceladaClass}" onclick='verDetallePanel(${JSON.stringify(alerta)})' style="position: relative;">
                         ${canceladaBadge}
                         <div class="incident-time">${hora}</div>
+                        <div class="incident-tipo" style="color: ${colorTipo}; border-color: ${colorTipo};">${alerta.tipo || 'EMERGENCIA'}</div>
                         <div class="incident-title">${alerta.nombre}</div>
                         <div class="incident-location">${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}</div>
                         <div class="incident-meta">
@@ -1271,62 +1403,6 @@
             }
         }
 
-        function reproducirAlerta() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.type = 'sawtooth';
-                osc.frequency.value = 880;
-                gain.gain.value = 0.1;
-                
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-                
-                setTimeout(() => {
-                    const osc2 = audioCtx.createOscillator();
-                    const gain2 = audioCtx.createGain();
-                    osc2.connect(gain2);
-                    gain2.connect(audioCtx.destination);
-                    osc2.type = 'sawtooth';
-                    osc2.frequency.value = 440;
-                    gain2.gain.value = 0.1;
-                    osc2.start();
-                    osc2.stop(audioCtx.currentTime + 0.3);
-                }, 400);
-            } catch (e) {}
-        }
-
-        function agregarTerminal(mensaje, tipo = 'normal') {
-            const terminal = document.getElementById('terminal');
-            if (!terminal) return;
-            
-            const linea = document.createElement('div');
-            linea.className = 'terminal-line';
-            
-            const prompt = document.createElement('span');
-            prompt.className = 'terminal-prompt';
-            prompt.textContent = '>';
-            
-            const texto = document.createElement('span');
-            texto.className = `terminal-text ${tipo === 'alert' ? 'alert' : ''}`;
-            texto.textContent = mensaje;
-            
-            linea.appendChild(prompt);
-            linea.appendChild(texto);
-            terminal.appendChild(linea);
-            
-            while (terminal.children.length > 8) {
-                terminal.removeChild(terminal.firstChild);
-            }
-            
-            terminal.scrollTop = terminal.scrollHeight;
-        }
-
         // ==============================================
         // PANEL LATERAL DE DETALLE
         // ==============================================
@@ -1334,6 +1410,8 @@
             alertaSeleccionada = alerta;
             
             document.getElementById('panel-titulo').textContent = `🚨 ALERTA ${alerta.cancelada ? 'CANCELADA' : 'CRÍTICA'}`;
+            document.getElementById('panelTipo').textContent = alerta.tipo || 'EMERGENCIA';
+            document.getElementById('panelTipo').style.color = colorPorTipo(alerta.tipo);
             document.getElementById('panelNombre').textContent = alerta.nombre;
             document.getElementById('panelDni').textContent = alerta.dni;
             document.getElementById('panelTel').textContent = alerta.telefono;
@@ -1349,7 +1427,7 @@
             historial.innerHTML = `
                 <div class="timeline-item">
                     <span class="timeline-time">${fecha.toLocaleTimeString()}</span>
-                    <span class="timeline-event">🚨 Alerta creada</span>
+                    <span class="timeline-event">🚨 Alerta ${alerta.tipo || 'EMERGENCIA'} creada</span>
                 </div>
                 ${alerta.cancelada ? `
                 <div class="timeline-item">
@@ -1592,6 +1670,24 @@
         }
 
         // ==============================================
+        // DETENER GRABACIÓN REMOTA
+        // ==============================================
+        async function detenerGrabacionRemota() {
+            if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
+            
+            await _supabase
+                .from('alertas')
+                .update({ 
+                    detener_grabacion: true,
+                    hora_llegada: new Date().toISOString()
+                })
+                .eq('id', alertaSeleccionada.id);
+            
+            notificarPush('⏹️ GRABACIÓN DETENIDA', 'La unidad ha llegado al lugar');
+            agregarTerminal('⏹️ ORDEN ENVIADA: DETENER GRABACIÓN', 'normal');
+        }
+
+        // ==============================================
         // SEGUIMIENTO TÁCTICO
         // ==============================================
         function activarSeguimientoRealtime(idAlerta) {
@@ -1652,7 +1748,7 @@
                         console.log(`🚨 ALERTA ASIGNADA A MI UNIDAD: ${alerta.id}`);
                         emergenciaActiva = alerta;
                         mostrarAlertaEnPantalla(alerta);
-                        reproducirAlerta();
+                        reproducirAlertaIntenso();
                         notificarPush('🚨 MISIÓN ASIGNADA', `Acuda a ${alerta.lat}, ${alerta.lng}`);
                     }
                 })
