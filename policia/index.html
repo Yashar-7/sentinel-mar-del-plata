@@ -29,6 +29,7 @@
             --alert-dark: #cc0000;
             --success: #39ff14;
             --warning: #ffaa00;
+            --cancel: #888888;
             --bg: #050a0f;
             --bg-panel: rgba(8, 15, 22, 0.95);
             --glass: rgba(0, 20, 40, 0.85);
@@ -296,7 +297,7 @@
             letter-spacing: 2px;
         }
 
-        /* FILTROS MEJORADOS */
+        /* FILTROS MEJORADOS CON CANCELADAS */
         .filtros-panel {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -347,8 +348,13 @@
                 0% 8%, 3% 0%, 97% 0%, 100% 8%,
                 100% 92%, 97% 100%, 3% 100%, 0% 92%
             );
-            animation: cardPulse 2s infinite;
             position: relative;
+        }
+
+        .incident-card.cancelada {
+            background: rgba(136,136,136,0.05);
+            border-color: var(--cancel);
+            opacity: 0.7;
         }
 
         .incident-card:hover {
@@ -357,39 +363,31 @@
             box-shadow: 0 0 20px var(--alert);
         }
 
-        .incident-card.resuelto {
-            background: rgba(57,255,20,0.05);
-            border-color: var(--success);
-            animation: none;
-            opacity: 0.7;
+        .incident-card.cancelada:hover {
+            background: rgba(136,136,136,0.15);
+            box-shadow: 0 0 20px var(--cancel);
         }
 
-        .incident-card.critico {
-            border-color: #ff8800;
-            animation: cardPulseCritico 1s infinite;
-        }
-
-        @keyframes cardPulseCritico {
-            0% { border-color: #ff8800; }
-            50% { border-color: var(--alert); }
-            100% { border-color: #ff8800; }
-        }
-
-        .prioridad-badge {
+        .cancelada-badge {
             position: absolute;
             top: 5px;
-            right: 5px;
+            left: 5px;
+            background: var(--cancel);
+            color: white;
+            padding: 2px 6px;
             font-size: 0.55rem;
-            padding: 2px 5px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid;
-            border-radius: 2px;
+            border-radius: 3px;
+            z-index: 5;
         }
 
         .incident-time {
             font-size: 0.6rem;
             color: var(--alert);
             margin-bottom: 5px;
+        }
+
+        .incident-card.cancelada .incident-time {
+            color: var(--cancel);
         }
 
         .incident-title {
@@ -419,7 +417,7 @@
             font-weight: bold;
         }
 
-        /* ESTADÍSTICAS AVANZADAS */
+        /* ESTADÍSTICAS AVANZADAS CON CANCELADAS */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -512,7 +510,7 @@
         }
 
         /* ============================================== */
-        /* PANEL LATERAL DE DETALLE (REEMPLAZA AL MODAL) */
+        /* PANEL LATERAL DE DETALLE */
         /* ============================================== */
         #panel-detalle-alerta {
             position: fixed;
@@ -578,6 +576,10 @@
 
         .detalle-value.alert {
             color: var(--alert);
+        }
+
+        .detalle-value.cancelada {
+            color: var(--cancel);
         }
 
         /* CONTENEDOR DE VIDEO EN VIVO */
@@ -670,6 +672,10 @@
             color: var(--alert);
         }
 
+        .timeline-event.cancelada {
+            color: var(--cancel);
+        }
+
         .panel-detalle-actions {
             display: flex;
             gap: 10px;
@@ -721,7 +727,7 @@
             box-shadow: 0 0 20px var(--success);
         }
 
-        /* PANEL DE EMERGENCIA PARA EL POLICÍA (INTERCEPCIÓN) */
+        /* PANEL DE EMERGENCIA PARA EL POLICÍA */
         #panel-emergencia {
             position: fixed;
             top: 100px;
@@ -759,6 +765,11 @@
 
         .toast-mensaje {
             font-size: 0.7rem;
+        }
+
+        /* ESTILO PARA PUNTOS ANÓNIMOS */
+        .punto-anonimo {
+            filter: drop-shadow(0 0 3px rgba(255,255,255,0.3));
         }
 
         .hidden {
@@ -829,19 +840,12 @@
         <!-- PANEL IZQUIERDO - INCIDENTES -->
         <div class="left-panel">
             <div class="panel-header">
-                <span>🚨 INCIDENTES ACTIVOS</span>
-                <span>PRIORIDAD</span>
+                <span>🚨 INCIDENTES</span>
+                <span>CRÍTICOS</span>
             </div>
             
-            <!-- FILTROS MEJORADOS -->
+            <!-- FILTROS CON CANCELADAS -->
             <div class="filtros-panel">
-                <select class="filtro-select" id="filtro-prioridad" onchange="aplicarFiltros()">
-                    <option value="todas">TODAS LAS PRIORIDADES</option>
-                    <option value="critica">CRÍTICA</option>
-                    <option value="alta">ALTA</option>
-                    <option value="media">MEDIA</option>
-                    <option value="normal">NORMAL</option>
-                </select>
                 <select class="filtro-select" id="filtro-rol" onchange="aplicarFiltros()">
                     <option value="todos">TODOS LOS ROLES</option>
                     <option value="civil">CIVIL</option>
@@ -849,19 +853,19 @@
                     <option value="emergencia">EMERGENCIA</option>
                     <option value="delivery">DELIVERY</option>
                 </select>
-                <input type="text" class="filtro-input" id="filtro-busqueda" placeholder="BUSCAR POR NOMBRE..." onkeyup="aplicarFiltros()">
-                <select class="filtro-select" id="filtro-estado" onchange="aplicarFiltros()">
-                    <option value="activos">ACTIVOS</option>
-                    <option value="resueltos">RESUELTOS</option>
-                    <option value="todos">TODOS</option>
+                <select class="filtro-select" id="filtro-canceladas" onchange="aplicarFiltros()">
+                    <option value="activas">SOLO ACTIVAS</option>
+                    <option value="todas">TODAS</option>
+                    <option value="canceladas">SOLO CANCELADAS</option>
                 </select>
+                <input type="text" class="filtro-input" id="filtro-busqueda" placeholder="BUSCAR POR NOMBRE..." onkeyup="aplicarFiltros()">
             </div>
             
             <div class="incident-list" id="incidentList">
                 <div style="color: rgba(255,255,255,0.3); text-align:center; padding:20px;">ESPERANDO ALERTAS...</div>
             </div>
 
-            <!-- ESTADÍSTICAS AVANZADAS -->
+            <!-- ESTADÍSTICAS CON CANCELADAS -->
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-value" id="statsHoy">0</div>
@@ -876,12 +880,12 @@
                     <div class="stat-label">RESUELTAS</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value" id="statsPendientes">0</div>
-                    <div class="stat-label">PENDIENTES</div>
+                    <div class="stat-value" id="statsCanceladas">0</div>
+                    <div class="stat-label">CANCELADAS</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value" id="statsCriticas">0</div>
-                    <div class="stat-label">CRÍTICAS</div>
+                    <div class="stat-value" id="statsPendientes">0</div>
+                    <div class="stat-label">PENDIENTES</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-value" id="statsTiempo">0s</div>
@@ -900,10 +904,10 @@
         </div>
     </div>
 
-    <!-- PANEL LATERAL DE DETALLE (REEMPLAZA AL MODAL) -->
+    <!-- PANEL LATERAL DE DETALLE -->
     <div id="panel-detalle-alerta">
         <div class="panel-detalle-header">
-            <span class="panel-detalle-titulo" id="panel-titulo">🚨 ALERTA PRIORIDAD</span>
+            <span class="panel-detalle-titulo" id="panel-titulo">🚨 ALERTA CRÍTICA</span>
             <span class="panel-detalle-close" onclick="cerrarPanelDetalle()">✖</span>
         </div>
         
@@ -925,9 +929,6 @@
             
             <span class="detalle-label">BATERÍA:</span>
             <span class="detalle-value alert" id="panelBateria">--</span>
-            
-            <span class="detalle-label">PRIORIDAD:</span>
-            <span class="detalle-value" id="panelPrioridad">--</span>
             
             <span class="detalle-label">ESTADO:</span>
             <span class="detalle-value" id="panelEstado">ACTIVA</span>
@@ -969,7 +970,7 @@
         </div>
     </div>
 
-    <!-- PANEL DE EMERGENCIA PARA EL POLICÍA (INTERCEPCIÓN) -->
+    <!-- PANEL DE EMERGENCIA PARA EL POLICÍA -->
     <div id="panel-emergencia"></div>
 
     <script>
@@ -1023,7 +1024,6 @@
                 filter: 'invert(1) hue-rotate(160deg) saturate(3) brightness(0.8) contrast(1.5)'
             }).addTo(mapa);
 
-            // Agregar marcador de unidad propia
             L.circleMarker([-38.0055, -57.5426], {
                 radius: 14,
                 color: '#0066ff',
@@ -1032,24 +1032,15 @@
                 fillOpacity: 0.3
             }).addTo(mapa).bindPopup(`🚓 UNIDAD ${miUnidadId}`);
 
-            // Iniciar reloj
             actualizarReloj();
             setInterval(actualizarReloj, 1000);
 
-            // Actualizar coordenadas del mapa
             mapa.on('move', actualizarCoordenadas);
             actualizarCoordenadas();
 
-            // Cargar unidades disponibles
             cargarUnidadesDisponibles();
-            
-            // Cargar alertas activas existentes
             cargarAlertasActivas();
-            
-            // Suscribirse a nuevas alertas
             suscribirAlertas();
-            
-            // Activar receptor de órdenes
             activarReceptorDeOrdenes();
             
             console.log("✅ Sistema listo. Esperando alertas...");
@@ -1070,7 +1061,7 @@
         }
 
         // ==============================================
-        // NOTIFICACIONES TOAST
+        // NOTIFICACIONES
         // ==============================================
         function mostrarToast(titulo, mensaje, tipo = 'alert') {
             const toast = document.getElementById('toast-notificacion');
@@ -1085,9 +1076,6 @@
             }, 5000);
         }
 
-        // ==============================================
-        // NOTIFICACIONES PUSH
-        // ==============================================
         function notificarPush(titulo, mensaje) {
             if (Notification.permission === 'granted') {
                 new Notification(titulo, {
@@ -1100,13 +1088,10 @@
         }
 
         // ==============================================
-        // CÁLCULO DE PRIORIDAD
+        // CALCULAR PRIORIDAD (TODAS CRÍTICAS)
         // ==============================================
         function calcularPrioridad(alerta) {
-            if (alerta.rol === 'emergencia') return 'CRÍTICA';
-            if (alerta.bateria && parseInt(alerta.bateria) < 15) return 'ALTA';
-            if (alerta.rol === 'patrulla') return 'MEDIA';
-            return 'NORMAL';
+            return 'CRÍTICA';
         }
 
         // ==============================================
@@ -1121,7 +1106,6 @@
             if (!error && data) {
                 document.getElementById('unidadesDisponibles').textContent = data.length;
                 
-                // Agregar marcadores de unidades disponibles
                 data.forEach(unidad => {
                     L.circleMarker([unidad.lat, unidad.lng], {
                         radius: 10,
@@ -1135,7 +1119,7 @@
         }
 
         // ==============================================
-        // ALERTAS REALES
+        // ALERTAS
         // ==============================================
         async function cargarAlertasActivas() {
             const { data, error } = await _supabase
@@ -1150,7 +1134,7 @@
                 });
                 actualizarListaIncidentes();
                 actualizarEstadisticas();
-                document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false).length;
+                document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
             }
         }
 
@@ -1172,26 +1156,25 @@
             agregarMarcador(alerta);
             actualizarListaIncidentes();
             actualizarEstadisticas();
-            document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false).length;
+            document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
             reproducirAlerta();
             agregarTerminal(`🚨 NUEVA ALERTA: ${alerta.nombre}`, 'alert');
             
-            // Notificación push
-            notificarPush('🚨 NUEVA ALERTA', `${alerta.nombre} - ${alerta.rol || 'CIVIL'}`);
+            if (!alerta.cancelada) {
+                notificarPush('🚨 NUEVA ALERTA', `${alerta.nombre} - ${alerta.rol || 'CIVIL'}`);
+            }
             
-            // Centrar mapa en la nueva alerta
-            if (mapa) {
+            if (mapa && !alerta.cancelada) {
                 mapa.flyTo([alerta.lat, alerta.lng], 16, {
                     duration: 1.5
                 });
             }
             
-            // Registrar tiempo de inicio
             alerta.tiempoInicio = Date.now();
         }
 
         function agregarMarcador(alerta) {
-            const color = alerta.activa === false ? '#39ff14' : '#ff3131';
+            const color = alerta.cancelada ? '#888888' : (alerta.activa === false ? '#39ff14' : '#ff3131');
             const marcador = L.circleMarker([alerta.lat, alerta.lng], {
                 radius: 12,
                 color: color,
@@ -1199,7 +1182,7 @@
                 fillColor: color,
                 fillOpacity: 0.6
             }).addTo(mapa).bindPopup(`
-                <b>${alerta.activa === false ? '✅ RESUELTA' : '🚨 ALERTA'}</b><br>
+                <b>${alerta.cancelada ? '❌ CANCELADA' : (alerta.activa === false ? '✅ RESUELTA' : '🚨 ALERTA')}</b><br>
                 ${alerta.nombre}<br>
                 ${new Date(alerta.timestamp).toLocaleTimeString()}
             `);
@@ -1207,33 +1190,22 @@
             marcadores[alerta.id] = marcador;
         }
 
-        function actualizarListaIncidentes() {
-            aplicarFiltros();
-        }
-
+        // ==============================================
+        // FILTROS Y LISTA DE INCIDENTES (CON CANCELADAS)
+        // ==============================================
         function aplicarFiltros() {
-            const filtroPrioridad = document.getElementById('filtro-prioridad').value;
             const filtroRol = document.getElementById('filtro-rol').value;
             const filtroBusqueda = document.getElementById('filtro-busqueda').value.toLowerCase();
-            const filtroEstado = document.getElementById('filtro-estado').value;
+            const filtroCanceladas = document.getElementById('filtro-canceladas').value;
             
             let alertasFiltradas = alertas.filter(alerta => {
-                // Filtro por estado
-                if (filtroEstado === 'activos' && alerta.activa === false) return false;
-                if (filtroEstado === 'resueltos' && alerta.activa !== false) return false;
+                if (filtroCanceladas === 'activas' && (alerta.cancelada || alerta.activa === false)) return false;
+                if (filtroCanceladas === 'canceladas' && !alerta.cancelada) return false;
                 
-                // Filtro por prioridad
-                if (filtroPrioridad !== 'todas') {
-                    const prioridad = calcularPrioridad(alerta).toLowerCase();
-                    if (prioridad !== filtroPrioridad) return false;
-                }
-                
-                // Filtro por rol
                 if (filtroRol !== 'todos') {
                     if (alerta.rol !== filtroRol) return false;
                 }
                 
-                // Filtro por búsqueda
                 if (filtroBusqueda) {
                     const nombre = (alerta.nombre || '').toLowerCase();
                     if (!nombre.includes(filtroBusqueda)) return false;
@@ -1254,16 +1226,15 @@
             }
 
             let html = '';
-            alertasFiltradas.slice(0, 10).forEach(alerta => {
+            alertasFiltradas.slice(0, 15).forEach(alerta => {
                 const fecha = new Date(alerta.timestamp);
                 const hora = fecha.toLocaleTimeString();
-                const prioridad = calcularPrioridad(alerta);
-                const prioridadClass = prioridad === 'CRÍTICA' ? 'critico' : (alerta.activa === false ? 'resuelto' : '');
-                const prioridadColor = prioridad === 'CRÍTICA' ? '#ff8800' : (alerta.activa === false ? '#39ff14' : '#ff3131');
+                const canceladaClass = alerta.cancelada ? 'cancelada' : '';
+                const canceladaBadge = alerta.cancelada ? '<span class="cancelada-badge">❌ CANCELADA</span>' : '';
                 
                 html += `
-                    <div class="incident-card ${prioridadClass}" onclick='verDetallePanel(${JSON.stringify(alerta)})'>
-                        <div class="prioridad-badge" style="border-color: ${prioridadColor}; color: ${prioridadColor};">${prioridad}</div>
+                    <div class="incident-card ${canceladaClass}" onclick='verDetallePanel(${JSON.stringify(alerta)})' style="position: relative;">
+                        ${canceladaBadge}
                         <div class="incident-time">${hora}</div>
                         <div class="incident-title">${alerta.nombre}</div>
                         <div class="incident-location">${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}</div>
@@ -1283,17 +1254,16 @@
         function actualizarEstadisticas() {
             const hoy = new Date().toDateString();
             const alertasHoy = alertas.filter(a => new Date(a.timestamp).toDateString() === hoy).length;
-            const activas = alertas.filter(a => a.activa !== false).length;
-            const resueltas = alertas.filter(a => a.activa === false).length;
-            const criticas = alertas.filter(a => calcularPrioridad(a) === 'CRÍTICA' && a.activa !== false).length;
+            const activas = alertas.filter(a => a.activa !== false && !a.cancelada).length;
+            const resueltas = alertas.filter(a => a.activa === false && !a.cancelada).length;
+            const canceladas = alertas.filter(a => a.cancelada === true).length;
             
             document.getElementById('statsHoy').textContent = alertasHoy;
             document.getElementById('statsActivas').textContent = activas;
             document.getElementById('statsResueltas').textContent = resueltas;
+            document.getElementById('statsCanceladas').textContent = canceladas;
             document.getElementById('statsPendientes').textContent = activas;
-            document.getElementById('statsCriticas').textContent = criticas;
             
-            // Calcular tiempo promedio de respuesta
             if (tiemposRespuesta.length > 0) {
                 const promedio = tiemposRespuesta.reduce((a, b) => a + b, 0) / tiemposRespuesta.length;
                 document.getElementById('statsTiempo').textContent = promedio.toFixed(1) + 's';
@@ -1358,38 +1328,42 @@
         }
 
         // ==============================================
-        // FUNCIONES DE INTERFAZ - PANEL LATERAL
+        // PANEL LATERAL DE DETALLE
         // ==============================================
         function verDetallePanel(alerta) {
             alertaSeleccionada = alerta;
             
-            document.getElementById('panel-titulo').textContent = `🚨 ALERTA ${calcularPrioridad(alerta)}`;
+            document.getElementById('panel-titulo').textContent = `🚨 ALERTA ${alerta.cancelada ? 'CANCELADA' : 'CRÍTICA'}`;
             document.getElementById('panelNombre').textContent = alerta.nombre;
             document.getElementById('panelDni').textContent = alerta.dni;
             document.getElementById('panelTel').textContent = alerta.telefono;
             document.getElementById('panelRol').textContent = alerta.rol ? alerta.rol.toUpperCase() : 'CIVIL';
             document.getElementById('panelUbicacion').textContent = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
             document.getElementById('panelBateria').textContent = alerta.bateria;
-            document.getElementById('panelPrioridad').textContent = calcularPrioridad(alerta);
-            document.getElementById('panelEstado').textContent = alerta.activa === false ? 'RESUELTA' : 'ACTIVA';
+            document.getElementById('panelEstado').textContent = alerta.cancelada ? 'CANCELADA' : (alerta.activa === false ? 'RESUELTA' : 'ACTIVA');
             
             const fecha = new Date(alerta.timestamp);
             document.getElementById('panelTimestamp').textContent = fecha.toLocaleString();
             
-            // Actualizar historial (simulado por ahora)
             const historial = document.getElementById('historial-timeline');
             historial.innerHTML = `
                 <div class="timeline-item">
                     <span class="timeline-time">${fecha.toLocaleTimeString()}</span>
                     <span class="timeline-event">🚨 Alerta creada</span>
                 </div>
-                ${alerta.unidad_asignada ? `
+                ${alerta.cancelada ? `
+                <div class="timeline-item">
+                    <span class="timeline-time">${new Date().toLocaleTimeString()}</span>
+                    <span class="timeline-event cancelada">❌ Cancelada por usuario</span>
+                </div>
+                ` : ''}
+                ${alerta.unidad_asignada && !alerta.cancelada ? `
                 <div class="timeline-item">
                     <span class="timeline-time">${new Date().toLocaleTimeString()}</span>
                     <span class="timeline-event">🚔 Unidad ${alerta.unidad_asignada} asignada</span>
                 </div>
                 ` : ''}
-                ${alerta.activa === false ? `
+                ${alerta.activa === false && !alerta.cancelada ? `
                 <div class="timeline-item">
                     <span class="timeline-time">${new Date().toLocaleTimeString()}</span>
                     <span class="timeline-event">✅ Incidente resuelto</span>
@@ -1397,26 +1371,26 @@
                 ` : ''}
             `;
             
-            // Resetear el contenedor de video
             if (videoPlayer) videoPlayer.style.display = 'none';
             if (textoEspera) textoEspera.style.display = 'flex';
             fragmentoActual = null;
             
-            // Iniciar streaming
-            conectarStreamingRealtime(alerta.id);
+            if (!alerta.cancelada) {
+                conectarStreamingRealtime(alerta.id);
+            }
             
             document.getElementById('panel-detalle-alerta').style.display = 'block';
             
-            // Centrar mapa con animación suave
-            if (mapa) {
+            if (mapa && !alerta.cancelada) {
                 mapa.flyTo([alerta.lat, alerta.lng], 17, {
                     duration: 1.2,
                     easeLinearity: 0.5
                 });
             }
             
-            // Activar seguimiento táctico
-            activarSeguimientoRealtime(alerta.id);
+            if (!alerta.cancelada) {
+                activarSeguimientoRealtime(alerta.id);
+            }
         }
 
         function cerrarPanelDetalle() {
@@ -1428,7 +1402,7 @@
         // CIERRE DE INCIDENTES
         // ==============================================
         async function cerrarIncidenteActual() {
-            if (!alertaSeleccionada) return;
+            if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
             
             if (confirm(`¿CERRAR INCIDENTE #${alertaSeleccionada.id}?`)) {
                 await cerrarIncidente(alertaSeleccionada.id);
@@ -1438,9 +1412,8 @@
 
         async function cerrarIncidente(idAlerta) {
             const alerta = alertas.find(a => a.id === idAlerta);
-            if (!alerta) return;
+            if (!alerta || alerta.cancelada) return;
             
-            // Registrar tiempo de respuesta
             if (alerta.tiempoInicio) {
                 const tiempoRespuesta = (Date.now() - alerta.tiempoInicio) / 1000;
                 tiemposRespuesta.push(tiempoRespuesta);
@@ -1456,7 +1429,6 @@
                 })
                 .eq('id', idAlerta);
             
-            // Actualizar array local
             alertas = alertas.map(a => {
                 if (a.id === idAlerta) {
                     return { ...a, activa: false };
@@ -1464,21 +1436,20 @@
                 return a;
             });
             
-            // Actualizar marcador en mapa
             if (marcadores[idAlerta]) {
                 marcadores[idAlerta].setStyle({ color: '#39ff14', fillColor: '#39ff14' });
             }
             
             actualizarListaIncidentes();
             actualizarEstadisticas();
-            document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false).length;
+            document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
             
             agregarTerminal(`✅ Incidente #${idAlerta} cerrado y archivado`, 'normal');
             notificarPush('✅ INCIDENTE RESUELTO', `Alerta #${idAlerta} ha sido cerrada`);
         }
 
         // ==============================================
-        // FUNCIONES DE VIDEO EN VIVO
+        // VIDEO EN VIVO
         // ==============================================
         async function cargarNuevoFragmento(nuevaUrl) {
             console.log("🎥 Intentando cargar fragmento:", nuevaUrl);
@@ -1548,10 +1519,10 @@
         }
 
         // ==============================================
-        // FUNCIONES DE ASIGNACIÓN DE UNIDAD
+        // ASIGNACIÓN DE UNIDAD
         // ==============================================
         async function asignarUnidadDesdePanel() {
-            if (!alertaSeleccionada) return;
+            if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
             await asignarUnidadMasCercana(alertaSeleccionada.id);
         }
 
@@ -1599,7 +1570,6 @@
                     })
                     .eq('id', idAlerta);
                 
-                // Actualizar panel si está abierto
                 if (alertaSeleccionada && alertaSeleccionada.id === idAlerta) {
                     alertaSeleccionada.unidad_asignada = unidadCercana.codigo;
                     verDetallePanel(alertaSeleccionada);
@@ -1613,7 +1583,7 @@
         }
 
         function verRutaDesdePanel() {
-            if (!alertaSeleccionada) return;
+            if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
             agregarTerminal('🗺️ CALCULANDO RUTA ÓPTIMA...', 'normal');
             setTimeout(() => {
                 agregarTerminal('✅ RUTA CALCULADA: ETA 02:30 MIN', 'normal');
@@ -1622,7 +1592,7 @@
         }
 
         // ==============================================
-        // FUNCIONES DE SEGUIMIENTO TÁCTICO
+        // SEGUIMIENTO TÁCTICO
         // ==============================================
         function activarSeguimientoRealtime(idAlerta) {
             console.log(`🚀 Sentinel: Iniciando seguimiento táctico para Alerta ${idAlerta}`);
@@ -1658,16 +1628,12 @@
                     if (data.bateria) {
                         document.getElementById('panelBateria').textContent = data.bateria;
                     }
-                    
-                    if (data.unidad_asignada && !data.tiempo_llegada) {
-                        agregarTerminal(`🚔 Unidad ${data.unidad_asignada} en camino`, 'alert');
-                    }
                 })
                 .subscribe();
         }
 
         // ==============================================
-        // RECEPTOR DE ÓRDENES (MODELO HÍBRIDO)
+        // RECEPTOR DE ÓRDENES
         // ==============================================
         function activarReceptorDeOrdenes() {
             console.log("🚔 Unidad en servicio. Esperando asignaciones...");
@@ -1682,7 +1648,7 @@
                 }, async (payload) => {
                     const alerta = payload.new;
                     
-                    if (alerta.estado === 'en_proceso') {
+                    if (alerta.estado === 'en_proceso' && !alerta.cancelada) {
                         console.log(`🚨 ALERTA ASIGNADA A MI UNIDAD: ${alerta.id}`);
                         emergenciaActiva = alerta;
                         mostrarAlertaEnPantalla(alerta);
