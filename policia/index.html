@@ -1152,26 +1152,51 @@
         // ==============================================
         // FUNCIONES DE INTERFAZ
         // ==============================================
-        function verDetalle(alerta) {
-            document.getElementById('modalNombre').textContent = alerta.nombre;
-            document.getElementById('modalDni').textContent = alerta.dni;
-            document.getElementById('modalTel').textContent = alerta.telefono;
-            document.getElementById('modalRol').textContent = alerta.rol ? alerta.rol.toUpperCase() : 'CIVIL';
-            document.getElementById('modalUbicacion').textContent = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
-            document.getElementById('modalBateria').textContent = alerta.bateria;
-            
-            const fecha = new Date(alerta.timestamp);
-            document.getElementById('modalTimestamp').textContent = fecha.toLocaleString();
-            
-            // Actualizar progreso del video si existe
-            actualizarProgresoVideo(alerta);
+       function verDetalle(alerta) {
+    document.getElementById('modalNombre').textContent = alerta.nombre;
+    document.getElementById('modalDni').textContent = alerta.dni;
+    document.getElementById('modalTel').textContent = alerta.telefono;
+    document.getElementById('modalRol').textContent = alerta.rol ? alerta.rol.toUpperCase() : 'CIVIL';
+    document.getElementById('modalUbicacion').textContent = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
+    document.getElementById('modalBateria').textContent = alerta.bateria;
+    
+    const fecha = new Date(alerta.timestamp);
+    document.getElementById('modalTimestamp').textContent = fecha.toLocaleString();
+    
+    // ==============================================
+    // NUEVA LÓGICA PARA MOSTRAR EL VIDEO
+    // ==============================================
+    const videoPlaceholder = document.getElementById('videoPlaceholder');
+    
+    if (alerta.video_url) {
+        // Si ya hay URL, mostrar el video
+        videoPlaceholder.innerHTML = `
+            <video controls style="width:100%; height:100%; background: black; object-fit: contain;">
+                <source src="${alerta.video_url}" type="video/webm">
+                Tu navegador no soporta video.
+            </video>
+        `;
+    } else if (alerta.video_progreso) {
+        // Si hay progreso pero no URL, mostrar porcentaje
+        videoPlaceholder.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                <div style="font-size: 1.2rem; color: var(--alert);">⏳</div>
+                <div style="margin-top: 10px;">[ VIDEO: ${alerta.video_progreso}% COMPLETADO ]</div>
+            </div>
+        `;
+    } else {
+        videoPlaceholder.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                <div style="font-size: 1.2rem; color: var(--secondary);">📹</div>
+                <div style="margin-top: 10px;">[ ESPERANDO VIDEO... ]</div>
+            </div>
+        `;
+    }
+    // ==============================================
 
-            document.getElementById('alert-modal').style.display = 'block';
-            
-            // Centrar mapa en la alerta
-            mapa.setView([alerta.lat, alerta.lng], 17);
-        }
-
+    document.getElementById('alert-modal').style.display = 'block';
+    mapa.setView([alerta.lat, alerta.lng], 17);
+    }
         function cerrarModal() {
             document.getElementById('alert-modal').style.display = 'none';
         }
