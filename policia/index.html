@@ -1169,47 +1169,57 @@
         // ==============================================
         // ASIGNACIÓN REAL DE UNIDAD (SIN SIMULACIONES)
         // ==============================================
-        async function asignarUnidadManual() {
-            if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
-            
-            // Obtener lista de unidades disponibles
-            const { data: unidades, error } = await _supabase
-                .from('unidades_respuesta')
-                .select('*')
-                .eq('estado', 'disponible');
-            
-            if (error || !unidades || unidades.length === 0) {
-                alert("❌ NO HAY UNIDADES DISPONIBLES");
-                return;
-            }
-
-            // Por ahora asignamos la primera disponible (podría mejorarse)
-            const unidad = unidades[0];
-            
-            // Actualizar la alerta con la unidad asignada
-            const { error: updateError } = await _supabase
-                .from('alertas')
-                .update({ 
-                    unidad_asignada: unidad.codigo,
-                    estado: 'en_proceso'
-                })
-                .eq('id', alertaSeleccionada.id);
-            
-            if (updateError) {
-                console.error("Error asignando unidad:", updateError);
-                alert("❌ ERROR AL ASIGNAR UNIDAD");
-                return;
-            }
-            
-            // Actualizar el estado de la unidad a "en servicio"
-            await _supabase
-                .from('unidades_respuesta')
-                .update({ estado: 'en_servicio' })
-                .eq('id', unidad.id);
-            
-            notificarPush('🚔 UNIDAD ASIGNADA', `Unidad ${unidad.codigo} en camino`);
-            cerrarPanelDetalle();
+       async function asignarUnidadManual() {
+    if (!alertaSeleccionada || alertaSeleccionada.cancelada) {
+        console.log("No hay alerta seleccionada o está cancelada");
+        return;
+    }
+    
+    console.log("🚔 Asignando unidad a alerta:", alertaSeleccionada.id);
+    
+    try {
+        // Obtener unidades disponibles
+        const { data: unidades, error: unidadesError } = await _supabase
+            .from('unidades_respuesta')
+            .select('*')
+            .eq('estado', 'disponible');
+        
+        if (unidadesError) throw unidadesError;
+        
+        if (!unidades || unidades.length === 0) {
+            alert("❌ NO HAY UNIDADES DISPONIBLES");
+            return;
         }
+
+        // Usar la primera unidad disponible
+        const unidad = unidades[0];
+        console.log("✅ Unidad seleccionada:", unidad.codigo);
+        
+        // Datos a actualizar (solo campos que existen)
+        const datosActualizar = {
+            unidad_asignada: unidad.codigo
+            // NO enviamos 'estado' si no existe
+        };
+        
+        console.log("📤 Enviando update:", datosActualizar);
+        
+        // Actualizar SOLO la alerta
+        const { error: updateError } = await _supabase
+            .from('alertas')
+            .update(datosActualizar)
+            .eq('id', alertaSeleccionada.id);
+        
+        if (updateError) throw updateError;
+        
+        console.log("✅ Unidad asignada correctamente");
+        notificarPush('🚔 UNIDAD ASIGNADA', `Unidad ${unidad.codigo} en camino`);
+        cerrarPanelDetalle();
+        
+    } catch (error) {
+        console.error("Error en asignación:", error);
+        alert("❌ ERROR AL ASIGNAR UNIDAD");
+    }
+}
 
         function verRuta() {
             if (!alertaSeleccionada) return;
