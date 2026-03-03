@@ -17,7 +17,6 @@
             --alert: #ff3131;
             --bg: #050505;
             --panel-bg: rgba(10, 15, 20, 0.95);
-            --radar-color: rgba(0, 255, 170, 0.15);
         }
 
         body {
@@ -28,9 +27,9 @@
             overflow: hidden;
         }
 
+        /* EFECTO DE ALERTA SIMPLE (solo borde, sin radar) */
         .alerta-global-active {
             animation: pulse-border 1.5s infinite;
-            --radar-color: rgba(255, 49, 49, 0.3);
         }
         @keyframes pulse-border {
             0% { box-shadow: inset 0 0 20px var(--alert); }
@@ -43,6 +42,7 @@
             background: var(--panel-bg); border-bottom: 2px solid var(--primary);
             display: flex; justify-content: space-between; align-items: center;
             padding: 0 15px; z-index: 2000;
+            backdrop-filter: blur(5px);
         }
 
         #map { 
@@ -51,56 +51,74 @@
             transition: bottom 0.3s ease;
         }
         
-        /* Cuando el panel está visible, el mapa se achica */
-        body:has(.action-panel:not(.hidden)) #map {
-            bottom: 240px;
+        /* Cuando el panel está visible, el mapa se achica para mostrar el panel */
+        .panel-visible #map {
+            bottom: 260px;
         }
 
-        .radar-container {
-            position: absolute; top: 50%; left: 50%;
-            width: 600px; height: 600px;
-            margin-top: -300px; margin-left: -300px;
-            border-radius: 50%; pointer-events: none;
-            z-index: 500; border: 1px solid var(--radar-color);
-        }
-        .radar-sweep {
-            position: absolute; width: 100%; height: 100%;
-            background: conic-gradient(from 0deg, var(--radar-color) 0deg, transparent 90deg);
-            border-radius: 50%; animation: rotate-radar 4s linear infinite;
-        }
-        .radar-circle {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            border: 1px solid var(--radar-color); border-radius: 50%;
-        }
-        @keyframes rotate-radar { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
+        /* PANEL DE VIDEO (más compacto) */
         .tactical-overlay {
-            position: fixed; top: 75px; right: 15px; width: 200px;
+            position: fixed; top: 75px; right: 10px; width: 160px;
             background: var(--panel-bg); border: 1px solid var(--secondary);
-            z-index: 1500; padding: 5px; clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
+            z-index: 1500; padding: 4px; clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
+            backdrop-filter: blur(5px);
         }
-        .video-feed { width: 100%; height: 120px; background: #000; border: 1px solid var(--alert); position: relative; }
-        .live-tag { position: absolute; top: 5px; left: 5px; color: var(--alert); font-size: 0.6rem; font-weight: bold; animation: blink 1s infinite; background: rgba(0,0,0,0.5); padding: 2px 4px; }
+        .video-feed { width: 100%; height: 100px; background: #000; border: 1px solid var(--alert); position: relative; }
+        .live-tag { 
+            position: absolute; top: 3px; left: 3px; color: var(--alert); 
+            font-size: 0.55rem; font-weight: bold; animation: blink 1s infinite; 
+            background: rgba(0,0,0,0.7); padding: 2px 4px; z-index: 10;
+        }
         @keyframes blink { 50% { opacity: 0; } }
 
+        /* PANEL DE ACCIÓN INFERIOR (rediseñado para móvil) */
         .action-panel {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: var(--panel-bg); border-top: 2px solid var(--secondary);
-            z-index: 2000; padding: 15px; transition: transform 0.4s ease-in-out;
+            z-index: 2000; padding: 12px 15px; 
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+            backdrop-filter: blur(10px);
+            max-height: 280px;
+            overflow-y: auto;
         }
-        .action-panel.hidden { transform: translateY(100%); }
+        .action-panel.visible { transform: translateY(0); }
 
-        .info-header { color: var(--alert); margin-bottom: 10px; border-bottom: 1px solid var(--alert); padding-bottom: 5px; font-size: 1rem; display: flex; justify-content: space-between; }
-        .data-row { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
+        .info-header { 
+            color: var(--alert); margin-bottom: 8px; 
+            border-bottom: 1px solid var(--alert); padding-bottom: 5px; 
+            font-size: 0.9rem; display: flex; justify-content: space-between; 
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 6px 10px;
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+        }
         .label { opacity: 0.6; }
         .value { color: var(--primary); font-weight: bold; }
         .value.alert { color: var(--alert); }
 
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .btn-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+            margin-top: 8px;
+        }
         .btn {
-            padding: 12px; border: 2px solid; background: transparent; color: inherit;
-            font-family: inherit; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.7rem;
+            padding: 14px 5px; 
+            border: 2px solid; 
+            background: transparent; 
+            color: inherit;
+            font-family: inherit; 
+            font-weight: bold; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            font-size: 0.7rem;
             transition: all 0.3s;
+            text-align: center;
         }
         .btn:hover { background: rgba(255,255,255,0.1); }
         .btn-nav { border-color: var(--secondary); color: var(--secondary); }
@@ -111,47 +129,56 @@
             position: fixed; bottom: 100px; left: 0; right: 0; 
             text-align: center; color: rgba(255,255,255,0.3); 
             pointer-events: none; font-size: 0.9rem;
-            transition: bottom 0.3s ease;
-        }
-        
-        body:has(.action-panel:not(.hidden)) #no-alerta {
-            bottom: 260px;
+            z-index: 500;
         }
 
         .hidden { display: none !important; }
 
-        /* RESPONSIVE MÓVIL */
+        /* RESPONSIVE MÓVIL (optimizado) */
         @media (max-width: 480px) {
-            body:has(.action-panel:not(.hidden)) #map {
-                bottom: 280px;
+            .panel-visible #map {
+                bottom: 290px;
             }
             
             .action-panel {
-                padding: 15px 12px;
+                padding: 12px 12px;
+                max-height: 300px;
+            }
+            
+            .info-grid {
+                font-size: 0.7rem;
+                gap: 4px 8px;
             }
             
             .btn {
-                padding: 14px;
-                font-size: 0.75rem;
-            }
-            
-            .data-row {
-                font-size: 0.85rem;
-                margin-bottom: 6px;
+                padding: 16px 4px;
+                font-size: 0.65rem;
             }
             
             .tactical-overlay {
-                width: 150px;
+                width: 140px;
                 top: 70px;
-                right: 10px;
+                right: 8px;
             }
             
             .video-feed {
-                height: 90px;
+                height: 85px;
             }
             
-            body:has(.action-panel:not(.hidden)) #no-alerta {
-                bottom: 300px;
+            .btn-backup {
+                padding: 14px 4px;
+            }
+        }
+        
+        /* Para pantallas muy pequeñas */
+        @media (max-width: 360px) {
+            .btn {
+                font-size: 0.6rem;
+                padding: 14px 2px;
+            }
+            
+            .info-grid {
+                font-size: 0.65rem;
             }
         }
     </style>
@@ -168,29 +195,27 @@
 
     <div id="map"></div>
 
-    <div class="radar-container" id="radar-eye">
-        <div class="radar-sweep"></div>
-        <div class="radar-circle" style="width: 200px; height: 200px;"></div>
-        <div class="radar-circle" style="width: 400px; height: 400px;"></div>
-    </div>
-
     <div class="tactical-overlay hidden" id="video-overlay">
         <div class="video-feed">
             <span class="live-tag">● EN VIVO</span>
             <video id="video-player" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
         </div>
-        <div style="font-size: 0.6rem; text-align: center; margin-top: 5px; color: var(--secondary);">VÍNCULO: <span id="user-link">--</span></div>
+        <div style="font-size: 0.55rem; text-align: center; margin-top: 3px; color: var(--secondary);">VÍNCULO: <span id="user-link">--</span></div>
     </div>
 
-    <div class="action-panel hidden" id="action-panel">
+    <div class="action-panel" id="action-panel">
         <div class="info-header">
             <span>🚨 INTERVENCIÓN TÁCTICA</span>
             <span id="tipo-alerta" style="color: var(--alert);">ROBO</span>
         </div>
-        <div class="data-row"><span class="label">OBJETIVO:</span> <span class="value" id="target-name">--</span></div>
-        <div class="data-row"><span class="label">UBICACIÓN:</span> <span class="value" id="target-addr">--</span></div>
-        <div class="data-row"><span class="label">DISTANCIA:</span> <span class="value" id="target-dist">--</span></div>
-        <div class="data-row"><span class="label">BATERÍA:</span> <span class="value alert" id="target-bat">--</span></div>
+        
+        <div class="info-grid">
+            <span class="label">OBJETIVO:</span> <span class="value" id="target-name">--</span>
+            <span class="label">UBICACIÓN:</span> <span class="value" id="target-addr">--</span>
+            <span class="label">DISTANCIA:</span> <span class="value" id="target-dist">--</span>
+            <span class="label">BATERÍA:</span> <span class="value alert" id="target-bat">--</span>
+        </div>
+        
         <div class="btn-grid">
             <button class="btn btn-nav" onclick="toggleRuta()">🧭 VER RUTA</button>
             <button class="btn btn-arrive" onclick="completeObjective()">✅ LLEGUÉ</button>
@@ -208,11 +233,11 @@
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
         const _client = supabase.createClient(SB_URL, SB_KEY);
 
-        // IMPORTANTE: Reemplazar con tu API key de Google Maps
-        const GOOGLE_API_KEY = 'AIzaSyCJ7bgd1zQ7XYvsd_nZdEMXZ1jEh4Le4rU'; // Esta es una key de ejemplo, reemplazar con la tuya
+        // IMPORTANTE: Reemplazar con su API key de Google Maps
+        const GOOGLE_API_KEY = 'AIzaSyCJ7bgd1zQ7XYvsd_nZdEMXZ1jEh4Le4rU'; // <--- PEGUE SU API KEY AQUÍ
 
         let map, userMarker, alertMarker, routeLine, activeAlert = null, myUnitId = "K-9";
-        let watchId = null, synth = window.speechSynthesis, utterance = null, rutaVisible = false;
+        let watchId = null, rutaVisible = false;
         let videoCanal = null;
 
         // ==============================================
@@ -226,7 +251,9 @@
                 radius: 12, color: '#0066ff', fillColor: '#0066ff', fillOpacity: 0.8, weight: 3
             }).addTo(map).bindPopup("🚓 MI POSICIÓN");
 
-            setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+            setInterval(() => { 
+                document.getElementById('clock').innerText = new Date().toLocaleTimeString(); 
+            }, 1000);
             
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(updateGPS, (err) => console.log(err), { enableHighAccuracy: true });
@@ -239,11 +266,18 @@
         // ==============================================
         function updateGPS(pos) {
             try {
+                if (!pos || !pos.coords) return;
+                
                 const { latitude, longitude } = pos.coords;
+                if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) return;
+                
                 userMarker.setLatLng([latitude, longitude]);
 
-                if (activeAlert && rutaVisible && activeAlert.lat && activeAlert.lng && 
-                    !isNaN(activeAlert.lat) && !isNaN(activeAlert.lng)) {
+                // SOLO actualizar ruta si activeAlert tiene coordenadas válidas
+                if (activeAlert && 
+                    activeAlert.lat && activeAlert.lng && 
+                    !isNaN(activeAlert.lat) && !isNaN(activeAlert.lng) &&
+                    rutaVisible) {
                     
                     if (routeLine) map.removeLayer(routeLine);
                     routeLine = L.polyline([[latitude, longitude], [activeAlert.lat, activeAlert.lng]], {
@@ -254,7 +288,7 @@
                     document.getElementById('target-dist').innerText = dist.toFixed(2) + " km";
                 }
             } catch (e) {
-                console.warn("Error en updateGPS:", e);
+                console.warn("Error en updateGPS (no crítico):", e);
             }
         }
 
@@ -263,7 +297,12 @@
         // ==============================================
         function listenForAlerts() {
             _client.channel(`patrulla-${myUnitId}`)
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'alertas', filter: `unidad_asignada=eq.${myUnitId}` },
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'alertas', 
+                    filter: `unidad_asignada=eq.${myUnitId}` 
+                },
                 (payload) => {
                     if (payload.new.estado === 'en_proceso' || payload.new.estado === 'CRITICO') {
                         triggerTacticalMode(payload.new);
@@ -272,7 +311,7 @@
         }
 
         // ==============================================
-        // GEOCODIFICACIÓN CON GOOGLE MAPS (SIN CORS)
+        // GEOCODIFICACIÓN CON GOOGLE MAPS
         // ==============================================
         async function obtenerNombreCalle(lat, lng) {
             try {
@@ -307,18 +346,14 @@
             try {
                 activeAlert = data;
                 
-                // Cancelar voz anterior
-                if (synth.speaking) synth.cancel();
-                
-                // Nueva alerta por voz
-                utterance = new SpeechSynthesisUtterance(`Alerta. Ciudadano ${data.nombre} en peligro. Proceda.`);
-                synth.speak(utterance);
-                
                 // Efectos visuales
                 document.getElementById('main-body').classList.add('alerta-global-active');
-                document.getElementById('action-panel').classList.remove('hidden');
                 document.getElementById('video-overlay').classList.remove('hidden');
                 document.getElementById('no-alerta').style.display = 'none';
+                
+                // Mostrar panel y ajustar mapa
+                document.getElementById('action-panel').classList.add('visible');
+                document.body.classList.add('panel-visible');
                 
                 // Cargar datos básicos
                 document.getElementById('target-name').innerText = data.nombre || '--';
@@ -330,7 +365,7 @@
                 const calle = await obtenerNombreCalle(data.lat, data.lng);
                 document.getElementById('target-addr').innerText = calle;
 
-                // Marcador de alerta (con validación)
+                // Marcador de alerta (CON VALIDACIÓN)
                 if (data.lat && data.lng && !isNaN(data.lat) && !isNaN(data.lng)) {
                     if (alertMarker) map.removeLayer(alertMarker);
                     alertMarker = L.circleMarker([data.lat, data.lng], { 
@@ -339,11 +374,21 @@
                         weight: 5, 
                         fillOpacity: 0.3 
                     }).addTo(map).bindPopup('🚨 ALERTA');
+                } else {
+                    console.warn("Coordenadas de alerta inválidas");
                 }
                 
-                // Mostrar ruta automáticamente
-                rutaVisible = true;
-                updateGPS({ coords: userMarker.getLatLng() });
+                // Mostrar ruta automáticamente (si hay coordenadas válidas)
+                if (data.lat && data.lng && !isNaN(data.lat) && !isNaN(data.lng)) {
+                    rutaVisible = true;
+                    if (userMarker.getLatLng()) {
+                        updateGPS({ coords: userMarker.getLatLng() });
+                    }
+                    
+                    // Centrar mapa para ver ambos puntos
+                    const bounds = L.latLngBounds(userMarker.getLatLng(), [data.lat, data.lng]);
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
                 
                 // Video si existe
                 if (data.video_url) {
@@ -355,7 +400,12 @@
                 // Escuchar nuevos fragmentos de video
                 if (videoCanal) _client.removeChannel(videoCanal);
                 videoCanal = _client.channel(`video-${data.id}`)
-                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'alertas', filter: `id=eq.${data.id}` },
+                    .on('postgres_changes', { 
+                        event: 'UPDATE', 
+                        schema: 'public', 
+                        table: 'alertas', 
+                        filter: `id=eq.${data.id}` 
+                    },
                     (payload) => {
                         const v = document.getElementById('video-player');
                         if (payload.new.video_url && payload.new.video_url !== v.src) {
@@ -395,13 +445,13 @@
         }
 
         function resetUI() {
-            if (synth.speaking) synth.cancel();
             if (videoCanal) _client.removeChannel(videoCanal);
             
             document.getElementById('main-body').classList.remove('alerta-global-active');
-            document.getElementById('action-panel').classList.add('hidden');
+            document.getElementById('action-panel').classList.remove('visible');
             document.getElementById('video-overlay').classList.add('hidden');
             document.getElementById('no-alerta').style.display = 'block';
+            document.body.classList.remove('panel-visible');
             
             if (alertMarker) map.removeLayer(alertMarker);
             if (routeLine) map.removeLayer(routeLine);
