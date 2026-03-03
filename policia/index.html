@@ -49,7 +49,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* EFECTO MATRIZ MEJORADO */
+        /* EFECTO MATRIZ */
         body::before {
             content: "";
             position: fixed;
@@ -69,7 +69,7 @@
             z-index: 0;
         }
 
-        /* GRID TÁCTICO SUPERPUESTO */
+        /* GRID TÁCTICO */
         .grid-overlay {
             position: fixed;
             top: 0;
@@ -85,7 +85,7 @@
             opacity: 0.3;
         }
 
-        /* SCANLINE DINÁMICA */
+        /* SCANLINE */
         .scanline {
             position: fixed;
             top: 0;
@@ -117,12 +117,10 @@
         }
 
         .dashboard-pulse {
-            animation: dashboard-pulse 0.5s 6; /* 3 segundos (6 veces a 0.5s) */
+            animation: dashboard-pulse 0.5s 6;
         }
 
-        /* ============================================== */
-        /* HEADER TÁCTICO CON LOGO SMART TECH */
-        /* ============================================== */
+        /* HEADER TÁCTICO */
         .tactical-header {
             position: fixed;
             top: 0;
@@ -262,9 +260,7 @@
             color: var(--secondary);
         }
 
-        /* ============================================== */
-        /* LAYOUT PRINCIPAL - GRID TÁCTICO */
-        /* ============================================== */
+        /* LAYOUT PRINCIPAL */
         .main-container {
             position: fixed;
             top: 80px;
@@ -278,9 +274,7 @@
             z-index: 10;
         }
 
-        /* ============================================== */
-        /* PANEL IZQUIERDO - INCIDENTES Y CONTROL */
-        /* ============================================== */
+        /* PANEL IZQUIERDO */
         .left-panel {
             background: var(--bg-panel);
             backdrop-filter: blur(10px);
@@ -374,11 +368,6 @@
             box-shadow: 0 0 20px var(--alert);
         }
 
-        .incident-card.cancelada:hover {
-            background: rgba(136,136,136,0.15);
-            box-shadow: 0 0 20px var(--cancel);
-        }
-
         .cancelada-badge {
             position: absolute;
             top: 5px;
@@ -394,15 +383,6 @@
         .incident-time {
             font-size: 0.6rem;
             color: var(--alert);
-            margin-bottom: 5px;
-        }
-
-        .incident-card.cancelada .incident-time {
-            color: var(--cancel);
-        }
-
-        .incident-title {
-            font-weight: bold;
             margin-bottom: 5px;
         }
 
@@ -468,9 +448,7 @@
             color: var(--secondary);
         }
 
-        /* ============================================== */
-        /* PANEL CENTRAL - MAPA TÁCTICO */
-        /* ============================================== */
+        /* PANEL CENTRAL - MAPA */
         .map-panel {
             background: #000;
             border: 1px solid var(--primary);
@@ -529,9 +507,7 @@
             to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        /* ============================================== */
         /* PANEL LATERAL DE DETALLE */
-        /* ============================================== */
         #panel-detalle-alerta {
             position: fixed;
             top: 90px;
@@ -598,11 +574,7 @@
             color: var(--alert);
         }
 
-        .detalle-value.cancelada {
-            color: var(--cancel);
-        }
-
-        /* CONTENEDOR DE VIDEO EN VIVO */
+        /* CONTENEDOR DE VIDEO */
         #contenedor-video-alerta {
             position: relative;
             width: 100%;
@@ -657,45 +629,6 @@
             text-align: center;
         }
 
-        /* HISTORIAL DEL INCIDENTE */
-        .historial-timeline {
-            margin: 15px 0;
-            padding: 10px;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--alert);
-            max-height: 150px;
-            overflow-y: auto;
-            clip-path: polygon(
-                0% 5%, 2% 0%, 98% 0%, 100% 5%,
-                100% 95%, 98% 100%, 2% 100%, 0% 95%
-            );
-        }
-
-        .timeline-item {
-            display: flex;
-            gap: 10px;
-            font-size: 0.6rem;
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(255,49,49,0.2);
-        }
-
-        .timeline-time {
-            color: var(--secondary);
-            min-width: 70px;
-        }
-
-        .timeline-event {
-            color: var(--primary);
-        }
-
-        .timeline-event.alert {
-            color: var(--alert);
-        }
-
-        .timeline-event.cancelada {
-            color: var(--cancel);
-        }
-
         .panel-detalle-actions {
             display: flex;
             gap: 10px;
@@ -737,16 +670,6 @@
             box-shadow: 0 0 20px var(--primary);
         }
 
-        .action-button.success {
-            border-color: var(--success);
-            color: var(--success);
-        }
-
-        .action-button.success:hover {
-            background: rgba(57,255,20,0.1);
-            box-shadow: 0 0 20px var(--success);
-        }
-
         .action-button.warning {
             border-color: var(--warning);
             color: var(--warning);
@@ -755,18 +678,6 @@
         .action-button.warning:hover {
             background: rgba(255,170,0,0.1);
             box-shadow: 0 0 20px var(--warning);
-        }
-
-        /* PANEL DE EMERGENCIA PARA EL POLICÍA */
-        #panel-emergencia {
-            position: fixed;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            z-index: 20000;
-            display: none;
         }
 
         /* NOTIFICACIÓN TOAST */
@@ -801,7 +712,6 @@
             display: none !important;
         }
 
-        /* CUSTOM SCROLLBAR */
         ::-webkit-scrollbar {
             width: 5px;
         }
@@ -821,7 +731,7 @@
     <div class="grid-overlay"></div>
     <div class="scanline"></div>
 
-    <!-- HEADER TÁCTICO CON LOGO SMART TECH -->
+    <!-- HEADER TÁCTICO -->
     <div class="tactical-header">
         <div class="header-left">
             <div class="logo-area">
@@ -830,7 +740,7 @@
                 </div>
                 <div class="title-block">
                     <div class="title-main">SENTINEL</div>
-                    <div class="title-sub">SMART TECH · POLICIAL</div>
+                    <div class="title-sub">SMART TECH · COM</div>
                 </div>
             </div>
             <div class="status-indicators">
@@ -850,7 +760,7 @@
         </div>
         <div class="header-right">
             <div class="time-display" id="reloj">--:--:--</div>
-            <div class="unit-badge" id="unidadId">UNIDAD K-9</div>
+            <div class="unit-badge">COMANDO</div>
         </div>
     </div>
 
@@ -862,10 +772,10 @@
 
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="main-container" id="main-container">
-        <!-- PANEL IZQUIERDO - INCIDENTES -->
+        <!-- PANEL IZQUIERDO -->
         <div class="left-panel">
             <div class="panel-header">
-                <span>🚨 INCIDENTES</span>
+                <span>🚨 INCIDENTES ACTIVOS</span>
                 <span>CRÍTICOS</span>
             </div>
             
@@ -932,7 +842,7 @@
     <!-- PANEL LATERAL DE DETALLE -->
     <div id="panel-detalle-alerta">
         <div class="panel-detalle-header">
-            <span class="panel-detalle-titulo" id="panel-titulo">🚨 ALERTA</span>
+            <span class="panel-detalle-titulo" id="panel-titulo">🚨 ALERTA CRÍTICA</span>
             <span class="panel-detalle-close" onclick="cerrarPanelDetalle()">✖</span>
         </div>
         
@@ -962,7 +872,7 @@
             <span class="detalle-value" id="panelEstado">ACTIVA</span>
         </div>
         
-        <!-- CONTENEDOR DE VIDEO EN VIVO -->
+        <!-- VIDEO -->
         <div id="contenedor-video-alerta">
             <div id="status-live">
                 <div class="pulse-dot"></div>
@@ -979,28 +889,16 @@
             </div>
         </div>
         
-        <!-- HISTORIAL DEL INCIDENTE -->
-        <div class="historial-timeline" id="historial-timeline">
-            <div class="timeline-item">
-                <span class="timeline-time">--:--:--</span>
-                <span class="timeline-event">SIN HISTORIAL</span>
-            </div>
-        </div>
-        
         <div style="text-align: center; margin: 10px 0; font-size: 0.65rem; color: var(--secondary);" id="panelTimestamp">
             --
         </div>
         
         <div class="panel-detalle-actions">
-            <button class="action-button primary" onclick="asignarUnidadDesdePanel()">🚔 ASIGNAR</button>
-            <button class="action-button secondary" onclick="verRutaDesdePanel()">🗺️ RUTA</button>
-            <button class="action-button success" onclick="cerrarIncidenteActual()">✅ CERRAR</button>
-            <button class="action-button warning" onclick="detenerGrabacionRemota()">⏹️ DETENER GRABACIÓN</button>
+            <button class="action-button primary" onclick="asignarUnidadManual()">🚔 ASIGNAR UNIDAD</button>
+            <button class="action-button secondary" onclick="verRuta()">🗺️ VER RUTA</button>
+            <button class="action-button warning" onclick="cerrarIncidenteActual()">✅ CERRAR</button>
         </div>
     </div>
-
-    <!-- PANEL DE EMERGENCIA PARA EL POLICÍA -->
-    <div id="panel-emergencia"></div>
 
     <script>
         const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
@@ -1011,35 +909,15 @@
         let marcadores = {};
         let alertas = [];
         let alertaSeleccionada = null;
-        
-        // VARIABLES DE CONTROL TÁCTICO
         let markerCiudadano = null;
-        let markerPatrulleroCercano = null;
         let lineaRuta = null;
-        
-        // VARIABLES DE ESTADO DEL PATRULLERO
-        let miUnidadId = "K-9";
-        let emergenciaActiva = null;
-        
-        // VARIABLES DE CONTROL DE VIDEO
-        let fragmentoActual = null;
         let canalStreamingActivo = null;
+        let fragmentoActual = null;
 
-        // Elementos de video
         const videoPlayer = document.getElementById('video-feed');
         const fuenteVideo = videoPlayer ? videoPlayer.querySelector('source') : null;
         const textoEspera = document.getElementById('esperando-texto');
-
-        // Variables para tiempos de respuesta
-        let tiemposRespuesta = [];
-
-        // Referencia al contenedor principal para el efecto de pulso
         const mainContainer = document.getElementById('main-container');
-
-        // Solicitar permiso para notificaciones al inicio
-        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-            Notification.requestPermission();
-        }
 
         // ==============================================
         // INICIALIZACIÓN
@@ -1056,34 +934,19 @@
                 filter: 'invert(1) hue-rotate(160deg) saturate(3) brightness(0.8) contrast(1.5)'
             }).addTo(mapa);
 
-            L.circleMarker([-38.0055, -57.5426], {
-                radius: 14,
-                color: '#0066ff',
-                weight: 4,
-                fillColor: '#0066ff',
-                fillOpacity: 0.3
-            }).addTo(mapa).bindPopup(`🚓 UNIDAD ${miUnidadId}`);
-
             actualizarReloj();
             setInterval(actualizarReloj, 1000);
-
             mapa.on('move', actualizarCoordenadas);
             actualizarCoordenadas();
 
             cargarUnidadesDisponibles();
             cargarAlertasActivas();
             suscribirAlertas();
-            activarReceptorDeOrdenes();
-            
-            console.log("✅ Sistema listo. Esperando alertas...");
         }
 
         function actualizarReloj() {
             const ahora = new Date();
-            const horas = ahora.getHours().toString().padStart(2, '0');
-            const minutos = ahora.getMinutes().toString().padStart(2, '0');
-            const segundos = ahora.getSeconds().toString().padStart(2, '0');
-            document.getElementById('reloj').textContent = `${horas}:${minutos}:${segundos}`;
+            document.getElementById('reloj').textContent = ahora.toLocaleTimeString();
         }
 
         function actualizarCoordenadas() {
@@ -1093,49 +956,7 @@
         }
 
         // ==============================================
-        // NOTIFICACIONES
-        // ==============================================
-        function mostrarToast(titulo, mensaje, tipo = 'alert') {
-            const toast = document.getElementById('toast-notificacion');
-            document.getElementById('toast-titulo').textContent = titulo;
-            document.getElementById('toast-mensaje').textContent = mensaje;
-            
-            toast.style.borderLeftColor = tipo === 'alert' ? 'var(--alert)' : 'var(--primary)';
-            toast.style.display = 'block';
-            
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 5000);
-        }
-
-        function notificarPush(titulo, mensaje) {
-            if (Notification.permission === 'granted') {
-                new Notification(titulo, {
-                    body: mensaje,
-                    icon: 'logo.png',
-                    requireInteraction: true
-                });
-            }
-            mostrarToast(titulo, mensaje);
-        }
-
-        // ==============================================
-        // FUNCIÓN DE COLOR POR TIPO DE ALERTA
-        // ==============================================
-        function colorPorTipo(tipo) {
-            const colores = {
-                'ROBO': '#ff3131',
-                'ACCIDENTE': '#ffaa00',
-                'INCENDIO': '#ff6600',
-                'MEDICA': '#39ff14',
-                'VIOLENCIA': '#ff00ff',
-                'OTRO': '#00f2ff'
-            };
-            return colores[tipo] || '#ff3131';
-        }
-
-        // ==============================================
-        // UNIDADES DISPONIBLES
+        // UNIDADES DISPONIBLES (REALES)
         // ==============================================
         async function cargarUnidadesDisponibles() {
             const { data, error } = await _supabase
@@ -1145,41 +966,28 @@
                 
             if (!error && data) {
                 document.getElementById('unidadesDisponibles').textContent = data.length;
-                
-                data.forEach(unidad => {
-                    L.circleMarker([unidad.lat, unidad.lng], {
-                        radius: 10,
-                        color: '#0066ff',
-                        weight: 2,
-                        fillColor: '#0066ff',
-                        fillOpacity: 0.5
-                    }).addTo(mapa).bindPopup(`🚔 UNIDAD ${unidad.codigo}<br>${unidad.tipo}`);
-                });
             }
         }
 
         // ==============================================
         // ALERTAS
         // ==============================================
-       async function cargarAlertasActivas() {
-    const { data, error } = await _supabase
-        .from('alertas')
-        .select('*')
-        .order('timestamp', { ascending: false });
+        async function cargarAlertasActivas() {
+            const { data, error } = await _supabase
+                .from('alertas')
+                .select('*')
+                .order('timestamp', { ascending: false });
 
-    if (!error && data) {
-        data.forEach(alerta => {
-            alertas.push(alerta);
-            agregarMarcador(alerta);
-        });
-        
-        // Usar aplicarFiltros() en lugar de actualizarListaIncidentes()
-        aplicarFiltros();
-        
-        actualizarEstadisticas();
-        document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
-    }
-}
+            if (!error && data) {
+                data.forEach(alerta => {
+                    alertas.push(alerta);
+                    agregarMarcador(alerta);
+                });
+                aplicarFiltros();
+                actualizarEstadisticas();
+                document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
+            }
+        }
 
         function suscribirAlertas() {
             _supabase
@@ -1193,89 +1001,25 @@
         }
 
         function nuevaAlerta(alerta) {
-    if (alertas.some(a => a.id === alerta.id)) return;
-    
-    alertas.unshift(alerta);
-    agregarMarcador(alerta);
-    
-    // Usar aplicarFiltros() en lugar de actualizarListaIncidentes()
-    aplicarFiltros();
-    
-    actualizarEstadisticas();
-    document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
-    
-    // ACTIVAR ALERTA VISUAL INMEDIATA (3 SEGUNDOS)
-    mainContainer.classList.add('dashboard-pulse');
-    
-    setTimeout(() => {
-        mainContainer.classList.remove('dashboard-pulse');
-    }, 3000);
-    
-    // ZOOM AUTOMÁTICO AL LUGAR DEL EVENTO
-    if (mapa && !alerta.cancelada) {
-        mapa.flyTo([alerta.lat, alerta.lng], 18, {
-            duration: 2,
-            easeLinearity: 0.5
-        });
-    }
-    
-    // SELECCIONAR AUTOMÁTICAMENTE LA NUEVA ALERTA
-    setTimeout(() => {
-        if (!alerta.cancelada) {
-            verDetallePanel(alerta);
-        }
-    }, 500);
-    
-    reproducirAlertaIntenso();
-    
-    if (!alerta.cancelada) {
-        notificarPush('🚨 NUEVA ALERTA', `${alerta.tipo || 'EMERGENCIA'} - ${alerta.nombre}`);
-    }
-    
-    agregarTerminal(`🚨 NUEVA ALERTA ${alerta.tipo || 'EMERGENCIA'}: ${alerta.nombre}`, 'alert');
-    
-    alerta.tiempoInicio = Date.now();
-}
-
-        function reproducirAlertaIntenso() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                const osc1 = audioCtx.createOscillator();
-                const gain1 = audioCtx.createGain();
-                osc1.connect(gain1);
-                gain1.connect(audioCtx.destination);
-                osc1.type = 'sawtooth';
-                osc1.frequency.value = 880;
-                gain1.gain.value = 0.3;
-                osc1.start();
-                osc1.stop(audioCtx.currentTime + 0.2);
-                
-                setTimeout(() => {
-                    const osc2 = audioCtx.createOscillator();
-                    const gain2 = audioCtx.createGain();
-                    osc2.connect(gain2);
-                    gain2.connect(audioCtx.destination);
-                    osc2.type = 'sawtooth';
-                    osc2.frequency.value = 440;
-                    gain2.gain.value = 0.3;
-                    osc2.start();
-                    osc2.stop(audioCtx.currentTime + 0.2);
-                }, 300);
-                
-                setTimeout(() => {
-                    const osc3 = audioCtx.createOscillator();
-                    const gain3 = audioCtx.createGain();
-                    osc3.connect(gain3);
-                    gain3.connect(audioCtx.destination);
-                    osc3.type = 'sawtooth';
-                    osc3.frequency.value = 660;
-                    gain3.gain.value = 0.3;
-                    osc3.start();
-                    osc3.stop(audioCtx.currentTime + 0.2);
-                }, 600);
-                
-            } catch (e) {}
+            if (alertas.some(a => a.id === alerta.id)) return;
+            
+            alertas.unshift(alerta);
+            agregarMarcador(alerta);
+            aplicarFiltros();
+            actualizarEstadisticas();
+            document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
+            
+            // Efecto visual
+            mainContainer.classList.add('dashboard-pulse');
+            setTimeout(() => mainContainer.classList.remove('dashboard-pulse'), 3000);
+            
+            // Zoom automático
+            if (mapa && !alerta.cancelada) {
+                mapa.flyTo([alerta.lat, alerta.lng], 17, { duration: 2 });
+            }
+            
+            // Notificación
+            notificarPush('🚨 NUEVA ALERTA', `${alerta.tipo || 'EMERGENCIA'} - ${alerta.nombre}`);
         }
 
         function agregarMarcador(alerta) {
@@ -1296,34 +1040,8 @@
             marcadores[alerta.id] = marcador;
         }
 
-        function agregarTerminal(mensaje, tipo = 'normal') {
-            const terminal = document.getElementById('terminal');
-            if (!terminal) return;
-            
-            const linea = document.createElement('div');
-            linea.className = 'terminal-line';
-            
-            const prompt = document.createElement('span');
-            prompt.className = 'terminal-prompt';
-            prompt.textContent = '>';
-            
-            const texto = document.createElement('span');
-            texto.className = `terminal-text ${tipo === 'alert' ? 'alert' : ''}`;
-            texto.textContent = mensaje;
-            
-            linea.appendChild(prompt);
-            linea.appendChild(texto);
-            terminal.appendChild(linea);
-            
-            while (terminal.children.length > 8) {
-                terminal.removeChild(terminal.firstChild);
-            }
-            
-            terminal.scrollTop = terminal.scrollHeight;
-        }
-
         // ==============================================
-        // FILTROS Y LISTA DE INCIDENTES
+        // FILTROS
         // ==============================================
         function aplicarFiltros() {
             const filtroRol = document.getElementById('filtro-rol').value;
@@ -1333,16 +1051,8 @@
             let alertasFiltradas = alertas.filter(alerta => {
                 if (filtroCanceladas === 'activas' && (alerta.cancelada || alerta.activa === false)) return false;
                 if (filtroCanceladas === 'canceladas' && !alerta.cancelada) return false;
-                
-                if (filtroRol !== 'todos') {
-                    if (alerta.rol !== filtroRol) return false;
-                }
-                
-                if (filtroBusqueda) {
-                    const nombre = (alerta.nombre || '').toLowerCase();
-                    if (!nombre.includes(filtroBusqueda)) return false;
-                }
-                
+                if (filtroRol !== 'todos' && alerta.rol !== filtroRol) return false;
+                if (filtroBusqueda && !(alerta.nombre || '').toLowerCase().includes(filtroBusqueda)) return false;
                 return true;
             });
             
@@ -1361,15 +1071,13 @@
             alertasFiltradas.slice(0, 15).forEach(alerta => {
                 const fecha = new Date(alerta.timestamp);
                 const hora = fecha.toLocaleTimeString();
-                const canceladaClass = alerta.cancelada ? 'cancelada' : '';
                 const canceladaBadge = alerta.cancelada ? '<span class="cancelada-badge">❌ CANCELADA</span>' : '';
-                const colorTipo = colorPorTipo(alerta.tipo);
                 
                 html += `
-                    <div class="incident-card ${canceladaClass}" onclick='verDetallePanel(${JSON.stringify(alerta)})' style="position: relative;">
+                    <div class="incident-card ${alerta.cancelada ? 'cancelada' : ''}" onclick='verDetallePanel(${JSON.stringify(alerta)})' style="position: relative;">
                         ${canceladaBadge}
                         <div class="incident-time">${hora}</div>
-                        <div class="incident-tipo" style="color: ${colorTipo}; border-color: ${colorTipo};">${alerta.tipo || 'EMERGENCIA'}</div>
+                        <div class="incident-tipo" style="color: ${colorPorTipo(alerta.tipo)}">${alerta.tipo || 'EMERGENCIA'}</div>
                         <div class="incident-title">${alerta.nombre}</div>
                         <div class="incident-location">${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}</div>
                         <div class="incident-meta">
@@ -1385,6 +1093,18 @@
             contenedor.innerHTML = html;
         }
 
+        function colorPorTipo(tipo) {
+            const colores = {
+                'ROBO': '#ff3131',
+                'ACCIDENTE': '#ffaa00',
+                'INCENDIO': '#ff6600',
+                'MEDICA': '#39ff14',
+                'VIOLENCIA': '#ff00ff',
+                'OTRO': '#00f2ff'
+            };
+            return colores[tipo] || '#ff3131';
+        }
+
         function actualizarEstadisticas() {
             const hoy = new Date().toDateString();
             const alertasHoy = alertas.filter(a => new Date(a.timestamp).toDateString() === hoy).length;
@@ -1397,23 +1117,24 @@
             document.getElementById('statsResueltas').textContent = resueltas;
             document.getElementById('statsCanceladas').textContent = canceladas;
             document.getElementById('statsPendientes').textContent = activas;
-            
-            if (tiemposRespuesta.length > 0) {
-                const promedio = tiemposRespuesta.reduce((a, b) => a + b, 0) / tiemposRespuesta.length;
-                document.getElementById('statsTiempo').textContent = promedio.toFixed(1) + 's';
-                document.getElementById('tiempoPromedio').textContent = promedio.toFixed(1) + 's';
-            }
+        }
+
+        function notificarPush(titulo, mensaje) {
+            const toast = document.getElementById('toast-notificacion');
+            document.getElementById('toast-titulo').textContent = titulo;
+            document.getElementById('toast-mensaje').textContent = mensaje;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 5000);
         }
 
         // ==============================================
-        // PANEL LATERAL DE DETALLE
+        // PANEL DE DETALLE
         // ==============================================
         function verDetallePanel(alerta) {
             alertaSeleccionada = alerta;
             
             document.getElementById('panel-titulo').textContent = `🚨 ALERTA ${alerta.cancelada ? 'CANCELADA' : 'CRÍTICA'}`;
             document.getElementById('panelTipo').textContent = alerta.tipo || 'EMERGENCIA';
-            document.getElementById('panelTipo').style.color = colorPorTipo(alerta.tipo);
             document.getElementById('panelNombre').textContent = alerta.nombre;
             document.getElementById('panelDni').textContent = alerta.dni;
             document.getElementById('panelTel').textContent = alerta.telefono;
@@ -1424,32 +1145,6 @@
             
             const fecha = new Date(alerta.timestamp);
             document.getElementById('panelTimestamp').textContent = fecha.toLocaleString();
-            
-            const historial = document.getElementById('historial-timeline');
-            historial.innerHTML = `
-                <div class="timeline-item">
-                    <span class="timeline-time">${fecha.toLocaleTimeString()}</span>
-                    <span class="timeline-event">🚨 Alerta ${alerta.tipo || 'EMERGENCIA'} creada</span>
-                </div>
-                ${alerta.cancelada ? `
-                <div class="timeline-item">
-                    <span class="timeline-time">${new Date().toLocaleTimeString()}</span>
-                    <span class="timeline-event cancelada">❌ Cancelada por usuario</span>
-                </div>
-                ` : ''}
-                ${alerta.unidad_asignada && !alerta.cancelada ? `
-                <div class="timeline-item">
-                    <span class="timeline-time">${new Date().toLocaleTimeString()}</span>
-                    <span class="timeline-event">🚔 Unidad ${alerta.unidad_asignada} asignada</span>
-                </div>
-                ` : ''}
-                ${alerta.activa === false && !alerta.cancelada ? `
-                <div class="timeline-item">
-                    <span class="timeline-time">${new Date().toLocaleTimeString()}</span>
-                    <span class="timeline-event">✅ Incidente resuelto</span>
-                </div>
-                ` : ''}
-            `;
             
             if (videoPlayer) videoPlayer.style.display = 'none';
             if (textoEspera) textoEspera.style.display = 'flex';
@@ -1462,14 +1157,7 @@
             document.getElementById('panel-detalle-alerta').style.display = 'block';
             
             if (mapa && !alerta.cancelada) {
-                mapa.flyTo([alerta.lat, alerta.lng], 17, {
-                    duration: 1.2,
-                    easeLinearity: 0.5
-                });
-            }
-            
-            if (!alerta.cancelada) {
-                activarSeguimientoRealtime(alerta.id);
+                mapa.flyTo([alerta.lat, alerta.lng], 17, { duration: 1.2 });
             }
         }
 
@@ -1479,103 +1167,70 @@
         }
 
         // ==============================================
-        // CIERRE DE INCIDENTES
+        // ASIGNACIÓN REAL DE UNIDAD (SIN SIMULACIONES)
         // ==============================================
-        async function cerrarIncidenteActual() {
+        async function asignarUnidadManual() {
             if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
             
-            if (confirm(`¿CERRAR INCIDENTE #${alertaSeleccionada.id}?`)) {
-                await cerrarIncidente(alertaSeleccionada.id);
-                cerrarPanelDetalle();
+            // Obtener lista de unidades disponibles
+            const { data: unidades, error } = await _supabase
+                .from('unidades_respuesta')
+                .select('*')
+                .eq('estado', 'disponible');
+            
+            if (error || !unidades || unidades.length === 0) {
+                alert("❌ NO HAY UNIDADES DISPONIBLES");
+                return;
             }
+
+            // Por ahora asignamos la primera disponible (podría mejorarse)
+            const unidad = unidades[0];
+            
+            // Actualizar la alerta con la unidad asignada
+            const { error: updateError } = await _supabase
+                .from('alertas')
+                .update({ 
+                    unidad_asignada: unidad.codigo,
+                    estado: 'en_proceso'
+                })
+                .eq('id', alertaSeleccionada.id);
+            
+            if (updateError) {
+                console.error("Error asignando unidad:", updateError);
+                alert("❌ ERROR AL ASIGNAR UNIDAD");
+                return;
+            }
+            
+            // Actualizar el estado de la unidad a "en servicio"
+            await _supabase
+                .from('unidades_respuesta')
+                .update({ estado: 'en_servicio' })
+                .eq('id', unidad.id);
+            
+            notificarPush('🚔 UNIDAD ASIGNADA', `Unidad ${unidad.codigo} en camino`);
+            cerrarPanelDetalle();
         }
 
-        async function cerrarIncidente(idAlerta) {
-            const alerta = alertas.find(a => a.id === idAlerta);
-            if (!alerta || alerta.cancelada) return;
-            
-            if (alerta.tiempoInicio) {
-                const tiempoRespuesta = (Date.now() - alerta.tiempoInicio) / 1000;
-                tiemposRespuesta.push(tiempoRespuesta);
-                agregarTerminal(`⏱️ Tiempo de respuesta: ${tiempoRespuesta.toFixed(1)} segundos`);
-            }
+        function verRuta() {
+            if (!alertaSeleccionada) return;
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${alertaSeleccionada.lat},${alertaSeleccionada.lng}&travelmode=driving`, '_blank');
+        }
+
+        async function cerrarIncidenteActual() {
+            if (!alertaSeleccionada) return;
             
             await _supabase
                 .from('alertas')
-                .update({ 
-                    activa: false, 
-                    estado: 'resuelto',
-                    fecha_resolucion: new Date().toISOString()
-                })
-                .eq('id', idAlerta);
+                .update({ activa: false, estado: 'finalizado' })
+                .eq('id', alertaSeleccionada.id);
             
-            alertas = alertas.map(a => {
-                if (a.id === idAlerta) {
-                    return { ...a, activa: false };
-                }
-                return a;
-            });
-            
-            if (marcadores[idAlerta]) {
-                marcadores[idAlerta].setStyle({ color: '#39ff14', fillColor: '#39ff14' });
-            }
-            
-            actualizarListaIncidentes();
-            actualizarEstadisticas();
-            document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
-            
-            agregarTerminal(`✅ Incidente #${idAlerta} cerrado y archivado`, 'normal');
-            notificarPush('✅ INCIDENTE RESUELTO', `Alerta #${idAlerta} ha sido cerrada`);
+            cerrarPanelDetalle();
         }
 
         // ==============================================
-        // VIDEO EN VIVO
+        // VIDEO
         // ==============================================
-        async function cargarNuevoFragmento(nuevaUrl) {
-            console.log("🎥 Intentando cargar fragmento:", nuevaUrl);
-
-            if (fragmentoActual === nuevaUrl) {
-                console.log("🔄 Fragmento ya cargado, ignorando");
-                return;
-            }
-            fragmentoActual = nuevaUrl;
-
-            if (!videoPlayer || !fuenteVideo || !textoEspera) {
-                console.error("❌ Elementos de video no encontrados");
-                return;
-            }
-
-            textoEspera.style.display = 'none';
-            videoPlayer.style.display = 'block';
-
-            videoPlayer.oncanplay = null;
-            fuenteVideo.src = nuevaUrl;
-
-            try {
-                videoPlayer.load();
-
-                videoPlayer.oncanplay = async () => {
-                    videoPlayer.oncanplay = null;
-                    
-                    try {
-                        await videoPlayer.play();
-                        console.log("✅ Reproducción iniciada correctamente");
-                    } catch (err) {
-                        if (err.name === 'AbortError') {
-                            console.log("🔄 Fragmento interrumpido por nueva carga (normal)");
-                        } else {
-                            console.error("❌ Error real en reproducción:", err);
-                        }
-                    }
-                };
-            } catch (e) {
-                console.warn("⚠️ Fallo en la carga del fragmento:", e);
-            }
-        }
-
         function conectarStreamingRealtime(idDeLaAlerta) {
-            console.log(`📡 Conectando streaming para Alerta: ${idDeLaAlerta}`);
-
             if (canalStreamingActivo) {
                 _supabase.removeChannel(canalStreamingActivo);
             }
@@ -1589,236 +1244,20 @@
                     filter: `id=eq.${idDeLaAlerta}` 
                 }, payload => {
                     const nuevaUrl = payload.new.video_url;
-                    
-                    if (nuevaUrl) {
-                        console.log("🎥 Nuevo fragmento recibido:", nuevaUrl);
-                        cargarNuevoFragmento(nuevaUrl);
-                    }
-                })
-                .subscribe();
-        }
-
-        // ==============================================
-        // ASIGNACIÓN DE UNIDAD
-        // ==============================================
-        async function asignarUnidadDesdePanel() {
-            if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
-            await asignarUnidadMasCercana(alertaSeleccionada.id);
-        }
-
-        async function asignarUnidadMasCercana(idAlerta) {
-    console.log("🚔 Buscando unidad de respuesta inmediata...");
-    agregarTerminal('🚔 BUSCANDO UNIDAD MÁS CERCANA...', 'normal');
-
-    // 1. Obtener ubicación de la alerta
-    const { data: alerta, error: alertaError } = await _supabase
-        .from('alertas')
-        .select('lat, lng')
-        .eq('id', idAlerta)
-        .single();
-    
-    if (alertaError) {
-        console.error("Error obteniendo alerta:", alertaError);
-        return;
-    }
-
-    // 2. Obtener unidades disponibles
-    const { data: unidades, error: unidadesError } = await _supabase
-        .from('unidades_respuesta')
-        .select('*')
-        .eq('estado', 'disponible');
-
-    if (unidadesError || !unidades || unidades.length === 0) {
-        console.log("⚠️ No hay unidades disponibles");
-        agregarTerminal('❌ NO HAY UNIDADES DISPONIBLES', 'alert');
-        return;
-    }
-
-    // 3. Calcular la más cercana
-    let unidadCercana = unidades[0];
-    let minDist = Math.hypot(unidades[0].lat - alerta.lat, unidades[0].lng - alerta.lng);
-
-    unidades.forEach(u => {
-        let dist = Math.hypot(u.lat - alerta.lat, u.lng - alerta.lng);
-        if (dist < minDist) {
-            minDist = dist;
-            unidadCercana = u;
-        }
-    });
-
-    console.log(`✅ Patrulla más cercana: ${unidadCercana.codigo} (${minDist.toFixed(2)} km)`);
-
-    // 4. ACTUALIZAR LA ALERTA CON LA UNIDAD ASIGNADA (¡ESTO ES LO QUE FALTABA!)
-    const { error: updateError } = await _supabase
-        .from('alertas')
-        .update({ 
-            unidad_asignada: unidadCercana.codigo,
-            estado: 'en_proceso',
-            distancia_unidad: minDist.toFixed(2)
-        })
-        .eq('id', idAlerta);
-
-    if (updateError) {
-        console.error("Error asignando unidad:", updateError);
-        agregarTerminal('❌ ERROR AL ASIGNAR UNIDAD', 'alert');
-        return;
-    }
-
-    // 5. Dibujar ruta en el mapa del COM
-    if (lineaRuta) mapa.removeLayer(lineaRuta);
-    
-    lineaRuta = L.polyline([
-        [unidadCercana.lat, unidadCercana.lng],
-        [alerta.lat, alerta.lng]
-    ], { color: '#00f2ff', weight: 4, dashArray: '10, 10', opacity: 0.8 }).addTo(mapa);
-
-    agregarTerminal(`🚔 Unidad ${unidadCercana.codigo} asignada. ETA: 4 min.`, 'alert');
-    
-    // 6. Notificar al patrullero (ya lo hace la suscripción)
-    notificarPush('🚔 UNIDAD ASIGNADA', `Unidad ${unidadCercana.codigo} en camino`);
-    
-    cerrarModal();
-}
-
-        function verRutaDesdePanel() {
-            if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
-            agregarTerminal('🗺️ CALCULANDO RUTA ÓPTIMA...', 'normal');
-            setTimeout(() => {
-                agregarTerminal('✅ RUTA CALCULADA: ETA 02:30 MIN', 'normal');
-                notificarPush('🗺️ RUTA CALCULADA', 'ETA estimada: 2 minutos 30 segundos');
-            }, 1500);
-        }
-
-        // ==============================================
-        // DETENER GRABACIÓN REMOTA
-        // ==============================================
-        async function detenerGrabacionRemota() {
-            if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
-            
-            await _supabase
-                .from('alertas')
-                .update({ 
-                    detener_grabacion: true,
-                    hora_llegada: new Date().toISOString()
-                })
-                .eq('id', alertaSeleccionada.id);
-            
-            notificarPush('⏹️ GRABACIÓN DETENIDA', 'La unidad ha llegado al lugar');
-            agregarTerminal('⏹️ ORDEN ENVIADA: DETENER GRABACIÓN', 'normal');
-        }
-
-        // ==============================================
-        // SEGUIMIENTO TÁCTICO
-        // ==============================================
-        function activarSeguimientoRealtime(idAlerta) {
-            console.log(`🚀 Sentinel: Iniciando seguimiento táctico para Alerta ${idAlerta}`);
-
-            _supabase
-                .channel(`war-room-${idAlerta}`)
-                .on('postgres_changes', { 
-                    event: 'UPDATE', 
-                    schema: 'public', 
-                    table: 'alertas', 
-                    filter: `id=eq.${idAlerta}` 
-                }, payload => {
-                    const data = payload.new;
-
-                    if (data.lat && data.lng) {
-                        const nuevaPos = [data.lat, data.lng];
-                        
-                        if (!markerCiudadano) {
-                            const iconoBlanco = L.divIcon({
-                                html: '<div style="width: 16px; height: 16px; background: white; border-radius: 50%; box-shadow: 0 0 20px white;"></div>',
-                                className: '',
-                                iconSize: [16, 16],
-                                iconAnchor: [8, 8]
-                            });
-                            markerCiudadano = L.marker(nuevaPos, { icon: iconoBlanco }).addTo(mapa);
-                        } else {
-                            markerCiudadano.setLatLng(nuevaPos);
+                    if (nuevaUrl && nuevaUrl !== fragmentoActual) {
+                        fragmentoActual = nuevaUrl;
+                        if (fuenteVideo) fuenteVideo.src = nuevaUrl;
+                        if (videoPlayer) {
+                            videoPlayer.load();
+                            videoPlayer.play().catch(e => {});
                         }
-                        
-                        mapa.flyTo(nuevaPos, 17, { duration: 1 }); 
-                    }
-
-                    if (data.bateria) {
-                        document.getElementById('panelBateria').textContent = data.bateria;
+                        if (textoEspera) textoEspera.style.display = 'none';
+                        if (videoPlayer) videoPlayer.style.display = 'block';
                     }
                 })
                 .subscribe();
         }
 
-        // ==============================================
-        // RECEPTOR DE ÓRDENES
-        // ==============================================
-        function activarReceptorDeOrdenes() {
-            console.log("🚔 Unidad en servicio. Esperando asignaciones...");
-
-            _supabase
-                .channel(`patrullero-${miUnidadId}`)
-                .on('postgres_changes', { 
-                    event: 'UPDATE', 
-                    schema: 'public', 
-                    table: 'alertas',
-                    filter: `unidad_asignada=eq.${miUnidadId}` 
-                }, async (payload) => {
-                    const alerta = payload.new;
-                    
-                    if (alerta.estado === 'en_proceso' && !alerta.cancelada) {
-                        console.log(`🚨 ALERTA ASIGNADA A MI UNIDAD: ${alerta.id}`);
-                        emergenciaActiva = alerta;
-                        mostrarAlertaEnPantalla(alerta);
-                        reproducirAlertaIntenso();
-                        notificarPush('🚨 MISIÓN ASIGNADA', `Acuda a ${alerta.lat}, ${alerta.lng}`);
-                    }
-                })
-                .subscribe();
-        }
-
-        function mostrarAlertaEnPantalla(alerta) {
-            const panel = document.getElementById('panel-emergencia');
-            panel.innerHTML = `
-                <div style="background: #001529; border: 3px solid #00f2ff; padding: 20px; color: white; border-radius: 8px; box-shadow: 0 0 30px #00f2ff;">
-                    <h2 style="color: #ff4444; animation: pulse-red 1s infinite; text-align: center;">🚨 INTERCEPCIÓN EN CURSO</h2>
-                    <p><strong>CIUDADANO:</strong> ${alerta.nombre || 'Desconocido'}</p>
-                    <p><strong>UBICACIÓN:</strong> ${alerta.lat}, ${alerta.lng}</p>
-                    <hr>
-                    <button onclick="abrirWaze(${alerta.lat}, ${alerta.lng})" style="background: #00f2ff; color: black; padding: 15px; width: 100%; font-weight: bold; border: none; cursor: pointer; margin-bottom: 10px; border-radius: 4px;">
-                        🗺️ ABRIR NAVEGADOR (WAZE/MAPS)
-                    </button>
-                    <br>
-                    <button onclick="confirmarLlegada(${alerta.id})" style="background: #39ff14; color: black; padding: 15px; width: 100%; font-weight: bold; border: none; cursor: pointer; border-radius: 4px;">
-                        ✅ LLEGUÉ AL LUGAR
-                    </button>
-                </div>
-            `;
-            panel.style.display = 'block';
-        }
-
-        function abrirWaze(lat, lng) {
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`, '_blank');
-        }
-
-        async function confirmarLlegada(idAlerta) {
-            const { error } = await _supabase
-                .from('alertas')
-                .update({ 
-                    estado: 'finalizado', 
-                    activa: false,
-                    tiempo_llegada: new Date().toISOString()
-                })
-                .eq('id', idAlerta);
-
-            if (!error) {
-                await cerrarIncidente(idAlerta);
-                document.getElementById('panel-emergencia').style.display = 'none';
-                notificarPush('✅ MISIÓN COMPLETADA', 'Ha llegado al lugar del incidente');
-            }
-        }
-
-        // ==============================================
-        // INICIO
-        // ==============================================
         window.onload = iniciar;
     </script>
 </body>
