@@ -2,380 +2,241 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>SENTINEL | PATRULLERO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SENTINEL | UNIDAD DE RESPUESTA TÁCTICA</title>
     
-    <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --primary: #00ffaa;
-            --secondary: #0066ff;
-            --alert: #ff3131;
-            --bg: #0a0c10;
-            --bg-panel: rgba(0, 5, 10, 0.9);
+            --primary: #00ffaa; /* Verde Neón */
+            --secondary: #0066ff; /* Azul Eléctrico */
+            --alert: #ff3131; /* Rojo Crítico */
+            --bg: #050505;
+            --panel-bg: rgba(10, 15, 20, 0.95);
         }
 
         body {
             background: var(--bg);
             color: var(--primary);
-            font-family: 'Courier New', monospace;
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
             height: 100vh;
             overflow: hidden;
-            position: relative;
         }
 
-        /* HEADER */
+        /* EFECTO DE ALERTA CRÍTICA (Borde parpadeante) */
+        .alerta-global-active {
+            animation: pulse-border 1.5s infinite;
+        }
+        @keyframes pulse-border {
+            0% { box-shadow: inset 0 0 20px var(--alert); }
+            50% { box-shadow: inset 0 0 50px rgba(255, 49, 49, 0.5); }
+            100% { box-shadow: inset 0 0 20px var(--alert); }
+        }
+
         header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50px;
-            background: var(--bg-panel);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 15px;
-            z-index: 1000;
-            font-size: 0.8rem;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: var(--panel-bg); border-bottom: 2px solid var(--primary);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px; z-index: 2000;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .unidad-info { display: flex; align-items: center; gap: 12px; }
+        .status-dot { width: 10px; height: 10px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary); }
+
+        #map { position: fixed; top: 60px; left: 0; right: 0; bottom: 0; z-index: 1; }
+
+        /* PANEL TÁCTICO FLOTANTE (VIDEO + INFO) */
+        .tactical-overlay {
+            position: fixed; top: 75px; right: 10px; width: 180px;
+            background: var(--panel-bg); border: 1px solid var(--secondary);
+            z-index: 1500; padding: 5px; clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
         }
 
-        .logo {
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            clip-path: polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%);
+        .video-feed-container {
+            width: 100%; height: 120px; background: #000;
+            border: 1px solid var(--alert); display: flex;
+            align-items: center; justify-content: center; position: relative;
         }
 
-        .unidad-badge {
-            background: rgba(0,102,255,0.2);
-            border: 1px solid var(--secondary);
-            padding: 3px 8px;
-            font-size: 0.7rem;
-            color: var(--secondary);
+        .live-label {
+            position: absolute; top: 5px; left: 5px; color: var(--alert);
+            font-size: 0.6rem; font-weight: bold; animation: blink 1s infinite;
         }
 
-        /* MAPA (PROTAGONISTA) */
-        #map {
-            position: fixed;
-            top: 50px;
-            left: 0;
-            right: 0;
-            bottom: 200px;
-            z-index: 1;
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* PANEL DE ACCIÓN INFERIOR */
+        .action-panel {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--panel-bg); border-top: 2px solid var(--secondary);
+            z-index: 2000; padding: 15px; transition: transform 0.4s ease-in-out;
         }
 
-        /* PANEL INFERIOR */
-        .bottom-panel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 200px;
-            background: var(--bg-panel);
-            backdrop-filter: blur(10px);
-            border-top: 2px solid var(--alert);
-            z-index: 1000;
-            padding: 15px;
-            transition: height 0.3s;
-            overflow-y: auto;
-        }
+        .action-panel.hidden { transform: translateY(100%); }
 
-        .bottom-panel.collapsed {
-            height: 60px;
-        }
+        .info-header { color: var(--alert); margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
 
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
+        .data-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; }
+        .data-label { opacity: 0.6; }
 
-        .panel-header h3 {
-            color: var(--alert);
-            font-size: 1rem;
-        }
-
-        .panel-content {
-            display: block;
-        }
-
-        .bottom-panel.collapsed .panel-content {
-            display: none;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 8px;
-            font-size: 0.8rem;
-            margin-bottom: 15px;
-        }
-
-        .label {
-            color: rgba(255,255,255,0.5);
-        }
-
-        .value {
-            color: var(--primary);
-            font-weight: bold;
-        }
-
-        .value.alert {
-            color: var(--alert);
-        }
-
-        /* BOTONES */
-        .button-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .btn {
-            padding: 12px;
-            background: transparent;
-            border: 2px solid;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
-            clip-path: polygon(0% 15%, 8% 0%, 92% 0%, 100% 15%, 100% 85%, 92% 100%, 8% 100%, 0% 85%);
+            padding: 15px; border: 2px solid; background: transparent;
+            color: inherit; font-family: inherit; font-weight: bold; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px;
         }
+        .btn-nav { border-color: var(--secondary); color: var(--secondary); }
+        .btn-arrive { border-color: #39ff14; color: #39ff14; }
+        .btn-backup { grid-column: span 2; border-color: var(--alert); color: var(--alert); }
 
-        .btn-primary {
-            border-color: var(--alert);
-            color: var(--alert);
-        }
-
-        .btn-secondary {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .btn-success {
-            border-color: #39ff14;
-            color: #39ff14;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* NO HAY ALERTAS */
-        .no-alerta {
-            text-align: center;
-            color: rgba(255,255,255,0.3);
-            padding: 20px;
-        }
+        #video-player { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
-<body>
+<body id="main-body">
+
     <header>
-        <div class="header-left">
-            <div class="logo"></div>
-            <span class="unidad-badge" id="unidad-id">K-9</span>
+        <div class="unidad-info">
+            <div class="status-dot"></div>
+            <span style="letter-spacing: 2px;">SENTINEL: UNIT <strong id="unit-tag">K-9</strong></span>
         </div>
-        <div class="system-indicator">
-            <span>● ONLINE</span>
-        </div>
+        <div id="clock" style="font-size: 0.8rem; opacity: 0.7;">21:51:22</div>
     </header>
 
     <div id="map"></div>
 
-    <div class="bottom-panel" id="bottom-panel">
-        <div class="panel-header" onclick="togglePanel()">
-            <h3 id="panel-title">🚨 ESPERANDO ALERTAS</h3>
-            <span id="toggle-icon">▼</span>
+    <div class="tactical-overlay hidden" id="video-overlay">
+        <div class="video-feed-container">
+            <span class="live-label">● LIVE FEED</span>
+            <video id="video-player" autoplay playsinline muted></video>
         </div>
-        <div class="panel-content" id="panel-content">
-            <div class="no-alerta" id="sin-alerta">
-                No hay alertas asignadas
-            </div>
-            <div id="alerta-activa" style="display: none;">
-                <div class="info-grid">
-                    <span class="label">TIPO:</span>
-                    <span class="value" id="tipo">--</span>
-                    
-                    <span class="label">CIUDADANO:</span>
-                    <span class="value" id="nombre">--</span>
-                    
-                    <span class="label">DNI:</span>
-                    <span class="value" id="dni">--</span>
-                    
-                    <span class="label">TELÉFONO:</span>
-                    <span class="value" id="telefono">--</span>
-                    
-                    <span class="label">UBICACIÓN:</span>
-                    <span class="value" id="ubicacion">--</span>
-                    
-                    <span class="label">BATERÍA:</span>
-                    <span class="value alert" id="bateria">--</span>
-                </div>
+        <div style="font-size: 0.6rem; padding: 5px; text-align: center;">Vínculo: Ciudadano <span id="user-link">--</span></div>
+    </div>
 
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="abrirNavegacion()">🗺️ NAVEGAR</button>
-                    <button class="btn btn-success" onclick="confirmarLlegada()">✅ LLEGUÉ</button>
-                </div>
-            </div>
+    <div class="action-panel hidden" id="action-panel">
+        <div class="info-header">🚨 INTERVENCIÓN EN CURSO</div>
+        <div class="data-row"><span class="data-label">OBJETIVO:</span> <span id="target-name">--</span></div>
+        <div class="data-row"><span class="data-label">DNI:</span> <span id="target-dni">--</span></div>
+        <div class="data-row"><span class="data-label">UBICACIÓN:</span> <span id="target-addr">CALCULANDO RUTA...</span></div>
+        <div class="data-row"><span class="data-label">BATERÍA DISP:</span> <span id="target-bat" style="color: var(--alert);">--</span></div>
+
+        <div class="btn-grid">
+            <button class="btn btn-nav" onclick="launchNavigation()">🧭 RUTA GPS</button>
+            <button class="btn btn-arrive" onclick="completeObjective()">✅ LLEGADA</button>
+            <button class="btn btn-backup" onclick="requestBackup()">⚠️ PEDIR REFUERZOS</button>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // CONFIGURACIÓN SUPABASE [cite: 2026-01-27]
+        const SB_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
+        const _client = supabase.createClient(SB_URL, SB_KEY);
 
-        let mapa;
-        let marcadorAlerta = null;
-        let marcadorUnidad = null;
-        let lineaRuta = null;
-        let alertaActual = null;
-        let miUnidadId = "K-9";
+        let map, userMarker, alertMarker, routeLine;
+        let activeAlert = null;
+        let myUnitId = "K-9";
 
-        // Inicializar
-        function iniciar() {
-            mapa = L.map('map', {
-                zoomControl: false,
-                attributionControl: false
-            }).setView([-38.0055, -57.5426], 15);
+        function init() {
+            map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 15);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                filter: 'invert(1) hue-rotate(160deg) saturate(3) brightness(0.8) contrast(1.5)'
-            }).addTo(mapa);
+            userMarker = L.circleMarker([-38.0055, -57.5426], {
+                radius: 10, color: '#0066ff', fillColor: '#0066ff', fillOpacity: 0.8, weight: 3
+            }).addTo(map).bindPopup('🚓 MI POSICIÓN');
 
-            // Marcador de la unidad propia
-            marcadorUnidad = L.circleMarker([-38.0055, -57.5426], {
-                radius: 12,
-                color: '#0066ff',
-                weight: 4,
-                fillColor: '#0066ff',
-                fillOpacity: 0.5
-            }).addTo(mapa).bindPopup('🚓 MI UNIDAD');
-
-            // Escuchar asignaciones
-            escucharAsignaciones();
+            setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+            
+            listenForTacticalAssignments();
         }
 
-        function escucharAsignaciones() {
-            _supabase
-                .channel(`patrullero-${miUnidadId}`)
-                .on('postgres_changes', {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'alertas',
-                    filter: `unidad_asignada=eq.${miUnidadId}`
+        function listenForTacticalAssignments() {
+            _client.channel(`patrulla-${myUnitId}`)
+                .on('postgres_changes', { 
+                    event: 'UPDATE', schema: 'public', table: 'alertas', 
+                    filter: `unidad_asignada=eq.${myUnitId}` 
                 }, (payload) => {
-                    if (payload.new.estado === 'en_proceso') {
-                        mostrarAlerta(payload.new);
+                    if (payload.new.estado === 'en_proceso' || payload.new.estado === 'CRITICO') {
+                        triggerTacticalAlert(payload.new);
                     }
-                })
-                .subscribe();
+                }).subscribe();
         }
 
-        function mostrarAlerta(alerta) {
-            alertaActual = alerta;
+        function triggerTacticalAlert(data) {
+            activeAlert = data;
             
-            // Actualizar panel
-            document.getElementById('sin-alerta').style.display = 'none';
-            document.getElementById('alerta-activa').style.display = 'block';
-            document.getElementById('panel-title').innerHTML = '🚨 ALERTA ASIGNADA';
-            
-            document.getElementById('tipo').textContent = alerta.tipo || 'EMERGENCIA';
-            document.getElementById('nombre').textContent = alerta.nombre;
-            document.getElementById('dni').textContent = alerta.dni;
-            document.getElementById('telefono').textContent = alerta.telefono;
-            document.getElementById('ubicacion').textContent = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
-            document.getElementById('bateria').textContent = alerta.bateria;
+            // 1. Alerta por Voz (Hands-Free) [cite: 2026-02-07]
+            const msg = new SpeechSynthesisUtterance(`Alerta de emergencia. Ciudadano ${data.nombre} en peligro. Proceda a la ubicación.`);
+            window.speechSynthesis.speak(msg);
 
-            // Marcador de la alerta
-            if (marcadorAlerta) mapa.removeLayer(marcadorAlerta);
-            marcadorAlerta = L.circleMarker([alerta.lat, alerta.lng], {
-                radius: 14,
-                color: '#ff3131',
-                weight: 4,
-                fillColor: '#ff3131',
-                fillOpacity: 0.7
-            }).addTo(mapa).bindPopup('🚨 ALERTA');
+            // 2. Efecto Visual Cyberpunk
+            document.getElementById('main-body').classList.add('alerta-global-active');
+            document.getElementById('action-panel').classList.remove('hidden');
+            document.getElementById('video-overlay').classList.remove('hidden');
 
-            // Dibujar ruta
-            if (lineaRuta) mapa.removeLayer(lineaRuta);
-            lineaRuta = L.polyline([
-                [marcadorUnidad.getLatLng().lat, marcadorUnidad.getLatLng().lng],
-                [alerta.lat, alerta.lng]
-            ], {
-                color: '#00f2ff',
-                weight: 3,
-                dashArray: '8, 8',
-                opacity: 0.8
-            }).addTo(mapa);
+            // 3. Cargar Datos
+            document.getElementById('target-name').innerText = data.nombre;
+            document.getElementById('target-dni').innerText = data.dni;
+            document.getElementById('target-bat').innerText = `${data.bateria || 0}%`;
+            document.getElementById('user-link').innerText = data.nombre.split(' ')[0];
 
-            // Hacer zoom para ver ambos
-            mapa.fitBounds([
-                [marcadorUnidad.getLatLng().lat, marcadorUnidad.getLatLng().lng],
-                [alerta.lat, alerta.lng]
-            ], { padding: [50, 50] });
+            // 4. Cargar Video Feed [cite: 2026-02-24]
+            if (data.video_url) {
+                const video = document.getElementById('video-player');
+                video.src = data.video_url;
+                video.play().catch(e => console.log("Auto-play blocked"));
+            }
+
+            // 5. Actualizar Mapa
+            updateMapTactical(data.lat, data.lng);
         }
 
-        function abrirNavegacion() {
-            if (!alertaActual) return;
-            const url = `https://www.google.com/maps/dir/?api=1&destination=${alertaActual.lat},${alertaActual.lng}&travelmode=driving`;
-            window.open(url, '_system');
+        function updateMapTactical(lat, lng) {
+            if (alertMarker) map.removeLayer(alertMarker);
+            alertMarker = L.circleMarker([lat, lng], {
+                radius: 15, color: '#ff3131', fillColor: '#ff3131', fillOpacity: 0.4, weight: 5
+            }).addTo(map);
+
+            if (routeLine) map.removeLayer(routeLine);
+            routeLine = L.polyline([userMarker.getLatLng(), [lat, lng]], {
+                color: '#00f2ff', weight: 4, dashArray: '10, 10', opacity: 0.7
+            }).addTo(map);
+
+            map.fitBounds([userMarker.getLatLng(), [lat, lng]], { padding: [80, 80] });
         }
 
-        async function confirmarLlegada() {
-            if (!alertaActual) return;
-            
-            await _supabase
-                .from('alertas')
-                .update({ 
-                    estado: 'finalizado', 
-                    activa: false,
-                    unidad_llego: new Date().toISOString()
-                })
-                .eq('id', alertaActual.id);
-            
-            // Limpiar
-            alertaActual = null;
-            document.getElementById('sin-alerta').style.display = 'block';
-            document.getElementById('alerta-activa').style.display = 'none';
-            document.getElementById('panel-title').innerHTML = '🚨 ESPERANDO ALERTAS';
-            
-            if (marcadorAlerta) mapa.removeLayer(marcadorAlerta);
-            if (lineaRuta) mapa.removeLayer(lineaRuta);
+        function launchNavigation() {
+            if (!activeAlert) return;
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${activeAlert.lat},${activeAlert.lng}&travelmode=driving`, '_blank');
         }
 
-        function togglePanel() {
-            const panel = document.getElementById('bottom-panel');
-            const icon = document.getElementById('toggle-icon');
-            panel.classList.toggle('collapsed');
-            icon.textContent = panel.classList.contains('collapsed') ? '▲' : '▼';
+        async function requestBackup() {
+            if (!confirm("¿SOLICITAR REFUERZOS INMEDIATOS A ESTA POSICIÓN?")) return;
+            await _client.from('alertas').update({ prioridad: 'REFUERZOS_REQUERIDOS' }).eq('id', activeAlert.id);
+            alert("SOPORTE EN CAMINO");
         }
 
-        window.onload = iniciar;
+        async function completeObjective() {
+            await _client.from('alertas').update({ 
+                estado: 'finalizado', 
+                activa: false, 
+                hora_llegada: new Date().toISOString() 
+            }).eq('id', activeAlert.id);
+
+            // Reset UI
+            document.getElementById('main-body').classList.remove('alerta-global-active');
+            document.getElementById('action-panel').classList.add('hidden');
+            document.getElementById('video-overlay').classList.add('hidden');
+            if (alertMarker) map.removeLayer(alertMarker);
+            if (routeLine) map.removeLayer(routeLine);
+            activeAlert = null;
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
