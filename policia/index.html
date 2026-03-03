@@ -1607,60 +1607,78 @@
         }
 
         async function asignarUnidadMasCercana(idAlerta) {
-            agregarTerminal('🚔 BUSCANDO UNIDAD MÁS CERCANA...', 'normal');
-            
-            const { data: alerta } = await _supabase
-                .from('alertas')
-                .select('lat, lng')
-                .eq('id', idAlerta)
-                .single();
+    console.log("🚔 Buscando unidad de respuesta inmediata...");
+    agregarTerminal('🚔 BUSCANDO UNIDAD MÁS CERCANA...', 'normal');
 
-            const { data: unidades } = await _supabase
-                .from('unidades_respuesta')
-                .select('*')
-                .eq('estado', 'disponible');
+    // 1. Obtener ubicación de la alerta
+    const { data: alerta, error: alertaError } = await _supabase
+        .from('alertas')
+        .select('lat, lng')
+        .eq('id', idAlerta)
+        .single();
+    
+    if (alertaError) {
+        console.error("Error obteniendo alerta:", alertaError);
+        return;
+    }
 
-            if (unidades && unidades.length > 0) {
-                let unidadCercana = unidades[0];
-                let minElem = Math.hypot(unidades[0].lat - alerta.lat, unidades[0].lng - alerta.lng);
+    // 2. Obtener unidades disponibles
+    const { data: unidades, error: unidadesError } = await _supabase
+        .from('unidades_respuesta')
+        .select('*')
+        .eq('estado', 'disponible');
 
-                unidades.forEach(u => {
-                    let dist = Math.hypot(u.lat - alerta.lat, u.lng - alerta.lng);
-                    if (dist < minElem) {
-                        minElem = dist;
-                        unidadCercana = u;
-                    }
-                });
+    if (unidadesError || !unidades || unidades.length === 0) {
+        console.log("⚠️ No hay unidades disponibles");
+        agregarTerminal('❌ NO HAY UNIDADES DISPONIBLES', 'alert');
+        return;
+    }
 
-                if (lineaRuta) mapa.removeLayer(lineaRuta);
-                
-                lineaRuta = L.polyline([
-                    [unidadCercana.lat, unidadCercana.lng],
-                    [alerta.lat, alerta.lng]
-                ], { color: '#00f2ff', weight: 4, dashArray: '10, 10', opacity: 0.8 }).addTo(mapa);
+    // 3. Calcular la más cercana
+    let unidadCercana = unidades[0];
+    let minDist = Math.hypot(unidades[0].lat - alerta.lat, unidades[0].lng - alerta.lng);
 
-                agregarTerminal(`🚔 Unidad ${unidadCercana.codigo} asignada. ETA: 4 min.`, 'alert');
-                
-                await _supabase
-                    .from('alertas')
-                    .update({ 
-                        estado: 'en_proceso', 
-                        unidad_asignada: unidadCercana.codigo,
-                        tiempo_asignacion: new Date().toISOString()
-                    })
-                    .eq('id', idAlerta);
-                
-                if (alertaSeleccionada && alertaSeleccionada.id === idAlerta) {
-                    alertaSeleccionada.unidad_asignada = unidadCercana.codigo;
-                    verDetallePanel(alertaSeleccionada);
-                }
-                
-                notificarPush('🚔 UNIDAD ASIGNADA', `Unidad ${unidadCercana.codigo} en camino`);
-                
-            } else {
-                agregarTerminal('❌ NO HAY UNIDADES DISPONIBLES', 'alert');
-            }
+    unidades.forEach(u => {
+        let dist = Math.hypot(u.lat - alerta.lat, u.lng - alerta.lng);
+        if (dist < minDist) {
+            minDist = dist;
+            unidadCercana = u;
         }
+    });
+
+    console.log(`✅ Patrulla más cercana: ${unidadCercana.codigo} (${minDist.toFixed(2)} km)`);
+
+    // 4. ACTUALIZAR LA ALERTA CON LA UNIDAD ASIGNADA (¡ESTO ES LO QUE FALTABA!)
+    const { error: updateError } = await _supabase
+        .from('alertas')
+        .update({ 
+            unidad_asignada: unidadCercana.codigo,
+            estado: 'en_proceso',
+            distancia_unidad: minDist.toFixed(2)
+        })
+        .eq('id', idAlerta);
+
+    if (updateError) {
+        console.error("Error asignando unidad:", updateError);
+        agregarTerminal('❌ ERROR AL ASIGNAR UNIDAD', 'alert');
+        return;
+    }
+
+    // 5. Dibujar ruta en el mapa del COM
+    if (lineaRuta) mapa.removeLayer(lineaRuta);
+    
+    lineaRuta = L.polyline([
+        [unidadCercana.lat, unidadCercana.lng],
+        [alerta.lat, alerta.lng]
+    ], { color: '#00f2ff', weight: 4, dashArray: '10, 10', opacity: 0.8 }).addTo(mapa);
+
+    agregarTerminal(`🚔 Unidad ${unidadCercana.codigo} asignada. ETA: 4 min.`, 'alert');
+    
+    // 6. Notificar al patrullero (ya lo hace la suscripción)
+    notificarPush('🚔 UNIDAD ASIGNADA', `Unidad ${unidadCercana.codigo} en camino`);
+    
+    cerrarModal();
+}
 
         function verRutaDesdePanel() {
             if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
