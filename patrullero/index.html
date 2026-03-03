@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>SENTINEL | PATRULLERO</title>
+    
+    <!-- Leaflet para mapas -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00ffaa;
+            --secondary: #0066ff;
+            --alert: #ff3131;
+            --bg: #0a0c10;
+            --bg-panel: rgba(0, 5, 10, 0.9);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--primary);
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* HEADER */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: var(--bg-panel);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            z-index: 1000;
+            font-size: 0.8rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            clip-path: polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%);
+        }
+
+        .unidad-badge {
+            background: rgba(0,102,255,0.2);
+            border: 1px solid var(--secondary);
+            padding: 3px 8px;
+            font-size: 0.7rem;
+            color: var(--secondary);
+        }
+
+        /* MAPA (PROTAGONISTA) */
+        #map {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            right: 0;
+            bottom: 200px;
+            z-index: 1;
+        }
+
+        /* PANEL INFERIOR */
+        .bottom-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: var(--bg-panel);
+            backdrop-filter: blur(10px);
+            border-top: 2px solid var(--alert);
+            z-index: 1000;
+            padding: 15px;
+            transition: height 0.3s;
+            overflow-y: auto;
+        }
+
+        .bottom-panel.collapsed {
+            height: 60px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .panel-header h3 {
+            color: var(--alert);
+            font-size: 1rem;
+        }
+
+        .panel-content {
+            display: block;
+        }
+
+        .bottom-panel.collapsed .panel-content {
+            display: none;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 8px;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+        }
+
+        .label {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .value {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .value.alert {
+            color: var(--alert);
+        }
+
+        /* BOTONES */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 12px;
+            background: transparent;
+            border: 2px solid;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            clip-path: polygon(0% 15%, 8% 0%, 92% 0%, 100% 15%, 100% 85%, 92% 100%, 8% 100%, 0% 85%);
+        }
+
+        .btn-primary {
+            border-color: var(--alert);
+            color: var(--alert);
+        }
+
+        .btn-secondary {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-success {
+            border-color: #39ff14;
+            color: #39ff14;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* NO HAY ALERTAS */
+        .no-alerta {
+            text-align: center;
+            color: rgba(255,255,255,0.3);
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <div class="logo"></div>
+            <span class="unidad-badge" id="unidad-id">K-9</span>
+        </div>
+        <div class="system-indicator">
+            <span>● ONLINE</span>
+        </div>
+    </header>
+
+    <div id="map"></div>
+
+    <div class="bottom-panel" id="bottom-panel">
+        <div class="panel-header" onclick="togglePanel()">
+            <h3 id="panel-title">🚨 ESPERANDO ALERTAS</h3>
+            <span id="toggle-icon">▼</span>
+        </div>
+        <div class="panel-content" id="panel-content">
+            <div class="no-alerta" id="sin-alerta">
+                No hay alertas asignadas
+            </div>
+            <div id="alerta-activa" style="display: none;">
+                <div class="info-grid">
+                    <span class="label">TIPO:</span>
+                    <span class="value" id="tipo">--</span>
+                    
+                    <span class="label">CIUDADANO:</span>
+                    <span class="value" id="nombre">--</span>
+                    
+                    <span class="label">DNI:</span>
+                    <span class="value" id="dni">--</span>
+                    
+                    <span class="label">TELÉFONO:</span>
+                    <span class="value" id="telefono">--</span>
+                    
+                    <span class="label">UBICACIÓN:</span>
+                    <span class="value" id="ubicacion">--</span>
+                    
+                    <span class="label">BATERÍA:</span>
+                    <span class="value alert" id="bateria">--</span>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="abrirNavegacion()">🗺️ NAVEGAR</button>
+                    <button class="btn btn-success" onclick="confirmarLlegada()">✅ LLEGUÉ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let mapa;
+        let marcadorAlerta = null;
+        let marcadorUnidad = null;
+        let lineaRuta = null;
+        let alertaActual = null;
+        let miUnidadId = "K-9";
+
+        // Inicializar
+        function iniciar() {
+            mapa = L.map('map', {
+                zoomControl: false,
+                attributionControl: false
+            }).setView([-38.0055, -57.5426], 15);
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                filter: 'invert(1) hue-rotate(160deg) saturate(3) brightness(0.8) contrast(1.5)'
+            }).addTo(mapa);
+
+            // Marcador de la unidad propia
+            marcadorUnidad = L.circleMarker([-38.0055, -57.5426], {
+                radius: 12,
+                color: '#0066ff',
+                weight: 4,
+                fillColor: '#0066ff',
+                fillOpacity: 0.5
+            }).addTo(mapa).bindPopup('🚓 MI UNIDAD');
+
+            // Escuchar asignaciones
+            escucharAsignaciones();
+        }
+
+        function escucharAsignaciones() {
+            _supabase
+                .channel(`patrullero-${miUnidadId}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'alertas',
+                    filter: `unidad_asignada=eq.${miUnidadId}`
+                }, (payload) => {
+                    if (payload.new.estado === 'en_proceso') {
+                        mostrarAlerta(payload.new);
+                    }
+                })
+                .subscribe();
+        }
+
+        function mostrarAlerta(alerta) {
+            alertaActual = alerta;
+            
+            // Actualizar panel
+            document.getElementById('sin-alerta').style.display = 'none';
+            document.getElementById('alerta-activa').style.display = 'block';
+            document.getElementById('panel-title').innerHTML = '🚨 ALERTA ASIGNADA';
+            
+            document.getElementById('tipo').textContent = alerta.tipo || 'EMERGENCIA';
+            document.getElementById('nombre').textContent = alerta.nombre;
+            document.getElementById('dni').textContent = alerta.dni;
+            document.getElementById('telefono').textContent = alerta.telefono;
+            document.getElementById('ubicacion').textContent = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
+            document.getElementById('bateria').textContent = alerta.bateria;
+
+            // Marcador de la alerta
+            if (marcadorAlerta) mapa.removeLayer(marcadorAlerta);
+            marcadorAlerta = L.circleMarker([alerta.lat, alerta.lng], {
+                radius: 14,
+                color: '#ff3131',
+                weight: 4,
+                fillColor: '#ff3131',
+                fillOpacity: 0.7
+            }).addTo(mapa).bindPopup('🚨 ALERTA');
+
+            // Dibujar ruta
+            if (lineaRuta) mapa.removeLayer(lineaRuta);
+            lineaRuta = L.polyline([
+                [marcadorUnidad.getLatLng().lat, marcadorUnidad.getLatLng().lng],
+                [alerta.lat, alerta.lng]
+            ], {
+                color: '#00f2ff',
+                weight: 3,
+                dashArray: '8, 8',
+                opacity: 0.8
+            }).addTo(mapa);
+
+            // Hacer zoom para ver ambos
+            mapa.fitBounds([
+                [marcadorUnidad.getLatLng().lat, marcadorUnidad.getLatLng().lng],
+                [alerta.lat, alerta.lng]
+            ], { padding: [50, 50] });
+        }
+
+        function abrirNavegacion() {
+            if (!alertaActual) return;
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${alertaActual.lat},${alertaActual.lng}&travelmode=driving`;
+            window.open(url, '_system');
+        }
+
+        async function confirmarLlegada() {
+            if (!alertaActual) return;
+            
+            await _supabase
+                .from('alertas')
+                .update({ 
+                    estado: 'finalizado', 
+                    activa: false,
+                    unidad_llego: new Date().toISOString()
+                })
+                .eq('id', alertaActual.id);
+            
+            // Limpiar
+            alertaActual = null;
+            document.getElementById('sin-alerta').style.display = 'block';
+            document.getElementById('alerta-activa').style.display = 'none';
+            document.getElementById('panel-title').innerHTML = '🚨 ESPERANDO ALERTAS';
+            
+            if (marcadorAlerta) mapa.removeLayer(marcadorAlerta);
+            if (lineaRuta) mapa.removeLayer(lineaRuta);
+        }
+
+        function togglePanel() {
+            const panel = document.getElementById('bottom-panel');
+            const icon = document.getElementById('toggle-icon');
+            panel.classList.toggle('collapsed');
+            icon.textContent = panel.classList.contains('collapsed') ? '▲' : '▼';
+        }
+
+        window.onload = iniciar;
+    </script>
+</body>
+</html>
