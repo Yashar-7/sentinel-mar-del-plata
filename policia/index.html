@@ -47,6 +47,29 @@
             position: relative;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            transition: filter 0.3s;
+        }
+
+        /* EFECTO DE ALERTA GLOBAL (pulso en toda la pantalla) */
+        @keyframes global-alert {
+            0% { filter: drop-shadow(0 0 5px var(--alert)); }
+            50% { filter: drop-shadow(0 0 30px var(--alert)) drop-shadow(0 0 60px var(--alert)); }
+            100% { filter: drop-shadow(0 0 5px var(--alert)); }
+        }
+
+        .alerta-global-active {
+            animation: global-alert 0.5s 6;
+        }
+
+        /* PULSO PARA EL CONTADOR DE ALERTAS */
+        @keyframes pulse-counter {
+            0% { opacity: 1; text-shadow: 0 0 5px var(--alert); }
+            50% { opacity: 0.5; text-shadow: 0 0 20px var(--alert); }
+            100% { opacity: 1; text-shadow: 0 0 5px var(--alert); }
+        }
+
+        .pulse-counter-active {
+            animation: pulse-counter 0.5s 6;
         }
 
         /* EFECTO MATRIZ */
@@ -107,17 +130,6 @@
         @keyframes scan {
             0% { transform: translateY(-100%); }
             100% { transform: translateY(100%); }
-        }
-
-        /* ANIMACIÓN DE PULSO PARA NUEVAS ALERTAS */
-        @keyframes dashboard-pulse {
-            0% { filter: drop-shadow(0 0 5px var(--alert)); }
-            50% { filter: drop-shadow(0 0 30px var(--alert)) drop-shadow(0 0 60px var(--alert)); }
-            100% { filter: drop-shadow(0 0 5px var(--alert)); }
-        }
-
-        .dashboard-pulse {
-            animation: dashboard-pulse 0.5s 6;
         }
 
         /* HEADER TÁCTICO */
@@ -726,7 +738,7 @@
         }
     </style>
 </head>
-<body>
+<body id="main-body">
     <!-- CAPAS TÁCTICAS -->
     <div class="grid-overlay"></div>
     <div class="scanline"></div>
@@ -917,7 +929,6 @@
         const videoPlayer = document.getElementById('video-feed');
         const fuenteVideo = videoPlayer ? videoPlayer.querySelector('source') : null;
         const textoEspera = document.getElementById('esperando-texto');
-        const mainContainer = document.getElementById('main-container');
 
         // ==============================================
         // INICIALIZACIÓN
@@ -956,7 +967,7 @@
         }
 
         // ==============================================
-        // UNIDADES DISPONIBLES (REALES)
+        // UNIDADES DISPONIBLES
         // ==============================================
         async function cargarUnidadesDisponibles() {
             const { data, error } = await _supabase
@@ -1000,6 +1011,9 @@
                 .subscribe();
         }
 
+        // ==============================================
+        // NUEVA ALERTA - CON EFECTOS COMPLETOS
+        // ==============================================
         function nuevaAlerta(alerta) {
             if (alertas.some(a => a.id === alerta.id)) return;
             
@@ -1009,17 +1023,75 @@
             actualizarEstadisticas();
             document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
             
-            // Efecto visual
-            mainContainer.classList.add('dashboard-pulse');
-            setTimeout(() => mainContainer.classList.remove('dashboard-pulse'), 3000);
+            // ==============================================
+            // 1. SONIDO DE ALERTA (QUE RETUMBA)
+            // ==============================================
+            try {
+                // Sonido de alerta principal
+                const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                audio.volume = 0.8;
+                audio.play().catch(e => console.log("Autoplay bloqueado"));
+                
+                // Segundo tono más agudo para dar urgencia
+                setTimeout(() => {
+                    const audio2 = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                    audio2.volume = 1;
+                    audio2.play().catch(e => {});
+                }, 500);
+                
+                // Tercer tono para completar la sirena
+                setTimeout(() => {
+                    const audio3 = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                    audio3.volume = 0.6;
+                    audio3.play().catch(e => {});
+                }, 1000);
+            } catch (e) {}
+
+            // ==============================================
+            // 2. EFECTO VISUAL (PULSO EN TODA LA PANTALLA)
+            // ==============================================
+            document.body.classList.add('alerta-global-active');
+            setTimeout(() => document.body.classList.remove('alerta-global-active'), 3000);
             
-            // Zoom automático
+            // PULSO EN EL CONTADOR DE ALERTAS
+            const alertCount = document.getElementById('alertCount');
+            alertCount.classList.add('pulse-counter-active');
+            setTimeout(() => alertCount.classList.remove('pulse-counter-active'), 3000);
+
+            // ==============================================
+            // 3. ZOOM AUTOMÁTICO AL LUGAR DEL EVENTO
+            // ==============================================
             if (mapa && !alerta.cancelada) {
-                mapa.flyTo([alerta.lat, alerta.lng], 17, { duration: 2 });
+                mapa.flyTo([alerta.lat, alerta.lng], 18, {
+                    duration: 1.5,
+                    easeLinearity: 0.5
+                });
             }
-            
-            // Notificación
-            notificarPush('🚨 NUEVA ALERTA', `${alerta.tipo || 'EMERGENCIA'} - ${alerta.nombre}`);
+
+            // ==============================================
+            // 4. ABRIR PANEL AUTOMÁTICAMENTE
+            // ==============================================
+            setTimeout(() => {
+                if (!alerta.cancelada) {
+                    verDetallePanel(alerta);
+                }
+            }, 800);
+
+            // ==============================================
+            // 5. NOTIFICACIÓN PUSH
+            // ==============================================
+            if (Notification.permission === 'granted') {
+                new Notification('🚨 NUEVA ALERTA', {
+                    body: `${alerta.tipo || 'EMERGENCIA'} - ${alerta.nombre}`,
+                    icon: 'logo.png',
+                    requireInteraction: true
+                });
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+
+            agregarTerminal(`🚨 NUEVA ALERTA ${alerta.tipo || 'EMERGENCIA'}: ${alerta.nombre}`, 'alert');
+            alerta.tiempoInicio = Date.now();
         }
 
         function agregarMarcador(alerta) {
@@ -1119,6 +1191,27 @@
             document.getElementById('statsPendientes').textContent = activas;
         }
 
+        function agregarTerminal(mensaje, tipo = 'normal') {
+            const terminal = document.getElementById('terminal');
+            if (!terminal) return;
+            
+            const linea = document.createElement('div');
+            linea.className = 'terminal-line';
+            const prompt = document.createElement('span');
+            prompt.className = 'terminal-prompt';
+            prompt.textContent = '>';
+            const texto = document.createElement('span');
+            texto.className = `terminal-text ${tipo === 'alert' ? 'alert' : ''}`;
+            texto.textContent = mensaje;
+            linea.appendChild(prompt);
+            linea.appendChild(texto);
+            terminal.appendChild(linea);
+            
+            while (terminal.children.length > 8) {
+                terminal.removeChild(terminal.firstChild);
+            }
+        }
+
         function notificarPush(titulo, mensaje) {
             const toast = document.getElementById('toast-notificacion');
             document.getElementById('toast-titulo').textContent = titulo;
@@ -1155,10 +1248,6 @@
             }
             
             document.getElementById('panel-detalle-alerta').style.display = 'block';
-            
-            if (mapa && !alerta.cancelada) {
-                mapa.flyTo([alerta.lat, alerta.lng], 17, { duration: 1.2 });
-            }
         }
 
         function cerrarPanelDetalle() {
@@ -1167,59 +1256,42 @@
         }
 
         // ==============================================
-        // ASIGNACIÓN REAL DE UNIDAD (SIN SIMULACIONES)
+        // ASIGNACIÓN DE UNIDAD
         // ==============================================
-       async function asignarUnidadManual() {
-    if (!alertaSeleccionada || alertaSeleccionada.cancelada) {
-        console.log("No hay alerta seleccionada o está cancelada");
-        return;
-    }
-    
-    console.log("🚔 Asignando unidad a alerta:", alertaSeleccionada.id);
-    
-    try {
-        // Obtener unidades disponibles
-        const { data: unidades, error: unidadesError } = await _supabase
-            .from('unidades_respuesta')
-            .select('*')
-            .eq('estado', 'disponible');
-        
-        if (unidadesError) throw unidadesError;
-        
-        if (!unidades || unidades.length === 0) {
-            alert("❌ NO HAY UNIDADES DISPONIBLES");
-            return;
-        }
+        async function asignarUnidadManual() {
+            if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
+            
+            console.log("🚔 Asignando unidad a alerta:", alertaSeleccionada.id);
+            
+            const { data: unidades, error } = await _supabase
+                .from('unidades_respuesta')
+                .select('*')
+                .eq('estado', 'disponible');
+            
+            if (error || !unidades || unidades.length === 0) {
+                alert("❌ NO HAY UNIDADES DISPONIBLES");
+                return;
+            }
 
-        // Usar la primera unidad disponible
-        const unidad = unidades[0];
-        console.log("✅ Unidad seleccionada:", unidad.codigo);
-        
-        // Datos a actualizar (solo campos que existen)
-        const datosActualizar = {
-            unidad_asignada: unidad.codigo
-            // NO enviamos 'estado' si no existe
-        };
-        
-        console.log("📤 Enviando update:", datosActualizar);
-        
-        // Actualizar SOLO la alerta
-        const { error: updateError } = await _supabase
-            .from('alertas')
-            .update(datosActualizar)
-            .eq('id', alertaSeleccionada.id);
-        
-        if (updateError) throw updateError;
-        
-        console.log("✅ Unidad asignada correctamente");
-        notificarPush('🚔 UNIDAD ASIGNADA', `Unidad ${unidad.codigo} en camino`);
-        cerrarPanelDetalle();
-        
-    } catch (error) {
-        console.error("Error en asignación:", error);
-        alert("❌ ERROR AL ASIGNAR UNIDAD");
-    }
-}
+            const unidad = unidades[0];
+            
+            const { error: updateError } = await _supabase
+                .from('alertas')
+                .update({ 
+                    unidad_asignada: unidad.codigo,
+                    estado: 'en_proceso'
+                })
+                .eq('id', alertaSeleccionada.id);
+            
+            if (updateError) {
+                console.error("Error asignando unidad:", updateError);
+                alert("❌ ERROR AL ASIGNAR UNIDAD");
+                return;
+            }
+            
+            notificarPush('🚔 UNIDAD ASIGNADA', `Unidad ${unidad.codigo} en camino`);
+            cerrarPanelDetalle();
+        }
 
         function verRuta() {
             if (!alertaSeleccionada) return;
@@ -1266,6 +1338,11 @@
                     }
                 })
                 .subscribe();
+        }
+
+        // Solicitar permiso de notificaciones al inicio
+        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission();
         }
 
         window.onload = iniciar;
