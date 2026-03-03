@@ -27,7 +27,7 @@
             overflow: hidden;
         }
 
-        /* EFECTO DE ALERTA CRÍTICA (Borde parpadeante) */
+        /* EFECTO DE ALERTA CRÍTICA */
         .alerta-global-active {
             animation: pulse-border 1.5s infinite;
         }
@@ -49,7 +49,7 @@
 
         #map { position: fixed; top: 60px; left: 0; right: 0; bottom: 0; z-index: 1; }
 
-        /* PANEL TÁCTICO FLOTANTE (VIDEO + INFO) */
+        /* PANEL TÁCTICO FLOTANTE */
         .tactical-overlay {
             position: fixed; top: 75px; right: 10px; width: 180px;
             background: var(--panel-bg); border: 1px solid var(--secondary);
@@ -94,6 +94,8 @@
         .btn-backup { grid-column: span 2; border-color: var(--alert); color: var(--alert); }
 
         #video-player { width: 100%; height: 100%; object-fit: cover; }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
 <body id="main-body">
@@ -122,6 +124,7 @@
         <div class="data-row"><span class="data-label">DNI:</span> <span id="target-dni">--</span></div>
         <div class="data-row"><span class="data-label">UBICACIÓN:</span> <span id="target-addr">CALCULANDO RUTA...</span></div>
         <div class="data-row"><span class="data-label">BATERÍA DISP:</span> <span id="target-bat" style="color: var(--alert);">--</span></div>
+        <div class="data-row"><span class="data-label">DISTANCIA:</span> <span id="target-dist">--</span></div>
 
         <div class="btn-grid">
             <button class="btn btn-nav" onclick="launchNavigation()">🧭 RUTA GPS</button>
@@ -131,7 +134,7 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN SUPABASE [cite: 2026-01-27]
+        // CONFIGURACIÓN SUPABASE
         const SB_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
         const _client = supabase.createClient(SB_URL, SB_KEY);
@@ -139,6 +142,8 @@
         let map, userMarker, alertMarker, routeLine;
         let activeAlert = null;
         let myUnitId = "K-9";
+        let watchId = null;
+        let videoCanal = null;
 
         function init() {
             map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 15);
@@ -149,11 +154,65 @@
                 radius: 10, color: '#0066ff', fillColor: '#0066ff', fillOpacity: 0.8, weight: 3
             }).addTo(map).bindPopup('🚓 MI POSICIÓN');
 
-            setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+            setInterval(() => { 
+                document.getElementById('clock').innerText = new Date().toLocaleTimeString(); 
+            }, 1000);
             
+            // Iniciar GPS
+            iniciarGPSPatrullero();
+            
+            // Escuchar asignaciones
             listenForTacticalAssignments();
         }
 
+        // ==============================================
+        // GPS EN TIEMPO REAL DEL PATRULLERO
+        // ==============================================
+        function iniciarGPSPatrullero() {
+            if (!navigator.geolocation) {
+                console.error("GPS no soportado");
+                return;
+            }
+
+            watchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    userMarker.setLatLng([latitude, longitude]);
+                    
+                    // Actualizar ruta si hay alerta activa
+                    if (activeAlert && routeLine) {
+                        map.removeLayer(routeLine);
+                        routeLine = L.polyline([
+                            [latitude, longitude],
+                            [activeAlert.lat, activeAlert.lng]
+                        ], { color: '#00f2ff', weight: 4, dashArray: '10, 10', opacity: 0.7 }).addTo(map);
+                        
+                        // Calcular distancia
+                        const dist = calcularDistancia(latitude, longitude, activeAlert.lat, activeAlert.lng);
+                        document.getElementById('target-dist').innerText = `${dist.toFixed(1)} km`;
+                    }
+                },
+                (error) => {
+                    console.error("Error GPS:", error);
+                },
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+            );
+        }
+
+        function calcularDistancia(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radio de la Tierra en km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // ==============================================
+        // RECEPCIÓN DE ASIGNACIONES
+        // ==============================================
         function listenForTacticalAssignments() {
             _client.channel(`patrulla-${myUnitId}`)
                 .on('postgres_changes', { 
@@ -166,35 +225,68 @@
                 }).subscribe();
         }
 
+        // ==============================================
+        // ACTIVAR ALERTA TÁCTICA
+        // ==============================================
         function triggerTacticalAlert(data) {
-            activeAlert = data;
-            
-            // 1. Alerta por Voz (Hands-Free) [cite: 2026-02-07]
-            const msg = new SpeechSynthesisUtterance(`Alerta de emergencia. Ciudadano ${data.nombre} en peligro. Proceda a la ubicación.`);
-            window.speechSynthesis.speak(msg);
+            try {
+                activeAlert = data;
+                
+                // 1. Alerta por Voz (Hands-Free)
+                const msg = new SpeechSynthesisUtterance(`Alerta de emergencia. Ciudadano ${data.nombre} en peligro. Proceda a la ubicación.`);
+                window.speechSynthesis.speak(msg);
 
-            // 2. Efecto Visual Cyberpunk
-            document.getElementById('main-body').classList.add('alerta-global-active');
-            document.getElementById('action-panel').classList.remove('hidden');
-            document.getElementById('video-overlay').classList.remove('hidden');
+                // 2. Efecto Visual
+                document.getElementById('main-body').classList.add('alerta-global-active');
+                document.getElementById('action-panel').classList.remove('hidden');
+                document.getElementById('video-overlay').classList.remove('hidden');
 
-            // 3. Cargar Datos
-            document.getElementById('target-name').innerText = data.nombre;
-            document.getElementById('target-dni').innerText = data.dni;
-            document.getElementById('target-bat').innerText = `${data.bateria || 0}%`;
-            document.getElementById('user-link').innerText = data.nombre.split(' ')[0];
+                // 3. Cargar Datos
+                document.getElementById('target-name').innerText = data.nombre;
+                document.getElementById('target-dni').innerText = data.dni;
+                document.getElementById('target-bat').innerText = `${data.bateria || 0}%`;
+                document.getElementById('user-link').innerText = data.nombre.split(' ')[0];
 
-            // 4. Cargar Video Feed [cite: 2026-02-24]
-            if (data.video_url) {
-                const video = document.getElementById('video-player');
-                video.src = data.video_url;
-                video.play().catch(e => console.log("Auto-play blocked"));
+                // 4. Actualizar Mapa
+                updateMapTactical(data.lat, data.lng);
+                
+                // 5. Escuchar video en tiempo real
+                escucharVideo(data.id);
+                
+            } catch (error) {
+                console.error("Error en alerta táctica:", error);
             }
-
-            // 5. Actualizar Mapa
-            updateMapTactical(data.lat, data.lng);
         }
 
+        // ==============================================
+        // ESCUCHAR VIDEO EN TIEMPO REAL
+        // ==============================================
+        function escucharVideo(idAlerta) {
+            if (videoCanal) {
+                _client.removeChannel(videoCanal);
+            }
+            
+            videoCanal = _client
+                .channel(`video-${idAlerta}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'alertas',
+                    filter: `id=eq.${idAlerta}`
+                }, (payload) => {
+                    const video = document.getElementById('video-player');
+                    if (payload.new.video_url && payload.new.video_url !== video.src) {
+                        video.src = payload.new.video_url;
+                        video.load();
+                        video.play().catch(e => console.log("Auto-play bloqueado"));
+                    }
+                })
+                .subscribe();
+        }
+
+        // ==============================================
+        // ACTUALIZAR MAPA
+        // ==============================================
         function updateMapTactical(lat, lng) {
             if (alertMarker) map.removeLayer(alertMarker);
             alertMarker = L.circleMarker([lat, lng], {
@@ -207,34 +299,76 @@
             }).addTo(map);
 
             map.fitBounds([userMarker.getLatLng(), [lat, lng]], { padding: [80, 80] });
+            
+            // Calcular distancia inicial
+            const userPos = userMarker.getLatLng();
+            const dist = calcularDistancia(userPos.lat, userPos.lng, lat, lng);
+            document.getElementById('target-dist').innerText = `${dist.toFixed(1)} km`;
         }
 
+        // ==============================================
+        // ACCIONES DEL PATRULLERO
+        // ==============================================
         function launchNavigation() {
             if (!activeAlert) return;
             window.open(`https://www.google.com/maps/dir/?api=1&destination=${activeAlert.lat},${activeAlert.lng}&travelmode=driving`, '_blank');
         }
 
         async function requestBackup() {
+            if (!activeAlert) return;
             if (!confirm("¿SOLICITAR REFUERZOS INMEDIATOS A ESTA POSICIÓN?")) return;
-            await _client.from('alertas').update({ prioridad: 'REFUERZOS_REQUERIDOS' }).eq('id', activeAlert.id);
-            alert("SOPORTE EN CAMINO");
+            
+            try {
+                await _client.from('alertas').update({ 
+                    prioridad: 'REFUERZOS_REQUERIDOS',
+                    solicitud_refuerzos: new Date().toISOString()
+                }).eq('id', activeAlert.id);
+                
+                alert("✅ SOPORTE EN CAMINO");
+            } catch (error) {
+                console.error("Error solicitando refuerzos:", error);
+                alert("❌ ERROR AL SOLICITAR REFUERZOS");
+            }
         }
 
         async function completeObjective() {
-            await _client.from('alertas').update({ 
-                estado: 'finalizado', 
-                activa: false, 
-                hora_llegada: new Date().toISOString() 
-            }).eq('id', activeAlert.id);
+            if (!activeAlert) return;
+            
+            try {
+                await _client.from('alertas').update({ 
+                    estado: 'finalizado', 
+                    activa: false, 
+                    hora_llegada: new Date().toISOString() 
+                }).eq('id', activeAlert.id);
 
-            // Reset UI
-            document.getElementById('main-body').classList.remove('alerta-global-active');
-            document.getElementById('action-panel').classList.add('hidden');
-            document.getElementById('video-overlay').classList.add('hidden');
-            if (alertMarker) map.removeLayer(alertMarker);
-            if (routeLine) map.removeLayer(routeLine);
-            activeAlert = null;
+                // Reset UI
+                document.getElementById('main-body').classList.remove('alerta-global-active');
+                document.getElementById('action-panel').classList.add('hidden');
+                document.getElementById('video-overlay').classList.add('hidden');
+                
+                if (alertMarker) map.removeLayer(alertMarker);
+                if (routeLine) map.removeLayer(routeLine);
+                
+                if (videoCanal) {
+                    _client.removeChannel(videoCanal);
+                    videoCanal = null;
+                }
+                
+                activeAlert = null;
+                
+            } catch (error) {
+                console.error("Error completando objetivo:", error);
+                alert("❌ ERROR AL CONFIRMAR LLEGADA");
+            }
         }
+
+        // ==============================================
+        // LIMPIEZA AL CERRAR
+        // ==============================================
+        window.addEventListener('beforeunload', () => {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            if (videoCanal) _client.removeChannel(videoCanal);
+        });
 
         window.onload = init;
     </script>
