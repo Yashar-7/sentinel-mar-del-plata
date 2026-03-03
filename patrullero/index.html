@@ -214,16 +214,24 @@
         // RECEPCIÓN DE ASIGNACIONES
         // ==============================================
         function listenForTacticalAssignments() {
-            _client.channel(`patrulla-${myUnitId}`)
-                .on('postgres_changes', { 
-                    event: 'UPDATE', schema: 'public', table: 'alertas', 
-                    filter: `unidad_asignada=eq.${myUnitId}` 
-                }, (payload) => {
-                    if (payload.new.estado === 'en_proceso' || payload.new.estado === 'CRITICO') {
-                        triggerTacticalAlert(payload.new);
-                    }
-                }).subscribe();
-        }
+    console.log("🚔 Escuchando asignaciones para unidad:", myUnitId);
+    
+    _client.channel(`patrulla-${myUnitId}`)
+        .on('postgres_changes', { 
+            event: 'UPDATE', 
+            schema: 'public', 
+            table: 'alertas', 
+            filter: `unidad_asignada=eq.${myUnitId}` 
+        }, (payload) => {
+            console.log("📡 CAMBIO DETECTADO:", payload);
+            if (payload.new.estado === 'en_proceso' || payload.new.estado === 'CRITICO') {
+                triggerTacticalAlert(payload.new);
+            }
+        })
+        .subscribe((status) => {
+            console.log("📡 Estado del canal:", status);
+        });
+}
 
         // ==============================================
         // ACTIVAR ALERTA TÁCTICA
