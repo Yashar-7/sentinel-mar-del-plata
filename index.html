@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL V10.0 | SMART TECH</title>
+    <title>SENTINEL V10.2 | SMART TECH</title>
     
     <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -302,6 +302,7 @@
             width: 120px;
             height: 90px;
             z-index: 800;
+            pointer-events: none;
         }
 
         .camera-frame {
@@ -315,6 +316,7 @@
             background: #000;
             overflow: hidden;
             position: relative;
+            pointer-events: auto;
         }
 
         #video-feed {
@@ -786,10 +788,12 @@
         let puntosAnonimos = {};
         let tipoAlertaSeleccionado = 'ROBO';
         
-        // NUEVAS VARIABLES PARA TRANSMISIÓN
+        // Variables para transmisión y grabación
         let canalVideo = null;
-        let intervaloFrames = null;
         let streamCamara = null;
+        let mediaRecorder = null;
+        let fragmentosVideo = [];
+        let transmitiendo = false;
 
         function mostrarFormulario(tipo) {
             if (tipo === 'registro') {
@@ -1117,54 +1121,93 @@
         }
 
         // ==============================================
-        // NUEVA FUNCIÓN: TRANSMISIÓN EN VIVO POR FRAMES
+        // ACTIVAR CÁMARA
+        // ==============================================
+        async function activarCamara() {
+            console.log("🎥 Iniciando sistema de captura de video...");
+            try {
+                const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+                if (permissionStatus.state === 'denied') {
+                    actualizarTerminal('❌ PERMISO DE CÁMARA DENEGADO');
+                    mostrarToast('❌ PERMISO DENEGADO', 'Active la cámara en la configuración', 'alert');
+                    return false;
+                }
+
+                streamCamara = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }, 
+                    audio: true 
+                });
+                
+                const video = document.getElementById('video-feed');
+                const placeholder = document.getElementById('camera-placeholder');
+                const recIndicator = document.getElementById('rec-indicator');
+                
+                if (video) {
+                    video.srcObject = streamCamara;
+                    video.style.display = 'block';
+                }
+                if (placeholder) placeholder.style.display = 'none';
+                if (!modoSigiloso) {
+                    if (recIndicator) recIndicator.classList.remove('hidden');
+                }
+                
+                console.log("✅ Cámara activada correctamente");
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Error crítico en activarCamara:', error);
+                actualizarTerminal('❌ ERROR CÁMARA');
+                mostrarToast('❌ ERROR DE CÁMARA', 'No se pudo acceder a la cámara', 'alert');
+                return false;
+            }
+        }
+
+        // ==============================================
+        // TRANSMISIÓN EN VIVO (60fps)
         // ==============================================
         async function iniciarTransmisionViva(idAlerta) {
             try {
-                // 1. Activar cámara si no está
                 if (!streamCamara) {
-                    streamCamara = await navigator.mediaDevices.getUserMedia({ 
-                        video: { width: 320, height: 240 }, 
-                        audio: false 
-                    });
+                    console.warn("No hay stream de cámara");
+                    return;
                 }
 
-                // 2. Crear elemento video oculto
                 const video = document.createElement('video');
                 video.srcObject = streamCamara;
                 video.style.display = 'none';
                 document.body.appendChild(video);
                 await video.play();
 
-                // 3. Canvas para capturar frames
                 const canvas = document.createElement('canvas');
-                canvas.width = 320;
-                canvas.height = 240;
+                canvas.width = 160;
+                canvas.height = 120;
                 const ctx = canvas.getContext('2d');
 
-                // 4. Canal específico para esta alerta
-                canalVideo = _supabase.channel(`stream-${idAlerta}`);
+                canalVideo = _supabase.channel(`alerta-${idAlerta}`);
+                transmitiendo = true;
 
-                let frameCount = 0;
-                intervaloFrames = setInterval(() => {
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                function enviarFrame() {
+                    if (!transmitiendo || !alertaActiva) return;
                     
-                    // Usar WebP calidad 0.4 (buena compresión)
-                    const frameData = canvas.toDataURL('image/webp', 0.4);
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const frameData = canvas.toDataURL('image/jpeg', 0.3);
                     
                     canalVideo.send({
                         type: 'broadcast',
                         event: 'video-frame',
-                        payload: { 
-                            frame: frameData,
-                            seq: frameCount++,
-                            timestamp: Date.now()
-                        }
+                        payload: { frame: frameData }
                     });
-                }, 200); // 5 fps
+                    
+                    requestAnimationFrame(enviarFrame);
+                }
 
-                actualizarTerminal('📹 TRANSMISIÓN EN VIVO INICIADA');
-                
+                enviarFrame();
+                actualizarTerminal('📹 TRANSMISIÓN 60fps');
+
             } catch (error) {
                 console.error("Error iniciando transmisión:", error);
                 actualizarTerminal('❌ ERROR EN TRANSMISIÓN');
@@ -1172,24 +1215,15 @@
         }
 
         function detenerTransmision() {
-            if (intervaloFrames) {
-                clearInterval(intervaloFrames);
-                intervaloFrames = null;
-            }
+            transmitiendo = false;
             if (canalVideo) {
                 _supabase.removeChannel(canalVideo);
                 canalVideo = null;
             }
-            // Liberar cámara
-            if (streamCamara) {
-                streamCamara.getTracks().forEach(t => t.stop());
-                streamCamara = null;
-            }
-            actualizarTerminal('📹 TRANSMISIÓN DETENIDA');
         }
 
         // ==============================================
-        // NOTIFICAR A PATRULLA MÁS CERCANA
+        // NOTIFICAR A PATRULLA
         // ==============================================
         async function notificarPatrullaMasCercana(idAlerta, lat, lng) {
             try {
@@ -1225,7 +1259,7 @@
         }
 
         // ==============================================
-        // SEGUIMIENTO GPS CONTINUO
+        // SEGUIMIENTO GPS
         // ==============================================
         function iniciarSeguimientoContinuo(idAlerta) {
             if (intervaloGPS) clearInterval(intervaloGPS);
@@ -1247,6 +1281,14 @@
         // ==============================================
         async function activarAlerta() {
             if (alertaActiva || !ubicacionActual || !usuarioActual) return;
+            
+            console.log("🎥 Activando cámara...");
+            const camaraActivada = await activarCamara();
+            
+            if (!camaraActivada) {
+                actualizarTerminal('❌ ERROR: NO SE PUDO ACTIVAR LA CÁMARA');
+                return;
+            }
             
             cerrarModal();
 
@@ -1276,8 +1318,52 @@
                     alertaId = data[0].id;
                     alertaActiva = true;
                     
-                    // INICIAR TRANSMISIÓN EN VIVO (NUEVO)
+                    // Iniciar transmisión en vivo
                     await iniciarTransmisionViva(alertaId);
+                    
+                    // Configurar grabación para evidencia
+                    fragmentosVideo = [];
+                    mediaRecorder = new MediaRecorder(streamCamara, { 
+                        mimeType: 'video/webm;codecs=vp8' 
+                    });
+                    
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) fragmentosVideo.push(e.data);
+                    };
+                    
+                    mediaRecorder.onstop = async () => {
+                        if (fragmentosVideo.length === 0 || !alertaId) return;
+                        
+                        actualizarTerminal('📤 SUBIENDO EVIDENCIA...');
+                        
+                        const videoBlob = new Blob(fragmentosVideo, { type: 'video/webm' });
+                        const nombre = `evidencia_${alertaId}_${Date.now()}.webm`;
+                        
+                        try {
+                            const { error } = await _supabase.storage
+                                .from('videos-alertas')
+                                .upload(nombre, videoBlob);
+                            
+                            if (error) throw error;
+                            
+                            const { data: urlData } = _supabase.storage
+                                .from('videos-alertas')
+                                .getPublicUrl(nombre);
+                            
+                            await _supabase
+                                .from('alertas')
+                                .update({ video_evidencia_url: urlData.publicUrl })
+                                .eq('id', alertaId);
+                            
+                            actualizarTerminal('✅ EVIDENCIA ASEGURADA');
+                            
+                        } catch (error) {
+                            console.error("Error subiendo evidencia:", error);
+                            actualizarTerminal('❌ ERROR SUBIENDO EVIDENCIA');
+                        }
+                    };
+                    
+                    mediaRecorder.start();
                     
                     mostrarOpcionCancelar(alertaId);
                     await notificarPatrullaMasCercana(alertaId, ubicacionActual.lat, ubicacionActual.lng);
@@ -1318,7 +1404,9 @@
             document.getElementById('cancelar-overlay').style.display = 'none';
             if (timeoutCancelacion) clearTimeout(timeoutCancelacion);
             
-            // DETENER TRANSMISIÓN
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
             detenerTransmision();
             
             if (intervaloGPS) clearInterval(intervaloGPS);
@@ -1329,6 +1417,12 @@
                 .eq('id', idAlerta);
             
             alertaActiva = false;
+            
+            if (streamCamara) {
+                streamCamara.getTracks().forEach(t => t.stop());
+                streamCamara = null;
+            }
+            
             mostrarToast('✅ ALERTA CANCELADA', 'La alerta ha sido cancelada correctamente', 'success');
             actualizarTerminal('✅ ALERTA CANCELADA POR USUARIO');
         }
@@ -1340,6 +1434,9 @@
         function cancelarAlerta() {
             if (confirm('¿CANCELAR ALERTA?')) {
                 alertaActiva = false;
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
                 detenerTransmision();
                 if (intervaloGPS) clearInterval(intervaloGPS);
                 cerrarModal();
