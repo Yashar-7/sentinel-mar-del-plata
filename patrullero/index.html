@@ -257,37 +257,29 @@
         }
 
         function activarAlerta(alerta) {
-            activeAlert = alerta;
-            
-            document.getElementById('no-alerta').classList.add('hidden');
-            document.getElementById('panel-accion').classList.add('visible');
-            document.getElementById('panel-video').classList.remove('hidden');
-            
-            document.getElementById('tipo').innerText = alerta.tipo || 'EMERGENCIA';
-            document.getElementById('nombre').innerText = alerta.nombre || '--';
-            document.getElementById('ubicacion').innerText = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
-            
-            if (alertMarker) mapa.removeLayer(alertMarker);
-            alertMarker = L.circleMarker([alerta.lat, alerta.lng], {
-                radius: 16, color: '#ff3131', weight: 5, fillOpacity: 0.3
-            }).addTo(mapa);
-            
-            rutaVisible = true;
-            updateGPS({ coords: userMarker.getLatLng() });
-            
-            // Sintonizar video
-            if (canalVideo) canalVideo.unsubscribe();
-            canalVideo = _client.channel(`alerta-${alerta.id}`);
-            canalVideo.on('broadcast', { event: 'video-frame' }, payload => {
-                const img = new Image();
-                img.onload = () => {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                };
-                img.src = payload.payload.frame;
-            }).subscribe();
-        }
+    console.log("🚨 Activando alerta en patrullero", alerta);
+    activeAlert = alerta;
+    
+    // ... resto del código ...
+    
+    // Sintonizar video con logs
+    console.log("📡 Conectando a canal:", `alerta-${alerta.id}`);
+    if (canalVideo) canalVideo.unsubscribe();
+    
+    canalVideo = _client.channel(`alerta-${alerta.id}`);
+    canalVideo.on('broadcast', { event: 'video-frame' }, payload => {
+        console.log("📹 Frame recibido", payload);
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            console.log("✅ Frame dibujado");
+        };
+        img.onerror = (err) => console.error("❌ Error cargando imagen:", err);
+        img.src = payload.payload.frame;
+    }).subscribe();
+}
 
         function toggleRuta() {
             rutaVisible = !rutaVisible;
