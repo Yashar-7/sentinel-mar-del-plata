@@ -9,8 +9,22 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <!-- Primero, cargar configuración -->
+<script src="../config.js"></script>
+
+<!-- Luego, Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    // Usar las claves desde config.js
+    const _client = supabase.createClient(
+        SENTINEL_CONFIG.SUPABASE_URL,
+        SENTINEL_CONFIG.SUPABASE_KEY
+    );
+    
+    // Para Google Maps
+    const GOOGLE_API_KEY = SENTINEL_CONFIG.GOOGLE_MAPS_KEY;
+</script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
