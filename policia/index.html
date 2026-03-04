@@ -394,28 +394,44 @@
         // ==============================================
         // ACCIONES
         // ==============================================
-        async function asignarUnidad() {
-            if (!alertaSeleccionada) return;
-            
-            const { data: unidades, error } = await _client
-                .from('unidades_respuesta')
-                .select('*')
-                .eq('estado', 'disponible');
-            
-            if (error || !unidades || unidades.length === 0) {
-                alert("❌ NO HAY UNIDADES DISPONIBLES");
-                return;
-            }
+       async function asignarUnidad() {
+    if (!alertaSeleccionada) return;
+    
+    // 1. Obtener unidades disponibles
+    const { data: unidades, error } = await _client
+        .from('unidades_respuesta')
+        .select('*')
+        .eq('estado', 'disponible');
+    
+    if (error || !unidades || unidades.length === 0) {
+        alert("❌ NO HAY UNIDADES DISPONIBLES");
+        return;
+    }
 
-            const unidad = unidades[0];
-            
-            await _client
-                .from('alertas')
-                .update({ unidad_asignada: unidad.codigo, estado: 'en_proceso' })
-                .eq('id', alertaSeleccionada.id);
-            
-            alert(`🚔 UNIDAD ${unidad.codigo} ASIGNADA`);
-        }
+    // 2. Asignar la primera disponible (mejorable)
+    const unidad = unidades[0];
+    
+    // 3. ACTUALIZAR LA ALERTA CON LA UNIDAD ASIGNADA
+    const { error: updateError } = await _client
+        .from('alertas')
+        .update({ 
+            unidad_asignada: unidad.codigo,
+            estado: 'en_proceso'
+        })
+        .eq('id', alertaSeleccionada.id);
+    
+    if (updateError) {
+        console.error("Error asignando unidad:", updateError);
+        alert("❌ ERROR AL ASIGNAR UNIDAD");
+        return;
+    }
+    
+    // 4. Notificar éxito
+    alert(`🚔 UNIDAD ${unidad.codigo} ASIGNADA`);
+    
+    // 5. Opcional: actualizar UI para mostrar que ya fue asignada
+    document.getElementById('acciones').style.display = 'none';
+}
 
         async function cerrarIncidente() {
             if (!alertaSeleccionada) return;
