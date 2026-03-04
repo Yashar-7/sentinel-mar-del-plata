@@ -3,621 +3,432 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL | CENTRO DE MANDO TÁCTICO</title>
+    <title>SENTINEL | WAR ROOM TÁCTICO</title>
     
+    <!-- Leaflet para mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --primary: #00ffaa;
-            --secondary: #0066ff;
-            --alert: #ff3131;
-            --success: #39ff14;
-            --warning: #ffaa00;
-            --cancel: #888888;
-            --bg: #050a0f;
-            --bg-panel: rgba(8, 15, 22, 0.95);
-            --border-glow: 0 0 15px rgba(0, 255, 170, 0.3);
-            --text-glow: 0 0 8px rgba(0, 255, 170, 0.5);
-            --grid-color: rgba(0, 255, 170, 0.1);
-        }
-
+        :root { --primary: #00ffaa; --alert: #ff3131; --bg: #020202; }
+        
         body {
             background: var(--bg);
             color: var(--primary);
-            font-family: 'JetBrains Mono', 'Orbitron', monospace;
+            font-family: 'Share Tech Mono', monospace;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 300px 1fr 400px;
+            gap: 15px;
             height: 100vh;
             overflow: hidden;
+        }
+
+        /* PANELES COMUNES */
+        .panel {
+            border: 1px solid #333;
+            background: rgba(10,10,10,0.9);
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(5px);
+        }
+
+        h2 { 
+            font-size: 1rem; 
+            border-bottom: 1px solid var(--primary); 
+            padding-bottom: 10px; 
+            color: var(--primary); 
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
         }
 
-        /* EFECTO DE ALERTA GLOBAL */
-        @keyframes global-alert {
-            0% { filter: drop-shadow(0 0 5px var(--alert)); }
-            50% { filter: drop-shadow(0 0 30px var(--alert)) drop-shadow(0 0 60px var(--alert)); }
-            100% { filter: drop-shadow(0 0 5px var(--alert)); }
-        }
-        .alerta-global-active {
-            animation: global-alert 0.5s 6;
+        /* PANEL IZQUIERDO - LISTA DE INCIDENTES */
+        .incident-list {
+            flex: 1;
+            overflow-y: auto;
         }
 
-        /* PULSO PARA CONTADOR */
-        @keyframes pulse-counter {
-            0% { opacity: 1; text-shadow: 0 0 5px var(--alert); }
-            50% { opacity: 0.5; text-shadow: 0 0 20px var(--alert); }
-            100% { opacity: 1; text-shadow: 0 0 5px var(--alert); }
-        }
-        .pulse-counter-active {
-            animation: pulse-counter 0.5s 6;
-        }
-
-        /* EFECTO MATRIZ */
-        body::before {
-            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0, 255, 170, 0.03) 0px, transparent 1px, transparent 3px);
-            pointer-events: none; z-index: 0;
-        }
-
-        /* GRID TÁCTICO */
-        .grid-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px),
-                              linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-            background-size: 40px 40px; pointer-events: none; z-index: 1; opacity: 0.3;
-        }
-
-        /* SCANLINE */
-        .scanline {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, transparent, rgba(0, 255, 170, 0.05) 50%, transparent);
-            animation: scan 8s linear infinite; pointer-events: none; z-index: 2; opacity: 0.5;
-        }
-        @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
-
-        /* HEADER TÁCTICO */
-        .tactical-header {
-            position: fixed; top: 0; left: 0; right: 0; height: 80px;
-            background: linear-gradient(180deg, rgba(0,10,20,0.95) 0%, rgba(0,5,10,0.98) 100%);
-            border-bottom: 2px solid var(--primary); z-index: 1000;
-            display: flex; align-items: center; padding: 0 20px; backdrop-filter: blur(10px);
-        }
-
-        .header-left { display: flex; align-items: center; gap: 20px; flex: 1; }
-        .logo-area { display: flex; align-items: center; gap: 15px; }
-        .logo {
-            width: 50px; height: 50px; background: linear-gradient(135deg, var(--primary), var(--secondary));
-            clip-path: polygon(0% 20%, 15% 0%, 85% 0%, 100% 20%, 100% 80%, 85% 100%, 15% 100%, 0% 80%);
-            display: flex; align-items: center; justify-content: center; overflow: hidden;
-            box-shadow: 0 0 20px var(--primary);
-        }
-        .logo img { width: 100%; height: 100%; object-fit: cover; }
-        .title-block { display: flex; flex-direction: column; }
-        .title-main { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--primary); text-shadow: var(--text-glow); letter-spacing: 4px; }
-        .title-sub { font-size: 0.7rem; color: var(--secondary); letter-spacing: 2px; }
-
-        .status-indicators { display: flex; gap: 20px; margin-left: 40px; }
-        .indicator { display: flex; flex-direction: column; align-items: center; }
-        .indicator-label { font-size: 0.6rem; color: var(--secondary); letter-spacing: 1px; }
-        .indicator-value { font-size: 1rem; font-weight: bold; color: var(--primary); text-shadow: var(--text-glow); }
-        .indicator-value.alert { color: var(--alert); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        .header-right { display: flex; align-items: center; gap: 20px; }
-        .time-display {
-            font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--primary);
-            text-shadow: 0 0 10px var(--primary); padding: 5px 15px; border: 1px solid var(--primary);
-            clip-path: polygon(0% 15%, 10% 0%, 90% 0%, 100% 15%, 100% 85%, 90% 100%, 10% 100%, 0% 85%);
-        }
-        .unit-badge {
-            background: rgba(0,102,255,0.2); border: 1px solid var(--secondary); padding: 5px 15px;
-            font-size: 0.9rem; font-weight: bold; color: var(--secondary);
-            clip-path: polygon(0% 15%, 10% 0%, 90% 0%, 100% 15%, 100% 85%, 90% 100%, 10% 100%, 0% 85%);
-        }
-
-        /* LAYOUT PRINCIPAL */
-        .main-container {
-            position: fixed; top: 80px; left: 0; right: 0; bottom: 0;
-            display: grid; grid-template-columns: 380px 1fr; gap: 10px; padding: 10px; z-index: 10;
-        }
-
-        /* PANEL IZQUIERDO */
-        .left-panel {
-            background: var(--bg-panel); backdrop-filter: blur(10px); border: 1px solid var(--primary);
-            box-shadow: var(--border-glow); display: flex; flex-direction: column; gap: 10px; padding: 15px;
-            clip-path: polygon(0% 1%, 1% 0%, 99% 0%, 100% 1%, 100% 99%, 99% 100%, 1% 100%, 0% 99%);
-        }
-
-        .panel-header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--primary); padding-bottom: 8px;
-            font-family: 'Orbitron', sans-serif; font-weight: 700; color: var(--secondary); letter-spacing: 2px;
-        }
-
-        /* FILTROS */
-        .filtros-panel {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; padding: 10px;
-            background: rgba(0,0,0,0.3); border: 1px solid var(--primary);
-            clip-path: polygon(0% 10%, 2% 0%, 98% 0%, 100% 10%, 100% 90%, 98% 100%, 2% 100%, 0% 90%);
-        }
-        .filtro-select, .filtro-input {
-            background: rgba(0,0,0,0.5); border: 1px solid var(--primary); color: var(--primary);
-            font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; padding: 6px;
-            clip-path: polygon(0% 15%, 8% 0%, 92% 0%, 100% 15%, 100% 85%, 92% 100%, 8% 100%, 0% 85%);
-        }
-        .filtro-select option { background: var(--bg); color: var(--primary); }
-
-        .incident-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .incident-card {
-            background: rgba(255,49,49,0.05); border: 1px solid var(--alert); padding: 12px;
-            cursor: pointer; transition: all 0.3s; position: relative;
-            clip-path: polygon(0% 8%, 3% 0%, 97% 0%, 100% 8%, 100% 92%, 97% 100%, 3% 100%, 0% 92%);
-        }
-        .incident-card.cancelada { background: rgba(136,136,136,0.05); border-color: var(--cancel); opacity: 0.7; }
-        .incident-card:hover { background: rgba(255,49,49,0.15); transform: translateX(5px); box-shadow: 0 0 20px var(--alert); }
-        .cancelada-badge {
-            position: absolute; top: 5px; left: 5px; background: var(--cancel); color: white;
-            padding: 2px 6px; font-size: 0.55rem; border-radius: 3px; z-index: 5;
-        }
-        .incident-time { font-size: 0.6rem; color: var(--alert); margin-bottom: 5px; }
-        .incident-tipo {
-            font-size: 0.55rem; padding: 2px 5px; background: rgba(0,0,0,0.3);
-            display: inline-block; margin-bottom: 5px; border-radius: 3px;
-        }
-        .incident-location { font-size: 0.65rem; color: var(--secondary); margin-bottom: 8px; }
-        .incident-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.6rem; }
-        .meta-label { color: rgba(255,255,255,0.5); }
-        .meta-value { color: var(--primary); font-weight: bold; }
-
-        /* ESTADÍSTICAS */
-        .stats-grid {
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px;
-        }
-        .stat-box {
-            background: rgba(0,255,170,0.05); border: 1px solid var(--primary); padding: 8px; text-align: center;
-            clip-path: polygon(0% 15%, 10% 0%, 90% 0%, 100% 15%, 100% 85%, 90% 100%, 10% 100%, 0% 85%);
-        }
-        .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--primary); text-shadow: var(--text-glow); }
-        .stat-label { font-size: 0.55rem; color: var(--secondary); }
-
-        /* MAPA */
-        .map-panel {
-            background: #000; border: 1px solid var(--primary); box-shadow: var(--border-glow);
-            position: relative; overflow: hidden;
-            clip-path: polygon(0% 0.5%, 0.5% 0%, 99.5% 0%, 100% 0.5%, 100% 99.5%, 99.5% 100%, 0.5% 100%, 0% 99.5%);
-        }
-        #map { width: 100%; height: 100%; background: #000; }
-        .map-overlay {
-            position: absolute; bottom: 10px; left: 10px; background: rgba(0,10,20,0.8);
-            backdrop-filter: blur(5px); border: 1px solid var(--primary); padding: 8px 12px;
-            font-size: 0.65rem; z-index: 1000;
-            clip-path: polygon(0% 15%, 10% 0%, 90% 0%, 100% 15%, 100% 85%, 90% 100%, 10% 100%, 0% 85%);
-        }
-        .coordinates { color: var(--secondary); font-family: 'Orbitron', sans-serif; }
-
-        /* PANEL LATERAL DE DETALLE */
-        #panel-detalle-alerta {
-            position: fixed; top: 90px; right: 20px; width: 380px;
-            background: var(--bg-panel); backdrop-filter: blur(20px); border: 2px solid var(--alert);
-            box-shadow: 0 0 50px rgba(255,49,49,0.5); z-index: 2000; padding: 20px;
-            clip-path: polygon(0% 2%, 1% 0%, 99% 0%, 100% 2%, 100% 98%, 99% 100%, 1% 100%, 0% 98%);
-            display: none;
-        }
-        .panel-detalle-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--alert); padding-bottom: 10px; }
-        .panel-detalle-titulo { font-size: 1.1rem; color: var(--alert); font-weight: bold; }
-        .panel-detalle-close { font-size: 1.5rem; cursor: pointer; color: var(--alert); transition: all 0.3s; }
-        .panel-detalle-close:hover { text-shadow: 0 0 15px var(--alert); transform: scale(1.2); }
-        .detalle-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-bottom: 15px; font-size: 0.75rem; }
-        .detalle-label { color: rgba(255,255,255,0.5); }
-        .detalle-value { color: var(--primary); font-weight: bold; }
-        .detalle-value.alert { color: var(--alert); }
-
-        #contenedor-video-alerta {
-            position: relative; width: 100%; height: 200px; border: 2px solid #ff4444;
-            box-shadow: 0 0 15px #ff4444; background: #000; display: flex; align-items: center;
-            justify-content: center; overflow: hidden; border-radius: 8px; margin: 15px 0;
-        }
-        #status-live { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 8px; z-index: 10; }
-        .pulse-dot { width: 10px; height: 10px; background: #ff4444; border-radius: 50%; animation: pulse-red 1.5s infinite; }
-        @keyframes pulse-red {
-            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
-            70% { opacity: 0.5; box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
-            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
-        }
-        #video-feed { width: 100%; height: 100%; object-fit: cover; display: none; }
-        #esperando-texto { color: #ff4444; font-family: 'Courier New', monospace; letter-spacing: 2px; text-transform: uppercase; text-align: center; }
-
-        .panel-detalle-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .action-button {
-            flex: 1; padding: 10px; background: transparent; border: 1px solid;
-            font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; cursor: pointer;
+        .alerta-item {
+            padding: 12px;
+            border: 1px solid #222;
+            margin-bottom: 10px;
+            cursor: pointer;
             transition: all 0.3s;
-            clip-path: polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%);
+            font-size: 0.8rem;
+            position: relative;
         }
-        .action-button.primary { border-color: var(--alert); color: var(--alert); }
-        .action-button.primary:hover { background: rgba(255,49,49,0.2); box-shadow: 0 0 20px var(--alert); }
-        .action-button.secondary { border-color: var(--primary); color: var(--primary); }
-        .action-button.secondary:hover { background: rgba(0,255,170,0.1); box-shadow: 0 0 20px var(--primary); }
+        .alerta-item:hover { 
+            background: #111; 
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+        .alerta-item.activa { 
+            border-left: 4px solid var(--alert); 
+            animation: pulse-border 1s infinite;
+        }
+        @keyframes pulse-border { 50% { border-left-color: transparent; } }
+        
+        .alerta-tipo {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(255,49,49,0.2);
+            border: 1px solid var(--alert);
+            font-size: 0.6rem;
+            margin-bottom: 5px;
+        }
 
-        #toast-notificacion {
-            position: fixed; top: 100px; right: 20px; background: var(--bg-panel);
-            border-left: 4px solid var(--alert); padding: 15px; box-shadow: 0 0 30px rgba(255,49,49,0.3);
-            z-index: 10000; display: none; min-width: 250px;
-            clip-path: polygon(0% 15%, 3% 0%, 97% 0%, 100% 15%, 100% 85%, 97% 100%, 3% 100%, 0% 85%);
+        /* PANEL CENTRAL - MAPA TÁCTICO */
+        .map-panel {
+            position: relative;
+            overflow: hidden;
+            padding: 0;
         }
-        .toast-titulo { font-weight: bold; color: var(--alert); margin-bottom: 5px; }
-        .toast-mensaje { font-size: 0.7rem; }
+        #mapa {
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        .radar-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0,255,170,0.2);
+            animation: scan 4s linear infinite;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        @keyframes scan { from { top: 0; } to { top: 100%; } }
+        
+        .map-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            font-size: 0.6rem;
+            border: 1px solid var(--primary);
+            z-index: 1000;
+        }
+
+        /* PANEL DERECHO - MONITOR DE VIDEO */
+        .video-panel {
+            display: flex;
+            flex-direction: column;
+        }
+        #visor-tactico {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #000;
+            border: 1px solid #333;
+            margin-bottom: 15px;
+        }
+        .no-signal {
+            color: #444;
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 8px;
+            font-size: 0.75rem;
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #333;
+        }
+        .label { opacity: 0.6; }
+        .value { color: var(--primary); font-weight: bold; }
+        .value.alert { color: var(--alert); }
+        
+        .acciones {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover { background: rgba(0,255,170,0.1); }
+        .btn-alert { border-color: var(--alert); color: var(--alert); }
+        .btn-alert:hover { background: rgba(255,49,49,0.1); }
+
+        .tag-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--alert);
+            color: black;
+            padding: 2px 10px;
+            font-weight: bold;
+            font-size: 0.7rem;
+            z-index: 1000;
+        }
 
         .hidden { display: none !important; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: rgba(0,255,170,0.05); }
-        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 0; }
     </style>
 </head>
-<body id="main-body">
-    <div class="grid-overlay"></div>
-    <div class="scanline"></div>
+<body>
 
-    <div class="tactical-header">
-        <div class="header-left">
-            <div class="logo-area">
-                <div class="logo"><img src="logo.png" alt="SMART TECH"></div>
-                <div class="title-block">
-                    <div class="title-main">SENTINEL</div>
-                    <div class="title-sub">SMART TECH · COM</div>
-                </div>
-            </div>
-            <div class="status-indicators">
-                <div class="indicator"><span class="indicator-label">ALERTAS</span><span class="indicator-value alert" id="alertCount">0</span></div>
-                <div class="indicator"><span class="indicator-label">UNIDADES</span><span class="indicator-value" id="unidadesDisponibles">0</span></div>
-                <div class="indicator"><span class="indicator-label">RESPUESTA</span><span class="indicator-value" id="tiempoPromedio">0s</span></div>
-            </div>
-        </div>
-        <div class="header-right">
-            <div class="time-display" id="reloj">--:--:--</div>
-            <div class="unit-badge">COMANDO</div>
+    <!-- PANEL IZQUIERDO - INCIDENTES -->
+    <div class="panel">
+        <h2>🚨 INCIDENTES ACTIVOS</h2>
+        <div class="incident-list" id="incident-list">
+            <p style="opacity:0.3">Esperando señal...</p>
         </div>
     </div>
 
-    <div id="toast-notificacion">
-        <div class="toast-titulo" id="toast-titulo">🚨 NUEVA ALERTA</div>
-        <div class="toast-mensaje" id="toast-mensaje">Esperando detalles...</div>
+    <!-- PANEL CENTRAL - MAPA TÁCTICO -->
+    <div class="panel map-panel">
+        <div class="radar-line"></div>
+        <div id="mapa"></div>
+        <div class="map-overlay" id="map-coords">
+            LAT: -38.0055 | LNG: -57.5426
+        </div>
+        <div class="tag-status">SENTINEL ONLINE</div>
     </div>
 
-    <div class="main-container" id="main-container">
-        <div class="left-panel">
-            <div class="panel-header"><span>🚨 INCIDENTES ACTIVOS</span><span>CRÍTICOS</span></div>
-            <div class="filtros-panel">
-                <select class="filtro-select" id="filtro-rol" onchange="aplicarFiltros()">
-                    <option value="todos">TODOS LOS ROLES</option>
-                    <option value="civil">CIVIL</option>
-                    <option value="patrulla">PATRULLA</option>
-                    <option value="emergencia">EMERGENCIA</option>
-                    <option value="delivery">DELIVERY</option>
-                </select>
-                <select class="filtro-select" id="filtro-canceladas" onchange="aplicarFiltros()">
-                    <option value="activas">SOLO ACTIVAS</option>
-                    <option value="todas">TODAS</option>
-                    <option value="canceladas">SOLO CANCELADAS</option>
-                </select>
-                <input type="text" class="filtro-input" id="filtro-busqueda" placeholder="BUSCAR POR NOMBRE..." onkeyup="aplicarFiltros()">
-            </div>
-            <div class="incident-list" id="incidentList"><div style="color: rgba(255,255,255,0.3); text-align:center; padding:20px;">ESPERANDO ALERTAS...</div></div>
-            <div class="stats-grid">
-                <div class="stat-box"><div class="stat-value" id="statsHoy">0</div><div class="stat-label">HOY</div></div>
-                <div class="stat-box"><div class="stat-value" id="statsActivas">0</div><div class="stat-label">ACTIVAS</div></div>
-                <div class="stat-box"><div class="stat-value" id="statsResueltas">0</div><div class="stat-label">RESUELTAS</div></div>
-                <div class="stat-box"><div class="stat-value" id="statsCanceladas">0</div><div class="stat-label">CANCELADAS</div></div>
-                <div class="stat-box"><div class="stat-value" id="statsPendientes">0</div><div class="stat-label">PENDIENTES</div></div>
-                <div class="stat-box"><div class="stat-value" id="statsTiempo">0s</div><div class="stat-label">TTR PROM</div></div>
-            </div>
+    <!-- PANEL DERECHO - VIDEO + DATOS -->
+    <div class="panel video-panel">
+        <h2>📹 MONITOR TÁCTICO</h2>
+        
+        <!-- Canvas para video -->
+        <canvas id="visor-tactico" width="400" height="300"></canvas>
+        
+        <!-- Placeholder cuando no hay video -->
+        <div id="placeholder-msg" class="no-signal">SIN SEÑAL</div>
+        
+        <!-- Información de la alerta seleccionada -->
+        <div class="info-grid" id="info-alerta" style="display: none;">
+            <span class="label">TIPO:</span>
+            <span class="value" id="panel-tipo">--</span>
+            
+            <span class="label">CIUDADANO:</span>
+            <span class="value" id="panel-nombre">--</span>
+            
+            <span class="label">DNI:</span>
+            <span class="value" id="panel-dni">--</span>
+            
+            <span class="label">TELÉFONO:</span>
+            <span class="value" id="panel-tel">--</span>
+            
+            <span class="label">UBICACIÓN:</span>
+            <span class="value" id="panel-ubicacion">--</span>
+            
+            <span class="label">BATERÍA:</span>
+            <span class="value alert" id="panel-bateria">--</span>
+            
+            <span class="label">ESTADO:</span>
+            <span class="value" id="panel-estado">ACTIVA</span>
         </div>
-        <div class="map-panel">
-            <div id="map"></div>
-            <div class="map-overlay"><span class="coordinates" id="mapCoords">LAT: -38.0055 | LNG: -57.5426</span></div>
-        </div>
-    </div>
-
-    <div id="panel-detalle-alerta">
-        <div class="panel-detalle-header">
-            <span class="panel-detalle-titulo" id="panel-titulo">🚨 ALERTA CRÍTICA</span>
-            <span class="panel-detalle-close" onclick="cerrarPanelDetalle()">✖</span>
-        </div>
-        <div class="detalle-grid">
-            <span class="detalle-label">TIPO:</span><span class="detalle-value" id="panelTipo">--</span>
-            <span class="detalle-label">CIUDADANO:</span><span class="detalle-value" id="panelNombre">--</span>
-            <span class="detalle-label">DNI:</span><span class="detalle-value" id="panelDni">--</span>
-            <span class="detalle-label">TELÉFONO:</span><span class="detalle-value" id="panelTel">--</span>
-            <span class="detalle-label">ROL:</span><span class="detalle-value" id="panelRol">--</span>
-            <span class="detalle-label">UBICACIÓN:</span><span class="detalle-value" id="panelUbicacion">--</span>
-            <span class="detalle-label">BATERÍA:</span><span class="detalle-value alert" id="panelBateria">--</span>
-            <span class="detalle-label">ESTADO:</span><span class="detalle-value" id="panelEstado">ACTIVA</span>
-        </div>
-        <div id="contenedor-video-alerta">
-            <div id="status-live"><div class="pulse-dot"></div><span style="color: #ff4444; font-family: 'Courier New', monospace; font-weight: bold; font-size: 0.8rem; text-shadow: 0 0 5px #ff4444;">REC / EN VIVO</span></div>
-            <video id="video-feed" autoplay muted playsinline><source src="" type="video/webm">Tu navegador no soporta el video de Sentinel.</video>
-            <div id="esperando-texto">[ ESPERANDO VIDEO... ]</div>
-        </div>
-        <div style="text-align: center; margin: 10px 0; font-size: 0.65rem; color: var(--secondary);" id="panelTimestamp">--</div>
-        <div class="panel-detalle-actions">
-            <button class="action-button primary" onclick="asignarUnidadManual()">🚔 ASIGNAR UNIDAD</button>
-            <button class="action-button secondary" onclick="verRuta()">🗺️ VER RUTA</button>
-            <button class="action-button warning" onclick="cerrarIncidenteActual()">✅ CERRAR</button>
+        
+        <!-- Acciones -->
+        <div class="acciones" id="acciones" style="display: none;">
+            <button class="btn" onclick="asignarUnidad()">🚔 ASIGNAR UNIDAD</button>
+            <button class="btn btn-alert" onclick="cerrarIncidente()">✅ CERRAR</button>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let mapa, marcadores = {}, alertas = [], alertaSeleccionada = null;
-        let markerCiudadano = null, lineaRuta = null, marcadorUnidad = null;
-        let canalStreamingActivo = null, fragmentoActual = null;
-        let audioContext = null, sonidosPermitidos = false;
+        let mapa;
+        let marcadores = {};
+        let alertas = [];
+        let alertaSeleccionada = null;
+        let canalVideo = null;
 
-        const videoPlayer = document.getElementById('video-feed');
-        const fuenteVideo = videoPlayer ? videoPlayer.querySelector('source') : null;
-        const textoEspera = document.getElementById('esperando-texto');
-        const mainContainer = document.getElementById('main-container');
+        const canvas = document.getElementById('visor-tactico');
+        const ctx = canvas.getContext('2d');
 
-        // HABILITAR SONIDOS CON PRIMER CLIC
-        document.addEventListener('click', function iniciarAudio() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                sonidosPermitidos = true;
-                console.log("🔊 Sonidos habilitados");
-            }
-            document.removeEventListener('click', iniciarAudio);
-        }, { once: true });
-
-        function reproducirAlerta() {
-            if (!sonidosPermitidos || !audioContext) return;
-            
-            const osc1 = audioContext.createOscillator();
-            const gain1 = audioContext.createGain();
-            osc1.connect(gain1); gain1.connect(audioContext.destination);
-            osc1.type = 'sawtooth'; osc1.frequency.value = 880; gain1.gain.value = 0.3;
-            osc1.start(); osc1.stop(audioContext.currentTime + 0.2);
-            
-            setTimeout(() => {
-                const osc2 = audioContext.createOscillator();
-                const gain2 = audioContext.createGain();
-                osc2.connect(gain2); gain2.connect(audioContext.destination);
-                osc2.type = 'sawtooth'; osc2.frequency.value = 440; gain2.gain.value = 0.3;
-                osc2.start(); osc2.stop(audioContext.currentTime + 0.2);
-            }, 300);
-            
-            setTimeout(() => {
-                const osc3 = audioContext.createOscillator();
-                const gain3 = audioContext.createGain();
-                osc3.connect(gain3); gain3.connect(audioContext.destination);
-                osc3.type = 'sawtooth'; osc3.frequency.value = 660; gain3.gain.value = 0.3;
-                osc3.start(); osc3.stop(audioContext.currentTime + 0.2);
-            }, 600);
-        }
-
-        function notificarPush(titulo, mensaje) {
-            const toast = document.getElementById('toast-notificacion');
-            document.getElementById('toast-titulo').textContent = titulo;
-            document.getElementById('toast-mensaje').textContent = mensaje;
-            toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 5000);
-        }
-
-        function agregarTerminal(mensaje, tipo = 'normal') {
-            const terminal = document.getElementById('terminal');
-            if (!terminal) return;
-            const linea = document.createElement('div'); linea.className = 'terminal-line';
-            const prompt = document.createElement('span'); prompt.className = 'terminal-prompt'; prompt.textContent = '>';
-            const texto = document.createElement('span'); texto.className = `terminal-text ${tipo === 'alert' ? 'alert' : ''}`; texto.textContent = mensaje;
-            linea.appendChild(prompt); linea.appendChild(texto); terminal.appendChild(linea);
-            while (terminal.children.length > 8) terminal.removeChild(terminal.firstChild);
-        }
-
-        async function obtenerNombreCalle(lat, lng) {
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
-                const data = await response.json();
-                if (data && data.display_name) {
-                    const partes = data.display_name.split(',');
-                    return partes[0] + (partes[1] ? ', ' + partes[1] : '');
-                }
-                return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-            } catch (error) {
-                console.error("Error obteniendo calle:", error);
-                return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-            }
-        }
-
-        function colorPorTipo(tipo) {
-            const colores = { 'ROBO': '#ff3131', 'ACCIDENTE': '#ffaa00', 'INCENDIO': '#ff6600', 'MEDICA': '#39ff14', 'VIOLENCIA': '#ff00ff', 'OTRO': '#00f2ff' };
-            return colores[tipo] || '#ff3131';
-        }
-
-        function init() {
-            mapa = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 14);
+        // ==============================================
+        // INICIALIZACIÓN
+        // ==============================================
+        function iniciar() {
+            mapa = L.map('mapa', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 14);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 filter: 'invert(1) hue-rotate(160deg) saturate(3) brightness(0.8) contrast(1.5)'
             }).addTo(mapa);
-            actualizarReloj(); setInterval(actualizarReloj, 1000);
-            mapa.on('move', actualizarCoordenadas); actualizarCoordenadas();
-            cargarUnidadesDisponibles(); cargarAlertasActivas(); suscribirAlertas();
-            if (Notification.permission !== 'granted' && Notification.permission !== 'denied') Notification.requestPermission();
+
+            mapa.on('move', () => {
+                const centro = mapa.getCenter();
+                document.getElementById('map-coords').innerHTML = 
+                    `LAT: ${centro.lat.toFixed(5)} | LNG: ${centro.lng.toFixed(5)}`;
+            });
+
+            cargarAlertasIniciales();
+            suscribirAlertas();
         }
 
-        function actualizarReloj() { document.getElementById('reloj').textContent = new Date().toLocaleTimeString(); }
-        function actualizarCoordenadas() { const centro = mapa.getCenter(); document.getElementById('mapCoords').innerHTML = `LAT: ${centro.lat.toFixed(5)} | LNG: ${centro.lng.toFixed(5)}`; }
+        // ==============================================
+        // ALERTAS
+        // ==============================================
+        async function cargarAlertasIniciales() {
+            const { data, error } = await _client
+                .from('alertas')
+                .select('*')
+                .eq('activa', true)
+                .order('timestamp', { ascending: false })
+                .limit(10);
 
-        async function cargarUnidadesDisponibles() {
-            const { data, error } = await _supabase.from('unidades_respuesta').select('*').eq('estado', 'disponible');
-            if (!error && data) document.getElementById('unidadesDisponibles').textContent = data.length;
-        }
-
-        async function cargarAlertasActivas() {
-            const { data, error } = await _supabase.from('alertas').select('*').order('timestamp', { ascending: false });
             if (!error && data) {
-                data.forEach(alerta => { alertas.push(alerta); agregarMarcador(alerta); });
-                aplicarFiltros(); actualizarEstadisticas();
-                document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
+                data.forEach(alerta => {
+                    alertas.push(alerta);
+                    agregarAlertaALista(alerta);
+                    agregarMarcador(alerta);
+                });
             }
         }
 
         function suscribirAlertas() {
-            _supabase.channel('alertas-policia')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alertas' }, (payload) => { nuevaAlerta(payload.new); })
+            _client
+                .channel('nuevas-alertas')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alertas' }, payload => {
+                    const alerta = payload.new;
+                    if (alerta.activa) {
+                        alertas.unshift(alerta);
+                        agregarAlertaALista(alerta);
+                        agregarMarcador(alerta);
+                    }
+                })
                 .subscribe();
         }
 
+        function agregarAlertaALista(alerta) {
+            const container = document.getElementById('incident-list');
+            if (container.children[0]?.textContent === 'Esperando señal...') {
+                container.innerHTML = '';
+            }
+
+            const div = document.createElement('div');
+            div.className = 'alerta-item';
+            div.id = `alerta-${alerta.id}`;
+            
+            const fecha = new Date(alerta.timestamp);
+            const hora = fecha.toLocaleTimeString();
+            
+            div.innerHTML = `
+                <div class="alerta-tipo">${alerta.tipo || 'EMERGENCIA'}</div>
+                <strong>${alerta.nombre || 'Desconocido'}</strong><br>
+                📍 ${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}<br>
+                <small>${hora}</small>
+            `;
+            
+            div.onclick = () => sintonizarAlerta(alerta);
+            container.prepend(div);
+        }
+
         function agregarMarcador(alerta) {
-            const color = alerta.cancelada ? '#888888' : (alerta.activa === false ? '#39ff14' : '#ff3131');
             const marcador = L.circleMarker([alerta.lat, alerta.lng], {
-                radius: 12, color: color, weight: 3, fillColor: color, fillOpacity: 0.6
-            }).addTo(mapa).bindPopup(`<b>${alerta.cancelada ? '❌ CANCELADA' : (alerta.activa === false ? '✅ RESUELTA' : '🚨 ALERTA')}</b><br>${alerta.tipo || 'EMERGENCIA'}<br>${alerta.nombre}<br>${new Date(alerta.timestamp).toLocaleTimeString()}`);
+                radius: 10,
+                color: '#ff3131',
+                fillColor: '#ff3131',
+                fillOpacity: 0.6,
+                weight: 2
+            }).addTo(mapa).bindPopup(`🚨 ${alerta.tipo || 'EMERGENCIA'}<br>${alerta.nombre}`);
+            
             marcadores[alerta.id] = marcador;
         }
 
-        function nuevaAlerta(alerta) {
-            if (alertas.some(a => a.id === alerta.id)) return;
-            alertas.unshift(alerta); agregarMarcador(alerta); aplicarFiltros(); actualizarEstadisticas();
-            document.getElementById('alertCount').textContent = alertas.filter(a => a.activa !== false && !a.cancelada).length;
-            
-            // SONIDO
-            reproducirAlerta();
-            
-            // EFECTO VISUAL
-            document.body.classList.add('alerta-global-active');
-            setTimeout(() => document.body.classList.remove('alerta-global-active'), 3000);
-            
-            // PULSO EN CONTADOR
-            const alertCount = document.getElementById('alertCount');
-            alertCount.classList.add('pulse-counter-active');
-            setTimeout(() => alertCount.classList.remove('pulse-counter-active'), 3000);
-            
-            // ZOOM AUTOMÁTICO
-            if (mapa && !alerta.cancelada) mapa.flyTo([alerta.lat, alerta.lng], 18, { duration: 1.5, easeLinearity: 0.5 });
-            
-            // ABRIR PANEL
-            setTimeout(() => { if (!alerta.cancelada) verDetallePanel(alerta); }, 800);
-            
-            // NOTIFICACIÓN PUSH
-            if (Notification.permission === 'granted') new Notification('🚨 NUEVA ALERTA', { body: `${alerta.tipo || 'EMERGENCIA'} - ${alerta.nombre}`, icon: 'logo.png', requireInteraction: true });
-            
-            agregarTerminal(`🚨 NUEVA ALERTA ${alerta.tipo || 'EMERGENCIA'}: ${alerta.nombre}`, 'alert');
-            alerta.tiempoInicio = Date.now();
-        }
-
-        function aplicarFiltros() {
-            const filtroRol = document.getElementById('filtro-rol').value;
-            const filtroBusqueda = document.getElementById('filtro-busqueda').value.toLowerCase();
-            const filtroCanceladas = document.getElementById('filtro-canceladas').value;
-            let alertasFiltradas = alertas.filter(alerta => {
-                if (filtroCanceladas === 'activas' && (alerta.cancelada || alerta.activa === false)) return false;
-                if (filtroCanceladas === 'canceladas' && !alerta.cancelada) return false;
-                if (filtroRol !== 'todos' && alerta.rol !== filtroRol) return false;
-                if (filtroBusqueda && !(alerta.nombre || '').toLowerCase().includes(filtroBusqueda)) return false;
-                return true;
-            });
-            renderizarListaIncidentes(alertasFiltradas);
-        }
-
-        function renderizarListaIncidentes(alertasFiltradas) {
-            const contenedor = document.getElementById('incidentList');
-            if (alertasFiltradas.length === 0) { contenedor.innerHTML = '<div style="color: rgba(255,255,255,0.3); text-align:center; padding:20px;">NO HAY INCIDENTES</div>'; return; }
-            let html = '';
-            alertasFiltradas.slice(0, 15).forEach(alerta => {
-                const fecha = new Date(alerta.timestamp); const hora = fecha.toLocaleTimeString();
-                const canceladaBadge = alerta.cancelada ? '<span class="cancelada-badge">❌ CANCELADA</span>' : '';
-                html += `<div class="incident-card ${alerta.cancelada ? 'cancelada' : ''}" onclick='verDetallePanel(${JSON.stringify(alerta)})' style="position: relative;">${canceladaBadge}<div class="incident-time">${hora}</div><div class="incident-tipo" style="color: ${colorPorTipo(alerta.tipo)}">${alerta.tipo || 'EMERGENCIA'}</div><div class="incident-title">${alerta.nombre}</div><div class="incident-location">${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}</div><div class="incident-meta"><span class="meta-label">ROL:</span><span class="meta-value">${alerta.rol || 'CIVIL'}</span><span class="meta-label">BATERÍA:</span><span class="meta-value">${alerta.bateria}</span></div></div>`;
-            });
-            contenedor.innerHTML = html;
-        }
-
-        function actualizarEstadisticas() {
-            const hoy = new Date().toDateString();
-            const alertasHoy = alertas.filter(a => new Date(a.timestamp).toDateString() === hoy).length;
-            const activas = alertas.filter(a => a.activa !== false && !a.cancelada).length;
-            const resueltas = alertas.filter(a => a.activa === false && !a.cancelada).length;
-            const canceladas = alertas.filter(a => a.cancelada === true).length;
-            document.getElementById('statsHoy').textContent = alertasHoy;
-            document.getElementById('statsActivas').textContent = activas;
-            document.getElementById('statsResueltas').textContent = resueltas;
-            document.getElementById('statsCanceladas').textContent = canceladas;
-            document.getElementById('statsPendientes').textContent = activas;
-        }
-
-        async function verDetallePanel(alerta) {
+        // ==============================================
+        // SINTONIZAR VIDEO
+        // ==============================================
+        function sintonizarAlerta(alerta) {
             alertaSeleccionada = alerta;
-            document.getElementById('panel-titulo').textContent = `🚨 ALERTA ${alerta.cancelada ? 'CANCELADA' : 'CRÍTICA'}`;
-            document.getElementById('panelTipo').textContent = alerta.tipo || 'EMERGENCIA';
-            document.getElementById('panelNombre').textContent = alerta.nombre;
-            document.getElementById('panelDni').textContent = alerta.dni;
-            document.getElementById('panelTel').textContent = alerta.telefono;
-            document.getElementById('panelRol').textContent = alerta.rol ? alerta.rol.toUpperCase() : 'CIVIL';
-            document.getElementById('panelUbicacion').textContent = await obtenerNombreCalle(alerta.lat, alerta.lng);
-            document.getElementById('panelBateria').textContent = alerta.bateria;
-            document.getElementById('panelEstado').textContent = alerta.cancelada ? 'CANCELADA' : (alerta.activa === false ? 'RESUELTA' : 'ACTIVA');
-            const fecha = new Date(alerta.timestamp);
-            document.getElementById('panelTimestamp').textContent = fecha.toLocaleString();
-            if (videoPlayer) videoPlayer.style.display = 'none';
-            if (textoEspera) textoEspera.style.display = 'flex';
-            fragmentoActual = null;
-            if (!alerta.cancelada) conectarStreamingRealtime(alerta.id);
-            document.getElementById('panel-detalle-alerta').style.display = 'block';
+            
+            // Resaltar en lista
+            document.querySelectorAll('.alerta-item').forEach(el => el.classList.remove('activa'));
+            document.getElementById(`alerta-${alerta.id}`).classList.add('activa');
+            
+            // Centrar mapa
+            mapa.flyTo([alerta.lat, alerta.lng], 17);
+            
+            // Mostrar información
+            document.getElementById('info-alerta').style.display = 'grid';
+            document.getElementById('acciones').style.display = 'flex';
+            document.getElementById('placeholder-msg').classList.add('hidden');
+            
+            document.getElementById('panel-tipo').textContent = alerta.tipo || 'EMERGENCIA';
+            document.getElementById('panel-nombre').textContent = alerta.nombre || '--';
+            document.getElementById('panel-dni').textContent = alerta.dni || '--';
+            document.getElementById('panel-tel').textContent = alerta.telefono || '--';
+            document.getElementById('panel-ubicacion').textContent = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
+            document.getElementById('panel-bateria').textContent = alerta.bateria || '0%';
+            document.getElementById('panel-estado').textContent = alerta.cancelada ? 'CANCELADA' : 'ACTIVA';
+            
+            // Sintonizar canal de video
+            if (canalVideo) canalVideo.unsubscribe();
+            
+            canalVideo = _client.channel(`alerta-${alerta.id}`);
+            canalVideo.on('broadcast', { event: 'video-frame' }, (payload) => {
+                const img = new Image();
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = payload.payload.frame;
+            }).subscribe();
         }
 
-        function cerrarPanelDetalle() { document.getElementById('panel-detalle-alerta').style.display = 'none'; alertaSeleccionada = null; }
+        // ==============================================
+        // ACCIONES
+        // ==============================================
+        async function asignarUnidad() {
+            if (!alertaSeleccionada) return;
+            
+            const { data: unidades, error } = await _client
+                .from('unidades_respuesta')
+                .select('*')
+                .eq('estado', 'disponible');
+            
+            if (error || !unidades || unidades.length === 0) {
+                alert("❌ NO HAY UNIDADES DISPONIBLES");
+                return;
+            }
 
-        async function asignarUnidadManual() {
-            if (!alertaSeleccionada || alertaSeleccionada.cancelada) return;
-            console.log("🚔 Asignando unidad a alerta:", alertaSeleccionada.id);
-            const { data: unidades, error } = await _supabase.from('unidades_respuesta').select('*').eq('estado', 'disponible');
-            if (error || !unidades || unidades.length === 0) { alert("❌ NO HAY UNIDADES DISPONIBLES"); return; }
             const unidad = unidades[0];
-            const { error: updateError } = await _supabase.from('alertas').update({ unidad_asignada: unidad.codigo, estado: 'en_proceso' }).eq('id', alertaSeleccionada.id);
-            if (updateError) { console.error("Error asignando unidad:", updateError); alert("❌ ERROR AL ASIGNAR UNIDAD"); return; }
-            notificarPush('🚔 UNIDAD ASIGNADA', `Unidad ${unidad.codigo} en camino`);
             
-            // Suscribirse a la posición de la unidad asignada
-            _supabase.channel(`unidad-${unidad.codigo}`).on('postgres_changes', {
-                event: 'UPDATE', schema: 'public', table: 'unidades_respuesta', filter: `codigo=eq.${unidad.codigo}`
-            }, (payload) => {
-                if (payload.new.lat && payload.new.lng) {
-                    if (marcadorUnidad) mapa.removeLayer(marcadorUnidad);
-                    marcadorUnidad = L.circleMarker([payload.new.lat, payload.new.lng], {
-                        radius: 10, color: '#0066ff', fillColor: '#0066ff', fillOpacity: 0.8, weight: 3
-                    }).addTo(mapa).bindPopup(`🚔 UNIDAD ${unidad.codigo} EN CAMINO`);
-                }
-            }).subscribe();
+            await _client
+                .from('alertas')
+                .update({ unidad_asignada: unidad.codigo, estado: 'en_proceso' })
+                .eq('id', alertaSeleccionada.id);
             
-            cerrarPanelDetalle();
+            alert(`🚔 UNIDAD ${unidad.codigo} ASIGNADA`);
         }
 
-        function verRuta() { if (!alertaSeleccionada) return; window.open(`https://www.google.com/maps/dir/?api=1&destination=${alertaSeleccionada.lat},${alertaSeleccionada.lng}&travelmode=driving`, '_blank'); }
-        async function cerrarIncidenteActual() { if (!alertaSeleccionada) return; await _supabase.from('alertas').update({ activa: false, estado: 'finalizado' }).eq('id', alertaSeleccionada.id); cerrarPanelDetalle(); }
-
-        function conectarStreamingRealtime(idDeLaAlerta) {
-            if (canalStreamingActivo) _supabase.removeChannel(canalStreamingActivo);
-            canalStreamingActivo = _supabase.channel(`streaming-${idDeLaAlerta}`).on('postgres_changes', {
-                event: 'UPDATE', schema: 'public', table: 'alertas', filter: `id=eq.${idDeLaAlerta}`
-            }, payload => {
-                const nuevaUrl = payload.new.video_url;
-                if (nuevaUrl && nuevaUrl !== fragmentoActual) {
-                    fragmentoActual = nuevaUrl;
-                    if (fuenteVideo) fuenteVideo.src = nuevaUrl;
-                    if (videoPlayer) { videoPlayer.load(); videoPlayer.play().catch(e => {}); }
-                    if (textoEspera) textoEspera.style.display = 'none';
-                    if (videoPlayer) videoPlayer.style.display = 'block';
-                }
-            }).subscribe();
+        async function cerrarIncidente() {
+            if (!alertaSeleccionada) return;
+            
+            await _client
+                .from('alertas')
+                .update({ activa: false, estado: 'finalizado' })
+                .eq('id', alertaSeleccionada.id);
+            
+            location.reload(); // Simplificado para el ejemplo
         }
 
-        window.onload = init;
+        window.onload = iniciar;
     </script>
 </body>
 </html>
