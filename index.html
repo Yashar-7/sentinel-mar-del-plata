@@ -1280,104 +1280,106 @@
         // FUNCIÓN DE ALERTA (ACTUALIZADA)
         // ==============================================
         async function activarAlerta() {
-            if (alertaActiva || !ubicacionActual || !usuarioActual) return;
-            
-            console.log("🎥 Activando cámara...");
-            const camaraActivada = await activarCamara();
-            
-            if (!camaraActivada) {
-                actualizarTerminal('❌ ERROR: NO SE PUDO ACTIVAR LA CÁMARA');
-                return;
-            }
-            
-            cerrarModal();
+    if (alertaActiva || !ubicacionActual || !usuarioActual) return;
+    
+    // 1. CERRAR MODAL INMEDIATAMENTE (para que desaparezcan las opciones)
+    cerrarModal();
+    
+    // 2. Activar cámara
+    console.log("🎥 Activando cámara...");
+    const camaraActivada = await activarCamara();
+    
+    if (!camaraActivada) {
+        actualizarTerminal('❌ ERROR: NO SE PUDO ACTIVAR LA CÁMARA');
+        return;
+    }
 
-            const alerta = {
-                unidad_id: usuarioActual.id_unico,
-                nombre: usuarioActual.nombre,
-                dni: usuarioActual.dni,
-                telefono: usuarioActual.telefono,
-                rol: usuarioActual.rol,
-                lat: ubicacionActual.lat,
-                lng: ubicacionActual.lng,
-                timestamp: new Date().toISOString(),
-                bateria: document.getElementById('battery').textContent,
-                activa: true,
-                modo_sigiloso: modoSigiloso || false,
-                tipo: tipoAlertaSeleccionado
+    const alerta = {
+        unidad_id: usuarioActual.id_unico,
+        nombre: usuarioActual.nombre,
+        dni: usuarioActual.dni,
+        telefono: usuarioActual.telefono,
+        rol: usuarioActual.rol,
+        lat: ubicacionActual.lat,
+        lng: ubicacionActual.lng,
+        timestamp: new Date().toISOString(),
+        bateria: document.getElementById('battery').textContent,
+        activa: true,
+        modo_sigiloso: modoSigiloso || false,
+        tipo: tipoAlertaSeleccionado
+    };
+
+    try {
+        const { data, error } = await _supabase
+            .from('alertas')
+            .insert(alerta)
+            .select();
+        if (error) throw error;
+        
+        if (data && data[0]) {
+            alertaId = data[0].id;
+            alertaActiva = true;
+            
+            // Iniciar transmisión en vivo
+            await iniciarTransmisionViva(alertaId);
+            
+            // Configurar grabación para evidencia
+            fragmentosVideo = [];
+            mediaRecorder = new MediaRecorder(streamCamara, { 
+                mimeType: 'video/webm;codecs=vp8' 
+            });
+            
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) fragmentosVideo.push(e.data);
             };
-
-            try {
-                const { data, error } = await _supabase
-                    .from('alertas')
-                    .insert(alerta)
-                    .select();
-                if (error) throw error;
+            
+            mediaRecorder.onstop = async () => {
+                if (fragmentosVideo.length === 0 || !alertaId) return;
                 
-                if (data && data[0]) {
-                    alertaId = data[0].id;
-                    alertaActiva = true;
+                actualizarTerminal('📤 SUBIENDO EVIDENCIA...');
+                
+                const videoBlob = new Blob(fragmentosVideo, { type: 'video/webm' });
+                const nombre = `evidencia_${alertaId}_${Date.now()}.webm`;
+                
+                try {
+                    const { error } = await _supabase.storage
+                        .from('videos-alertas')
+                        .upload(nombre, videoBlob);
                     
-                    // Iniciar transmisión en vivo
-                    await iniciarTransmisionViva(alertaId);
+                    if (error) throw error;
                     
-                    // Configurar grabación para evidencia
-                    fragmentosVideo = [];
-                    mediaRecorder = new MediaRecorder(streamCamara, { 
-                        mimeType: 'video/webm;codecs=vp8' 
-                    });
+                    const { data: urlData } = _supabase.storage
+                        .from('videos-alertas')
+                        .getPublicUrl(nombre);
                     
-                    mediaRecorder.ondataavailable = (e) => {
-                        if (e.data.size > 0) fragmentosVideo.push(e.data);
-                    };
+                    await _supabase
+                        .from('alertas')
+                        .update({ video_evidencia_url: urlData.publicUrl })
+                        .eq('id', alertaId);
                     
-                    mediaRecorder.onstop = async () => {
-                        if (fragmentosVideo.length === 0 || !alertaId) return;
-                        
-                        actualizarTerminal('📤 SUBIENDO EVIDENCIA...');
-                        
-                        const videoBlob = new Blob(fragmentosVideo, { type: 'video/webm' });
-                        const nombre = `evidencia_${alertaId}_${Date.now()}.webm`;
-                        
-                        try {
-                            const { error } = await _supabase.storage
-                                .from('videos-alertas')
-                                .upload(nombre, videoBlob);
-                            
-                            if (error) throw error;
-                            
-                            const { data: urlData } = _supabase.storage
-                                .from('videos-alertas')
-                                .getPublicUrl(nombre);
-                            
-                            await _supabase
-                                .from('alertas')
-                                .update({ video_evidencia_url: urlData.publicUrl })
-                                .eq('id', alertaId);
-                            
-                            actualizarTerminal('✅ EVIDENCIA ASEGURADA');
-                            
-                        } catch (error) {
-                            console.error("Error subiendo evidencia:", error);
-                            actualizarTerminal('❌ ERROR SUBIENDO EVIDENCIA');
-                        }
-                    };
+                    actualizarTerminal('✅ EVIDENCIA ASEGURADA');
                     
-                    mediaRecorder.start();
-                    
-                    mostrarOpcionCancelar(alertaId);
-                    await notificarPatrullaMasCercana(alertaId, ubicacionActual.lat, ubicacionActual.lng);
-                    iniciarSeguimientoContinuo(alertaId);
-                    
-                    document.getElementById('modal-text').innerHTML = '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>TRANSMITIENDO EN VIVO';
-                    document.getElementById('alert-modal').style.display = 'flex';
-                    actualizarTerminal(`🚨 ALERTA ${tipoAlertaSeleccionado} ENVIADA`);
+                } catch (error) {
+                    console.error("Error subiendo evidencia:", error);
+                    actualizarTerminal('❌ ERROR SUBIENDO EVIDENCIA');
                 }
-            } catch (error) {
-                console.log('Error:', error);
-                actualizarTerminal('❌ ERROR AL ENVIAR');
-            }
+            };
+            
+            mediaRecorder.start();
+            
+            mostrarOpcionCancelar(alertaId);
+            await notificarPatrullaMasCercana(alertaId, ubicacionActual.lat, ubicacionActual.lng);
+            iniciarSeguimientoContinuo(alertaId);
+            
+            document.getElementById('modal-text').innerHTML = '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>TRANSMITIENDO EN VIVO';
+            // No volvemos a abrir el modal
+            actualizarTerminal(`🚨 ALERTA ${tipoAlertaSeleccionado} ENVIADA`);
         }
+    } catch (error) {
+        console.log('Error:', error);
+        actualizarTerminal('❌ ERROR AL ENVIAR');
+    }
+}
 
         function mostrarOpcionCancelar(idAlerta) {
             const cancelOverlay = document.getElementById('cancelar-overlay');
