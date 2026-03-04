@@ -32,7 +32,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 50px;
+            height: 60px;
             background: var(--panel-bg);
             border-bottom: 2px solid var(--primary);
             display: flex;
@@ -43,9 +43,29 @@
             backdrop-filter: blur(5px);
         }
 
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-box {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            clip-path: polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%);
+        }
+        .logo-text {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .logo-sub {
+            font-size: 0.6rem;
+            opacity: 0.7;
+        }
+
         #mapa {
             position: fixed;
-            top: 50px;
+            top: 60px;
             left: 0;
             right: 0;
             bottom: 250px;
@@ -54,7 +74,7 @@
 
         .panel-video {
             position: fixed;
-            top: 60px;
+            top: 70px;
             right: 10px;
             width: 160px;
             border: 2px solid var(--alert);
@@ -119,7 +139,9 @@
             font-family: inherit;
             font-weight: bold;
             cursor: pointer;
+            transition: all 0.3s;
         }
+        .btn:hover { background: rgba(255,255,255,0.1); }
         .btn-nav { border-color: var(--secondary); color: var(--secondary); }
         .btn-arrive { border-color: #39ff14; color: #39ff14; }
         .btn-backup { grid-column: span 2; border-color: var(--alert); color: var(--alert); }
@@ -140,7 +162,13 @@
 <body>
 
     <header>
-        <div>🚓 UNIDAD <span id="unidad-id">K-9</span></div>
+        <div class="logo">
+            <div class="logo-box"></div>
+            <div>
+                <div class="logo-text">SENTINEL</div>
+                <div class="logo-sub">UNIDAD <span id="unidad-id">K-9</span></div>
+            </div>
+        </div>
         <div id="reloj">--:--:--</div>
     </header>
 
@@ -160,7 +188,7 @@
             <span class="label">DISTANCIA:</span><span class="value" id="distancia">--</span>
         </div>
         <div class="btn-grid">
-            <button class="btn btn-nav" onclick="toggleRuta()">🧭 RUTA</button>
+            <button class="btn btn-nav" onclick="toggleRuta()">🧭 VER RUTA</button>
             <button class="btn btn-arrive" onclick="llegue()">✅ LLEGUÉ</button>
             <button class="btn btn-backup" onclick="refuerzos()">⚠️ REFUERZOS</button>
         </div>
@@ -176,6 +204,7 @@
         let mapa, userMarker, alertMarker, routeLine, activeAlert = null;
         let canalVideo = null;
         let rutaVisible = false;
+        let miUnidad = "K-9";
 
         const canvas = document.getElementById('visor-video');
         const ctx = canvas.getContext('2d');
@@ -213,11 +242,14 @@
 
         function escucharAsignaciones() {
             _client
-                .channel('patrulla-k9')
+                .channel(`patrulla-${miUnidad}`)
                 .on('postgres_changes', { 
-                    event: 'UPDATE', schema: 'public', table: 'alertas', filter: 'unidad_asignada=eq.K-9' 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'alertas', 
+                    filter: `unidad_asignada=eq.${miUnidad}` 
                 }, payload => {
-                    if (payload.new.estado === 'en_proceso') {
+                    if (payload.new.estado === 'en_proceso' || payload.new.estado === 'CRITICO') {
                         activarAlerta(payload.new);
                     }
                 })
@@ -235,6 +267,7 @@
             document.getElementById('nombre').innerText = alerta.nombre || '--';
             document.getElementById('ubicacion').innerText = `${alerta.lat.toFixed(5)}, ${alerta.lng.toFixed(5)}`;
             
+            if (alertMarker) mapa.removeLayer(alertMarker);
             alertMarker = L.circleMarker([alerta.lat, alerta.lng], {
                 radius: 16, color: '#ff3131', weight: 5, fillOpacity: 0.3
             }).addTo(mapa);
@@ -258,16 +291,35 @@
 
         function toggleRuta() {
             rutaVisible = !rutaVisible;
-            if (!rutaVisible && routeLine) {
+            
+            if (rutaVisible && activeAlert) {
+                const userPos = userMarker.getLatLng();
+                
+                if (routeLine) mapa.removeLayer(routeLine);
+                routeLine = L.polyline([userPos, [activeAlert.lat, activeAlert.lng]], {
+                    color: '#00f2ff',
+                    weight: 4,
+                    dashArray: '10, 10'
+                }).addTo(mapa);
+                
+                const dist = mapa.distance(userPos, [activeAlert.lat, activeAlert.lng]) / 1000;
+                document.getElementById('distancia').innerText = dist.toFixed(2) + ' km';
+                
+            } else if (routeLine) {
                 mapa.removeLayer(routeLine);
                 routeLine = null;
-            } else if (activeAlert) {
-                updateGPS({ coords: userMarker.getLatLng() });
             }
         }
 
-        function llegue() { alert('✅ LLEGADA CONFIRMADA'); location.reload(); }
-        function refuerzos() { alert('⚠️ REFUERZOS SOLICITADOS'); }
+        function llegue() { 
+            alert('✅ LLEGADA CONFIRMADA'); 
+            // Aquí se podría actualizar la alerta
+            location.reload(); 
+        }
+        
+        function refuerzos() { 
+            alert('⚠️ REFUERZOS SOLICITADOS'); 
+        }
 
         window.onload = init;
     </script>
