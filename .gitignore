@@ -1,0 +1,5 @@
+# Archivos que GitHub debe ignorar
+config.js
+.env
+node_modules/
+*.log
