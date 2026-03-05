@@ -9,29 +9,24 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-   <!-- Primero, cargar configuración -->
-<script src="../config.js"></script>
+    <!-- Primero, cargar configuración -->
+    <script src="../config.js"></script>
 
-<!-- Luego, Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-    // Usar las claves desde config.js
-    const _supabase = supabase.createClient(
-    SENTINEL_CONFIG.SUPABASE_URL,
-    SENTINEL_CONFIG.SUPABASE_KEY
-    );
-    
-    // Para Google Maps
-    const GOOGLE_API_KEY = SENTINEL_CONFIG.GOOGLE_MAPS_KEY;
-</script>
+    <!-- Luego, Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --primary: #00ffaa; --alert: #ff3131; --bg: #020202; }
-        
+        :root {
+            --primary: #00ffaa;
+            --secondary: #0066ff;
+            --alert: #ff3131;
+            --bg: #020202;
+            --panel-bg: rgba(10, 10, 10, 0.95);
+        }
+
         body {
             background: var(--bg);
             color: var(--primary);
@@ -47,7 +42,7 @@
         /* PANELES COMUNES */
         .panel {
             border: 1px solid #333;
-            background: rgba(10,10,10,0.9);
+            background: var(--panel-bg);
             padding: 15px;
             overflow-y: auto;
             display: flex;
@@ -65,7 +60,7 @@
             margin-bottom: 15px;
         }
 
-        /* PANEL IZQUIERDO - LISTA DE INCIDENTES */
+        /* PANEL IZQUIERDO - INCIDENTES */
         .incident-list {
             flex: 1;
             overflow-y: auto;
@@ -146,6 +141,7 @@
             background: #000;
             border: 1px solid #333;
             margin-bottom: 15px;
+            display: block;
         }
         .no-signal {
             color: #444;
@@ -224,11 +220,8 @@
     <div class="panel video-panel">
         <h2>📹 MONITOR TÁCTICO</h2>
         
-        <!-- Canvas para video -->
+        <!-- Canvas para video (siempre visible) -->
         <canvas id="visor-tactico" width="400" height="300"></canvas>
-        
-        <!-- Placeholder cuando no hay video -->
-        <div id="placeholder-msg" class="no-signal">SIN SEÑAL</div>
         
         <!-- Información de la alerta seleccionada -->
         <div class="info-grid" id="info-alerta" style="display: none;">
@@ -262,9 +255,13 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://svpurpvbiujhcbiugrkh.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHVycHZiaXVqaGNiaXVncmtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDgzMTUsImV4cCI6MjA4MzMyNDMxNX0.AivKJ0_N0z_4T4vLNfUcE2hepJ1XXOO8-4fSA3PJXdc';
-        const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // ==============================================
+        // CONFIGURACIÓN
+        // ==============================================
+        const _client = supabase.createClient(
+            SENTINEL_CONFIG.SUPABASE_URL,
+            SENTINEL_CONFIG.SUPABASE_KEY
+        );
 
         let mapa;
         let marcadores = {};
@@ -295,6 +292,36 @@
         }
 
         // ==============================================
+        // SONIDO DE ALERTA
+        // ==============================================
+        function reproducirAlertaSonido() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sawtooth';
+                osc.frequency.value = 880;
+                gain.gain.value = 0.3;
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+                
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.type = 'sawtooth';
+                    osc2.frequency.value = 440;
+                    gain2.gain.value = 0.3;
+                    osc2.start();
+                    osc2.stop(audioCtx.currentTime + 0.2);
+                }, 300);
+            } catch (e) {}
+        }
+
+        // ==============================================
         // ALERTAS
         // ==============================================
         async function cargarAlertasIniciales() {
@@ -320,9 +347,16 @@
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alertas' }, payload => {
                     const alerta = payload.new;
                     if (alerta.activa) {
+                        // 1. Sonido
+                        reproducirAlertaSonido();
+                        
+                        // 2. Agregar a la lista
                         alertas.unshift(alerta);
                         agregarAlertaALista(alerta);
                         agregarMarcador(alerta);
+                        
+                        // 3. Seleccionar automáticamente la última alerta
+                        setTimeout(() => sintonizarAlerta(alerta), 500);
                     }
                 })
                 .subscribe();
@@ -365,22 +399,22 @@
         }
 
         // ==============================================
-        // SINTONIZAR VIDEO
+        // SINTONIZAR VIDEO (AUTOMÁTICO)
         // ==============================================
         function sintonizarAlerta(alerta) {
             alertaSeleccionada = alerta;
             
             // Resaltar en lista
             document.querySelectorAll('.alerta-item').forEach(el => el.classList.remove('activa'));
-            document.getElementById(`alerta-${alerta.id}`).classList.add('activa');
+            const elementoLista = document.getElementById(`alerta-${alerta.id}`);
+            if (elementoLista) elementoLista.classList.add('activa');
             
             // Centrar mapa
-            mapa.flyTo([alerta.lat, alerta.lng], 17);
+            mapa.flyTo([alerta.lat, alerta.lng], 17, { duration: 1.5 });
             
             // Mostrar información
             document.getElementById('info-alerta').style.display = 'grid';
             document.getElementById('acciones').style.display = 'flex';
-            document.getElementById('placeholder-msg').classList.add('hidden');
             
             document.getElementById('panel-tipo').textContent = alerta.tipo || 'EMERGENCIA';
             document.getElementById('panel-nombre').textContent = alerta.nombre || '--';
@@ -408,44 +442,31 @@
         // ==============================================
         // ACCIONES
         // ==============================================
-       async function asignarUnidad() {
-    if (!alertaSeleccionada) return;
-    
-    // 1. Obtener unidades disponibles
-    const { data: unidades, error } = await _client
-        .from('unidades_respuesta')
-        .select('*')
-        .eq('estado', 'disponible');
-    
-    if (error || !unidades || unidades.length === 0) {
-        alert("❌ NO HAY UNIDADES DISPONIBLES");
-        return;
-    }
+        async function asignarUnidad() {
+            if (!alertaSeleccionada) return;
+            
+            const { data: unidades, error } = await _client
+                .from('unidades_respuesta')
+                .select('*')
+                .eq('estado', 'disponible');
+            
+            if (error || !unidades || unidades.length === 0) {
+                alert("❌ NO HAY UNIDADES DISPONIBLES");
+                return;
+            }
 
-    // 2. Asignar la primera disponible (mejorable)
-    const unidad = unidades[0];
-    
-    // 3. ACTUALIZAR LA ALERTA CON LA UNIDAD ASIGNADA
-    const { error: updateError } = await _client
-        .from('alertas')
-        .update({ 
-            unidad_asignada: unidad.codigo,
-            estado: 'en_proceso'
-        })
-        .eq('id', alertaSeleccionada.id);
-    
-    if (updateError) {
-        console.error("Error asignando unidad:", updateError);
-        alert("❌ ERROR AL ASIGNAR UNIDAD");
-        return;
-    }
-    
-    // 4. Notificar éxito
-    alert(`🚔 UNIDAD ${unidad.codigo} ASIGNADA`);
-    
-    // 5. Opcional: actualizar UI para mostrar que ya fue asignada
-    document.getElementById('acciones').style.display = 'none';
-}
+            const unidad = unidades[0];
+            
+            await _client
+                .from('alertas')
+                .update({ 
+                    unidad_asignada: unidad.codigo, 
+                    estado: 'en_proceso' 
+                })
+                .eq('id', alertaSeleccionada.id);
+            
+            alert(`🚔 UNIDAD ${unidad.codigo} ASIGNADA`);
+        }
 
         async function cerrarIncidente() {
             if (!alertaSeleccionada) return;
@@ -455,7 +476,7 @@
                 .update({ activa: false, estado: 'finalizado' })
                 .eq('id', alertaSeleccionada.id);
             
-            location.reload(); // Simplificado para el ejemplo
+            location.reload();
         }
 
         window.onload = iniciar;
