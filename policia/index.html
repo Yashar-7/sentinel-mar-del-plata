@@ -17,9 +17,9 @@
 
 <script>
     // Usar las claves desde config.js
-    const _client = supabase.createClient(
-        SENTINEL_CONFIG.SUPABASE_URL,
-        SENTINEL_CONFIG.SUPABASE_KEY
+    const _supabase = supabase.createClient(
+    SENTINEL_CONFIG.SUPABASE_URL,
+    SENTINEL_CONFIG.SUPABASE_KEY
     );
     
     // Para Google Maps
