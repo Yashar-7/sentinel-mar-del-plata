@@ -3,1463 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SENTINEL V10.2 | SMART TECH</title>
-    
-    <!-- Leaflet para mapas -->
+    <title>CITY_VIVA | CIUDADANO</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- Primero, cargar configuración (RUTA CORRECTA: MISMA CARPETA) -->
-    <script src="config.js"></script>
-
-    <!-- Luego, Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
-    <script>
-        // Usar las claves desde config.js
-       const _supabase = supabase.createClient(
-    SENTINEL_CONFIG.SUPABASE_URL,
-    SENTINEL_CONFIG.SUPABASE_KEY
-        );
-        
-        // Para Google Maps
-        const GOOGLE_API_KEY = SENTINEL_CONFIG.GOOGLE_MAPS_KEY;
-    </script>
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
-            --neon-cyan: #00f2ff;
-            --neon-red: #ff3131;
+            --neon-blue: #00f2ff;
+            --neon-red: #ff003c;
+            --neon-orange: #ff8c00;
             --neon-green: #39ff14;
-            --civil-white: #ffffff;
-            --bg-dark: #00050a;
-            --bg-gradient: radial-gradient(circle, #001a26 0%, #00050a 100%);
+            --bg-dark: #0a0a0c;
         }
 
-        body {
-            background: var(--bg-gradient);
-            color: var(--neon-cyan);
-            font-family: 'JetBrains Mono', monospace;
-            height: 100vh;
-            overflow: hidden;
-            position: relative;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+        body, html { 
+            margin: 0; padding: 0; height: 100%; 
+            background: var(--bg-dark); font-family: 'Share Tech Mono', monospace; 
+            color: white; overflow: hidden;
         }
 
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                repeating-linear-gradient(
-                    0deg,
-                    rgba(0, 242, 255, 0.02) 0px,
-                    transparent 1px,
-                    transparent 3px
-                ),
-                radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.7) 100%);
-            pointer-events: none;
-            z-index: 0;
+        /* Mapa con Filtro Inverso / Cyberpunk */
+        #map { 
+            height: 100vh; width: 100vw; 
+            filter: invert(100%) hue-rotate(180deg) brightness(0.5) contrast(1.2); 
         }
 
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 12px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            background: rgba(0, 5, 10, 0.7);
-            backdrop-filter: blur(5px);
-            border-bottom: 1px solid var(--neon-cyan);
+        /* Overlay de Interfaz */
+        .hud {
+            position: absolute; inset: 0; z-index: 1000;
+            pointer-events: none; display: flex; flex-direction: column; justify-content: space-between;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .hud-header {
+            padding: 15px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            display: flex; justify-content: space-between; pointer-events: auto;
         }
 
-        .logo-container {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--neon-cyan), #0066ff);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            clip-path: polygon(
-                0% 15%, 15% 0%, 85% 0%, 100% 15%,
-                100% 85%, 85% 100%, 15% 100%, 0% 85%
-            );
-            box-shadow: 0 0 15px var(--neon-cyan);
-            overflow: hidden;
-        }
-
-        .logo-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .brand {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .brand-main {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--neon-cyan);
-            text-shadow: 0 0 8px var(--neon-cyan);
-            letter-spacing: 2px;
-        }
-
-        .brand-sub {
-            font-size: 0.6rem;
-            color: rgba(0, 242, 255, 0.7);
-            letter-spacing: 1px;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .system-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.7rem;
-        }
-
-        .online-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--neon-cyan);
-            border-radius: 50%;
-            animation: blink 1.5s infinite;
-            box-shadow: 0 0 10px var(--neon-cyan);
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .logout-button {
-            background: rgba(255, 49, 49, 0.1);
-            border: 1px solid var(--neon-red);
-            color: var(--neon-red);
-            padding: 6px 12px;
-            font-size: 0.65rem;
-            cursor: pointer;
-            clip-path: polygon(
-                0% 20%, 20% 0%, 80% 0%, 100% 20%, 
-                100% 80%, 80% 100%, 20% 100%, 0% 80%
-            );
-            transition: all 0.3s;
-            font-family: 'JetBrains Mono', monospace;
-            text-transform: uppercase;
-        }
-
-        .logout-button:hover {
-            background: rgba(255, 49, 49, 0.2);
-            box-shadow: 0 0 15px var(--neon-red);
-        }
-
-        .sigiloso-button {
-            background: rgba(255, 49, 49, 0.1);
-            border: 1px solid var(--neon-red);
-            color: var(--neon-red);
-            width: 50px;
-            height: 50px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            clip-path: polygon(
-                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
-                100% 85%, 85% 100%, 15% 100%, 0% 85%
-            );
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .sigiloso-button.active {
-            background: rgba(255, 49, 49, 0.3);
-            box-shadow: 0 0 15px var(--neon-red);
-        }
-
-        #map {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        .radar-wave {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            border: 2px solid var(--neon-cyan);
-            transform: translate(-50%, -50%);
-            animation: radarWave 4s infinite ease-out;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 600;
-        }
-
-        .radar-wave:nth-child(2) { animation-delay: 1.3s; }
-        .radar-wave:nth-child(3) { animation-delay: 2.6s; }
-
-        @keyframes radarWave {
-            0% { width: 10px; height: 10px; opacity: 0.8; }
-            100% { width: 300px; height: 300px; opacity: 0; }
-        }
-
-        .vignette {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, 
-                transparent 30%, 
-                rgba(0, 5, 10, 0.7) 90%);
-            pointer-events: none;
-            z-index: 600;
-        }
-
-        .scanline {
-            position: fixed;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, 
-                transparent, 
-                var(--neon-cyan), 
-                transparent
-            );
-            opacity: 0.15;
-            z-index: 700;
-            pointer-events: none;
-            animation: scanMove 6s linear infinite;
-        }
-
-        @keyframes scanMove {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        .unit-bar {
-            position: fixed;
-            top: 80px;
-            left: 15px;
-            background: rgba(0, 5, 10, 0.6);
-            backdrop-filter: blur(5px);
-            border: 1px solid var(--neon-cyan);
-            padding: 8px 15px;
-            z-index: 800;
-            font-size: 0.65rem;
-            clip-path: polygon(
-                0% 15%, 5% 0%, 95% 0%, 100% 15%,
-                100% 85%, 95% 100%, 5% 100%, 0% 85%
-            );
-        }
-
-        .user-counter {
-            position: fixed;
-            top: 140px;
-            left: 15px;
-            background: rgba(0, 5, 10, 0.6);
-            backdrop-filter: blur(5px);
-            border: 1px solid var(--neon-cyan);
-            padding: 5px 12px;
-            z-index: 800;
-            font-size: 0.6rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            clip-path: polygon(
-                0% 15%, 10% 0%, 90% 0%, 100% 15%,
-                100% 85%, 90% 100%, 10% 100%, 0% 85%
-            );
-        }
-
-        .camera-container {
-            position: fixed;
-            bottom: 120px;
-            left: 15px;
-            width: 120px;
-            height: 90px;
-            z-index: 800;
-            pointer-events: none;
-        }
-
-        .camera-frame {
-            width: 100%;
-            height: 100%;
-            clip-path: polygon(
-                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
-                100% 85%, 85% 100%, 15% 100%, 0% 85%
-            );
-            border: 2px solid var(--neon-cyan);
-            background: #000;
-            overflow: hidden;
-            position: relative;
+        .hud-footer {
+            padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
             pointer-events: auto;
         }
 
-        #video-feed {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: hue-rotate(140deg) contrast(1.2);
-            display: none;
+        /* Consola de Estado */
+        #console {
+            font-size: 10px; color: var(--neon-blue); height: 60px; overflow: hidden;
+            margin-bottom: 10px; border-left: 2px solid var(--neon-blue); padding-left: 10px;
         }
 
-        .rec-indicator {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            color: var(--neon-red);
-            font-size: 0.55rem;
-            font-weight: bold;
-            animation: blink 1s infinite;
-            text-shadow: 0 0 5px var(--neon-red);
-            z-index: 10;
+        /* Botonera de Alertas */
+        .alert-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
         }
 
-        .camera-placeholder {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--neon-cyan);
-            font-size: 0.55rem;
-            opacity: 0.5;
+        .btn-alert {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--neon-blue);
+            color: var(--neon-blue); padding: 15px 5px; font-size: 0.7rem; text-align: center;
+            cursor: pointer; transition: 0.2s; text-transform: uppercase;
         }
 
-        .buttons-container {
-            position: fixed;
-            bottom: 120px;
-            right: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 800;
+        .btn-alert:active { background: var(--neon-blue); color: black; }
+
+        .btn-panic {
+            grid-column: span 3; background: rgba(255, 0, 60, 0.2); 
+            border: 2px solid var(--neon-red); color: var(--neon-red);
+            font-size: 1.2rem; height: 70px; font-weight: bold; margin-top: 10px;
+            animation: pulse-border 1.5s infinite alternate;
         }
 
-        .tactical-button {
-            width: 70px;
-            height: 70px;
-            clip-path: polygon(
-                0% 15%, 15% 0%, 85% 0%, 100% 15%, 
-                100% 85%, 85% 100%, 15% 100%, 0% 85%
-            );
-            border: 2px solid var(--neon-cyan);
-            background: rgba(0, 242, 255, 0.05);
-            color: var(--neon-cyan);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.55rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-            backdrop-filter: blur(5px);
+        @keyframes pulse-border {
+            from { box-shadow: 0 0 5px var(--neon-red); }
+            to { box-shadow: 0 0 20px var(--neon-red); }
         }
 
-        .tactical-button.alert {
-            border-color: var(--neon-red);
-            color: var(--neon-red);
-            background: rgba(255, 49, 49, 0.05);
-            animation: pulseAlert 2s infinite;
+        /* Visor de Cámara */
+        #camera-preview {
+            position: absolute; top: 80px; right: 15px; width: 120px; height: 160px;
+            border: 1px solid var(--neon-blue); background: black; display: none;
+            overflow: hidden; box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
         }
+        video { width: 100%; height: 100%; object-fit: cover; }
 
-        @keyframes pulseAlert {
-            0% { box-shadow: 0 0 10px rgba(255, 49, 49, 0.3); }
-            50% { box-shadow: 0 0 20px rgba(255, 49, 49, 0.7); }
-            100% { box-shadow: 0 0 10px rgba(255, 49, 49, 0.3); }
-        }
-
-        .tactical-button:hover {
-            background: rgba(0, 242, 255, 0.15);
-            transform: scale(1.05);
-        }
-
-        .button-icon {
-            font-size: 1.2rem;
-        }
-
-        .console {
-            position: fixed;
-            bottom: 15px;
-            left: 15px;
-            right: 15px;
-            background: rgba(0, 5, 10, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--neon-cyan);
-            padding: 10px 15px;
-            z-index: 800;
-            font-size: 0.6rem;
-            line-height: 1.5;
-            clip-path: polygon(
-                0% 15%, 1% 0%, 99% 0%, 100% 15%, 
-                100% 85%, 99% 100%, 1% 100%, 0% 85%
-            );
-        }
-
-        .console-line {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid rgba(0, 242, 255, 0.1);
-            padding: 2px 0;
-        }
-
-        .console-prompt {
-            color: var(--neon-cyan);
-            opacity: 0.7;
-        }
-
-        .battery-line {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 5px;
-            padding-top: 5px;
-            border-top: 1px solid rgba(0, 242, 255, 0.2);
-            font-size: 0.55rem;
-            color: var(--neon-cyan);
-        }
-
-        #cancelar-overlay {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--bg-dark);
-            border: 3px solid var(--neon-red);
-            padding: 25px;
-            z-index: 30000;
-            text-align: center;
-            min-width: 300px;
-            backdrop-filter: blur(10px);
-            clip-path: polygon(0% 5%, 2% 0%, 98% 0%, 100% 5%, 100% 95%, 98% 100%, 2% 100%, 0% 95%);
-            box-shadow: 0 0 50px rgba(255,49,49,0.5);
-            display: none;
-        }
-
-        #cancelar-overlay h2 { color: var(--neon-red); margin-bottom: 15px; }
-        #cancelar-overlay p { margin-bottom: 20px; }
-        #btn-cancelar-alerta {
-            background: transparent;
-            border: 2px solid var(--neon-red);
-            color: var(--neon-red);
-            padding: 12px 25px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            margin-bottom: 15px;
-            width: 100%;
-            font-family: 'JetBrains Mono', monospace;
-            clip-path: polygon(0% 15%, 10% 0%, 90% 0%, 100% 15%, 100% 85%, 90% 100%, 10% 100%, 0% 85%);
-        }
-        #btn-cancelar-alerta:hover { background: rgba(255,49,49,0.2); }
-        #contador-cancelar { color: var(--secondary); }
-
-        #toast-notificacion {
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            background: var(--bg-panel);
-            border-left: 4px solid var(--neon-red);
-            padding: 15px;
-            box-shadow: 0 0 30px rgba(255,49,49,0.3);
-            z-index: 10000;
-            display: none;
-            min-width: 250px;
-            clip-path: polygon(0% 15%, 3% 0%, 97% 0%, 100% 15%, 100% 85%, 97% 100%, 3% 100%, 0% 85%);
-        }
-        .toast-titulo { font-weight: bold; color: var(--neon-red); margin-bottom: 5px; }
-        .toast-mensaje { font-size: 0.7rem; }
-
-        .punto-anonimo { filter: drop-shadow(0 0 3px rgba(255,255,255,0.3)); }
-
-        .tipo-alerta-selector {
-            margin: 15px 0;
-            background: rgba(0,0,0,0.3);
-            padding: 15px;
-            border: 1px solid var(--neon-red);
-            clip-path: polygon(0% 8%, 3% 0%, 97% 0%, 100% 8%, 100% 92%, 97% 100%, 3% 100%, 0% 92%);
-        }
-        .tipo-alerta-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .tipo-alerta-btn {
-            background: transparent;
-            border: 2px solid var(--neon-red);
-            color: var(--neon-red);
-            padding: 10px;
-            cursor: pointer;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            transition: all 0.3s;
-            clip-path: polygon(0% 15%, 10% 0%, 90% 0%, 100% 15%, 100% 85%, 90% 100%, 10% 100%, 0% 85%);
-            opacity: 0.7;
-        }
-        .tipo-alerta-btn:hover { opacity: 1; transform: scale(1.02); }
-        .tipo-alerta-btn.seleccionado {
-            opacity: 1;
-            border-width: 3px;
-            box-shadow: 0 0 15px currentColor;
-        }
-
-        #alert-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 5, 10, 0.95);
-            z-index: 20000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-        }
-        .modal-content {
-            background: rgba(0, 5, 10, 0.9);
-            border: 2px solid var(--neon-red);
-            padding: 25px;
-            max-width: 280px;
-            text-align: center;
-            clip-path: polygon(0% 10%, 5% 0%, 95% 0%, 100% 10%, 100% 90%, 95% 100%, 5% 100%, 0% 90%);
-        }
-        .modal-title { font-size: 1.3rem; color: var(--neon-red); margin-bottom: 15px; text-shadow: 0 0 10px var(--neon-red); }
-        .modal-buttons { display: flex; gap: 15px; margin-top: 20px; }
-        .modal-button {
-            flex: 1; padding: 10px; background: transparent; border: 1px solid;
-            font-family: 'JetBrains Mono', monospace; cursor: pointer;
-            clip-path: polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%);
-            font-size: 0.7rem;
-        }
-        .modal-button.primary { border-color: var(--neon-red); color: var(--neon-red); }
-        .modal-button.secondary { border-color: var(--neon-cyan); color: var(--neon-cyan); }
-
-        #pantalla-auth {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--bg-gradient);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        .auth-contenedor {
-            max-width: 350px;
-            width: 100%;
-            background: rgba(0, 5, 10, 0.95);
-            backdrop-filter: blur(10px);
-            border: 2px solid var(--neon-cyan);
-            padding: 25px 20px;
-            clip-path: polygon(0% 3%, 2% 0%, 98% 0%, 100% 3%, 100% 97%, 98% 100%, 2% 100%, 0% 97%);
-            box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
-        }
-        .auth-logo { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
-        .auth-logo-img {
-            width: 60px; height: 60px; background: linear-gradient(135deg, var(--neon-cyan), #0066ff);
-            clip-path: polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%);
-            display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
-            overflow: hidden; box-shadow: 0 0 20px var(--neon-cyan);
-        }
-        .auth-logo-img img { width: 100%; height: 100%; object-fit: cover; }
-        .auth-titulo { font-size: 1.5rem; color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); letter-spacing: 4px; }
-        .auth-sub { font-size: 0.7rem; color: rgba(0, 242, 255, 0.7); margin-bottom: 20px; letter-spacing: 2px; }
-        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-button {
-            flex: 1; padding: 10px; background: transparent; border: 1px solid var(--neon-cyan);
-            color: var(--neon-cyan); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
-            cursor: pointer; clip-path: polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%);
-        }
-        .tab-button.active { background: rgba(0, 242, 255, 0.2); box-shadow: 0 0 15px var(--neon-cyan); }
-        .auth-form { display: block; }
-        .auth-form.hidden { display: none; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.6rem; color: rgba(0, 242, 255, 0.7); margin-bottom: 5px; letter-spacing: 1px; }
-        .label-opcional { display: block; font-size: 0.55rem; color: rgba(255, 255, 255, 0.4); margin-top: 2px; letter-spacing: 0.5px; }
-        input {
-            width: 100%; background: rgba(0, 5, 10, 0.7); border: 1px solid var(--neon-cyan);
-            padding: 12px; color: var(--neon-cyan); font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem; outline: none;
-            clip-path: polygon(0% 10%, 2% 0%, 98% 0%, 100% 10%, 100% 90%, 98% 100%, 2% 100%, 0% 90%);
-        }
-        .rol-selector { margin-bottom: 15px; }
-        .rol-opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-        .rol-opcion {
-            background: rgba(0, 5, 10, 0.7); border: 1px solid var(--neon-cyan); padding: 10px;
-            text-align: center; cursor: pointer; font-size: 0.65rem; transition: all 0.3s;
-            clip-path: polygon(0% 10%, 5% 0%, 95% 0%, 100% 10%, 100% 90%, 95% 100%, 5% 100%, 0% 90%);
-        }
-        .rol-opcion.civil { color: #ffffff; border-color: #ffffff; }
-        .rol-opcion.patrulla { color: #00f2ff; border-color: #00f2ff; }
-        .rol-opcion.delivery { color: #ff3131; border-color: #ff3131; }
-        .rol-opcion.emergencia { color: #39ff14; border-color: #39ff14; }
-        .rol-opcion.selected { background: rgba(0, 242, 255, 0.2); box-shadow: 0 0 15px currentColor; }
-        .terminos { margin: 15px 0; display: flex; align-items: center; gap: 8px; font-size: 0.6rem; color: rgba(255,255,255,0.6); }
-        .terminos input { width: auto; margin: 0; }
-        .auth-button {
-            width: 100%; padding: 12px; background: transparent; border: 2px solid var(--neon-cyan);
-            color: var(--neon-cyan); font-family: 'JetBrains Mono', monospace; font-weight: bold;
-            letter-spacing: 2px; cursor: pointer; font-size: 0.9rem; margin-top: 15px;
-            clip-path: polygon(0% 10%, 3% 0%, 97% 0%, 100% 10%, 100% 90%, 97% 100%, 3% 100%, 0% 90%);
-            transition: all 0.3s;
-        }
-        .auth-button:hover { background: rgba(0, 242, 255, 0.1); box-shadow: 0 0 30px var(--neon-cyan); }
-        .error-message { color: var(--neon-red); font-size: 0.65rem; margin-top: 10px; text-align: center; }
-        .hidden { display: none !important; }
-        .simple-marker { filter: drop-shadow(0 0 8px var(--neon-cyan)) drop-shadow(0 0 15px var(--neon-cyan)); }
+        .hidden { display: none; }
+        
+        .badge { font-size: 0.6rem; padding: 2px 5px; border: 1px solid; border-radius: 3px; }
     </style>
 </head>
 <body>
-    <div class="radar-wave"></div>
-    <div class="radar-wave"></div>
-    <div class="radar-wave"></div>
-    <div class="vignette"></div>
-    <div class="scanline"></div>
 
-    <div id="pantalla-auth">
-        <div class="auth-contenedor">
-            <div class="auth-logo">
-                <div class="auth-logo-img"><img src="logo.png" alt="SMART TECH"></div>
-                <div class="auth-titulo">SENTINEL</div>
-                <div class="auth-sub">SMART TECH</div>
+    <div id="map"></div>
+
+    <div class="hud">
+        <div class="hud-header">
+            <div>
+                <div style="font-size: 1.2rem; font-weight: bold; color: var(--neon-blue);">SMART_TECH [VIVA]</div>
+                <div style="font-size: 0.7rem;">ID: <span id="user-id">OFFLINE</span> | <span id="battery">--%</span> BAT</div>
             </div>
-            <div class="tab-buttons">
-                <button class="tab-button active" id="tab-registro" onclick="mostrarFormulario('registro')">REGISTRO</button>
-                <button class="tab-button" id="tab-login" onclick="mostrarFormulario('login')">INGRESAR</button>
-            </div>
-            <div id="form-registro" class="auth-form">
-                <div class="form-group"><label>EMAIL</label><input type="email" id="reg-email" placeholder="ejemplo@mail.com"></div>
-                <div class="form-group"><label>CONTRASEÑA</label><input type="password" id="reg-password" placeholder="••••••••"></div>
-                <div class="form-group"><label>NOMBRE COMPLETO</label><input type="text" id="reg-nombre" placeholder="JUAN PÉREZ"></div>
-                <div class="form-group"><label>DNI</label><input type="text" id="reg-dni" placeholder="12345678"></div>
-                <div class="form-group"><label>TELÉFONO</label><input type="text" id="reg-telefono" placeholder="223 555-1234"></div>
-                <div class="form-group"><label>DOMICILIO <span class="label-opcional">(OPCIONAL)</span></label><input type="text" id="reg-domicilio" placeholder="Av. Luro 1234"></div>
-                <div class="rol-selector">
-                    <label>ROL</label>
-                    <div class="rol-opciones">
-                        <div class="rol-opcion civil" onclick="seleccionarRolRegistro('civil', '#ffffff')">CIVIL</div>
-                        <div class="rol-opcion patrulla" onclick="seleccionarRolRegistro('patrulla', '#00f2ff')">PATRULLA</div>
-                        <div class="rol-opcion delivery" onclick="seleccionarRolRegistro('delivery', '#ff3131')">DELIVERY</div>
-                        <div class="rol-opcion emergencia" onclick="seleccionarRolRegistro('emergencia', '#39ff14')">EMERGENCIA</div>
-                    </div>
-                    <input type="hidden" id="reg-rol" value=""><input type="hidden" id="reg-rol-color" value="">
-                </div>
-                <div class="terminos"><input type="checkbox" id="reg-terminos" checked><label style="display:inline; margin:0;">ACEPTO QUE LAS FALSAS ALERTAS SERÁN DENUNCIADAS</label></div>
-                <button class="auth-button" onclick="registrarUsuario()">REGISTRARME</button>
-                <div id="reg-error" class="error-message"></div>
-            </div>
-            <div id="form-login" class="auth-form hidden">
-                <div class="form-group"><label>EMAIL</label><input type="email" id="login-email" placeholder="ejemplo@mail.com"></div>
-                <div class="form-group"><label>CONTRASEÑA</label><input type="password" id="login-password" placeholder="••••••••"></div>
-                <button class="auth-button" onclick="iniciarSesion()">INGRESAR</button>
-                <div id="login-error" class="error-message"></div>
+            <div style="text-align: right;">
+                <div class="badge" style="color: var(--neon-green); border-color: var(--neon-green);">GPS_ONLINE</div>
+                <div id="clock" style="font-size: 0.8rem; margin-top: 5px;">00:00:00</div>
             </div>
         </div>
-    </div>
 
-    <div id="modal-exito" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--bg-dark); border:2px solid var(--neon-cyan); padding:25px; text-align:center; z-index:20001; display:none; min-width:220px; clip-path: polygon(0% 10%, 5% 0%, 95% 0%, 100% 10%, 100% 90%, 95% 100%, 5% 100%, 0% 90%);">
-        <div style="font-size:2.5rem; color:var(--neon-cyan); margin-bottom:10px;">✓</div>
-        <div style="margin-bottom:15px;">REGISTRO EXITOSO</div>
-        <button class="auth-button" onclick="cerrarModalRegistro()" style="margin:0;">CONTINUAR</button>
-    </div>
+        <div id="camera-preview">
+            <div style="position:absolute; top:5px; left:5px; color:red; font-size:10px; z-index:10;">● REC</div>
+            <video id="video-feed" autoplay playsinline muted></video>
+        </div>
 
-    <div id="pantalla-principal" style="display:none;">
-        <header>
-            <div class="header-left">
-                <div class="logo-container"><img src="logo.png" alt="SMART TECH"></div>
-                <div class="brand"><div class="brand-main">SENTINEL</div><div class="brand-sub">SMART TECH</div></div>
-            </div>
-            <div class="header-right">
-                <div class="system-indicator"><span class="online-dot"></span><span>ONLINE</span></div>
-                <button class="sigiloso-button" id="btn-sigiloso" onclick="toggleModoSigiloso()" title="MODO SIGILOSO">🔇</button>
-                <button class="logout-button" onclick="cerrarSesion()">CERRAR</button>
-            </div>
-        </header>
-        <div id="map"></div>
-        <div class="unit-bar"><span>UNID: <span id="unid">--</span></span></div>
-        <div class="user-counter"><span>👥</span><span id="contador-usuarios">0</span><span>activos</span></div>
-        <div class="camera-container">
-            <div class="camera-frame">
-                <video id="video-feed" autoplay playsinline></video>
-                <div class="camera-placeholder" id="camera-placeholder">[OFF]</div>
-                <div class="rec-indicator hidden" id="rec-indicator">● REC</div>
+        <div class="hud-footer">
+            <div id="console"></div>
+            
+            <div class="alert-grid">
+                <div class="btn-alert" onclick="prepararAlerta('ROBO')">🛡️ ROBO</div>
+                <div class="btn-alert" onclick="prepararAlerta('INCENDIO')">🔥 FUEGO</div>
+                <div class="btn-alert" onclick="prepararAlerta('MEDICA')">🚑 MEDICA</div>
+                <div class="btn-alert" onclick="prepararAlerta('ACCIDENTE')">🚗 CHOQUE</div>
+                <div class="btn-alert" onclick="prepararAlerta('DISTURBIO')">👥 SAQUEO</div>
+                <div class="btn-alert" onclick="prepararAlerta('VIOLENCIA')">⚠️ VIOLENCIA</div>
+                
+                <button class="btn-alert btn-panic" id="panic-master" onclick="lanzarAlertaCritica()">PANICO TOTAL</button>
             </div>
         </div>
-        <div class="buttons-container">
-            <button class="tactical-button" id="btn-respaldo"><span class="button-icon">🔄</span>RESPALDO</button>
-            <button class="tactical-button alert" id="btn-alerta"><span class="button-icon">⚡</span>ALERTA</button>
-        </div>
-        <div class="console" id="terminal">
-            <div class="console-line"><span class="console-prompt">></span><span>SISTEMA: CONEXIÓN ESTABLE</span></div>
-            <div class="console-line"><span class="console-prompt">></span><span id="gps-status">GPS: BUSCANDO SEÑAL</span></div>
-            <div class="console-line"><span class="console-prompt">></span><span>ALERTA: SIN INCIDENTES</span></div>
-            <div class="battery-line"><span>BATERÍA: <span id="battery">--%</span></span></div>
-        </div>
-    </div>
-
-    <div id="alert-modal">
-        <div class="modal-content">
-            <div class="modal-title">🚨 ALERTA</div>
-            <div class="tipo-alerta-selector">
-                <label style="color: var(--secondary); font-size: 0.7rem; display: block; margin-bottom: 8px;">TIPO DE EMERGENCIA:</label>
-                <div class="tipo-alerta-grid">
-                    <button class="tipo-alerta-btn" data-tipo="ROBO" onclick="seleccionarTipoAlerta('ROBO')" style="border-color: var(--neon-red); color: var(--neon-red);">🚨 ROBO</button>
-                    <button class="tipo-alerta-btn" data-tipo="ACCIDENTE" onclick="seleccionarTipoAlerta('ACCIDENTE')" style="border-color: #ffaa00; color: #ffaa00;">🚗 ACCIDENTE</button>
-                    <button class="tipo-alerta-btn" data-tipo="INCENDIO" onclick="seleccionarTipoAlerta('INCENDIO')" style="border-color: #ff6600; color: #ff6600;">🔥 INCENDIO</button>
-                    <button class="tipo-alerta-btn" data-tipo="MEDICA" onclick="seleccionarTipoAlerta('MEDICA')" style="border-color: #39ff14; color: #39ff14;">🚑 MÉDICA</button>
-                    <button class="tipo-alerta-btn" data-tipo="VIOLENCIA" onclick="seleccionarTipoAlerta('VIOLENCIA')" style="border-color: #ff00ff; color: #ff00ff;">👊 VIOLENCIA</button>
-                    <button class="tipo-alerta-btn" data-tipo="OTRO" onclick="seleccionarTipoAlerta('OTRO')" style="border-color: var(--neon-cyan); color: var(--neon-cyan);">❓ OTRO</button>
-                </div>
-                <input type="hidden" id="tipo-alerta" value="ROBO">
-            </div>
-            <div class="modal-text" id="modal-text">UNIDADES NOTIFICADAS<br>GRABANDO VIDEO</div>
-            <div class="modal-buttons">
-                <button class="modal-button primary" onclick="activarAlerta()">ENVIAR</button>
-                <button class="modal-button secondary" onclick="cerrarModal()">CANCELAR</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="cancelar-overlay">
-        <div style="font-size: 2rem; color: var(--neon-red); margin-bottom: 15px;">⚡</div>
-        <h2>ALERTA ACTIVADA</h2>
-        <p>¿FUE UN ERROR?<br>Puedes cancelar en los próximos segundos.</p>
-        <button id="btn-cancelar-alerta">🚫 CANCELAR</button>
-        <div id="contador-cancelar">10 segundos restantes</div>
-    </div>
-
-    <div id="toast-notificacion">
-        <div class="toast-titulo" id="toast-titulo"></div>
-        <div class="toast-mensaje" id="toast-mensaje"></div>
     </div>
 
     <script>
-        let usuarioActual = null;
-        let mapa;
-        let marcador;
-        let ubicacionActual = null;
-        let watchId = null;
-        let alertaActiva = false;
-        let alertaId = null;
-        let rolSeleccionado = '';
-        let colorSeleccionado = '';
-        
-        let modoSigiloso = false;
-        let intervaloGPS = null;
-        let timeoutCancelacion = null;
-        let puntosAnonimos = {};
-        let tipoAlertaSeleccionado = 'ROBO';
-        
-        // Variables para transmisión y grabación
-        let canalVideo = null;
-        let streamCamara = null;
-        let mediaRecorder = null;
-        let fragmentosVideo = [];
-        let transmitiendo = false;
+        // Configuración Supabase
+        const SUPABASE_URL = "TU_URL";
+        const SUPABASE_KEY = "TU_KEY";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        function mostrarFormulario(tipo) {
-            if (tipo === 'registro') {
-                document.getElementById('form-registro').classList.remove('hidden');
-                document.getElementById('form-login').classList.add('hidden');
-                document.getElementById('tab-registro').classList.add('active');
-                document.getElementById('tab-login').classList.remove('active');
-            } else {
-                document.getElementById('form-registro').classList.add('hidden');
-                document.getElementById('form-login').classList.remove('hidden');
-                document.getElementById('tab-registro').classList.remove('active');
-                document.getElementById('tab-login').classList.add('active');
-            }
+        let map, userMarker, userLocation, stream;
+        let isAlertActive = false;
+        let lastAlertId = null;
+
+        // --- INICIO ---
+        function init() {
+            log("SISTEMA INICIADO...");
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Inicializar Mapa
+            map = L.map('map', { zoomControl: false }).setView([-38.0055, -57.5426], 16);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+            startTracking();
+            getBattery();
+            checkSession();
         }
 
-        function seleccionarRolRegistro(rol, color) {
-            document.querySelectorAll('#form-registro .rol-opcion').forEach(el => el.classList.remove('selected'));
-            event.target.classList.add('selected');
-            rolSeleccionado = rol;
-            colorSeleccionado = color;
-            document.getElementById('reg-rol').value = rol;
-            document.getElementById('reg-rol-color').value = color;
-        }
-
-        async function registrarUsuario() {
-            const email = document.getElementById('reg-email').value.trim();
-            const password = document.getElementById('reg-password').value.trim();
-            const nombre = document.getElementById('reg-nombre').value.trim();
-            const dni = document.getElementById('reg-dni').value.trim();
-            const telefono = document.getElementById('reg-telefono').value.trim();
-            const domicilio = document.getElementById('reg-domicilio').value.trim();
-            const terminos = document.getElementById('reg-terminos').checked;
-
-            if (!email || !password || !nombre || !dni || !telefono) {
-                document.getElementById('reg-error').textContent = "COMPLETE TODOS LOS CAMPOS OBLIGATORIOS";
-                return;
-            }
-            if (!rolSeleccionado) {
-                document.getElementById('reg-error').textContent = "SELECCIONE UN ROL";
-                return;
-            }
-            if (!terminos) {
-                document.getElementById('reg-error').textContent = "DEBE ACEPTAR LOS TÉRMINOS";
-                return;
-            }
-
-            try {
-                const { data, error } = await _supabase.auth.signUp({
-                    email: email,
-                    password: password,
-                    options: {
-                        data: { nombre, dni, telefono, domicilio: domicilio || '', rol: rolSeleccionado, color: colorSeleccionado }
-                    }
-                });
-                if (error) throw error;
-                setTimeout(() => {
-                    document.getElementById('pantalla-auth').style.display = 'none';
-                    document.getElementById('pantalla-principal').style.display = 'block';
-                    iniciarApp(data.user);
-                }, 1000);
-            } catch (error) {
-                console.error(error);
-                document.getElementById('reg-error').textContent = error.message.includes('already registered') ? "ESTE EMAIL YA ESTÁ REGISTRADO" : "ERROR: " + error.message;
-            }
-        }
-
-        function cerrarModalRegistro() {
-            document.getElementById('modal-exito').style.display = 'none';
-            document.getElementById('pantalla-auth').style.display = 'none';
-            document.getElementById('pantalla-principal').style.display = 'block';
-            iniciarApp();
-        }
-
-        async function iniciarSesion() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-            if (!email || !password) {
-                document.getElementById('login-error').textContent = "COMPLETE EMAIL Y CONTRASEÑA";
-                return;
-            }
-            try {
-                const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                const { data: ciudadano, error: dbError } = await _supabase
-                    .from('ciudadanos')
-                    .select('*')
-                    .eq('id_usuario', data.user.id)
-                    .single();
-                if (dbError) throw dbError;
-                usuarioActual = ciudadano;
-                document.getElementById('unid').textContent = ciudadano.id_unico;
-                document.getElementById('pantalla-auth').style.display = 'none';
-                document.getElementById('pantalla-principal').style.display = 'block';
-                iniciarApp();
-            } catch (error) {
-                console.error(error);
-                document.getElementById('login-error').textContent = "EMAIL O CONTRASEÑA INCORRECTOS";
-            }
-        }
-
-        async function verificarSesion() {
+        async function checkSession() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (session) {
-                const { data: ciudadano, error } = await _supabase
-                    .from('ciudadanos')
-                    .select('*')
-                    .eq('id_usuario', session.user.id)
-                    .single();
-                if (!error && ciudadano) {
-                    usuarioActual = ciudadano;
-                    document.getElementById('unid').textContent = ciudadano.id_unico;
-                    document.getElementById('pantalla-auth').style.display = 'none';
-                    document.getElementById('pantalla-principal').style.display = 'block';
-                    iniciarApp();
-                }
+                document.getElementById('user-id').textContent = session.user.id.substring(0, 8);
+                log("CONEXIÓN ENCRIPTADA OK.");
             }
         }
 
-        async function cerrarSesion() {
-            const { error } = await _supabase.auth.signOut();
-            if (!error) window.location.reload();
-        }
-
-        function iniciarApp() {
-            mapa = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.0055, -57.5426], 16);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                filter: 'invert(1) hue-rotate(160deg) saturate(3) brightness(0.8) contrast(1.5)'
-            }).addTo(mapa);
-
-            document.getElementById('btn-respaldo').addEventListener('click', () => alert('RESPALDO SOLICITADO'));
-            document.getElementById('btn-alerta').addEventListener('click', mostrarModalAlerta);
-
-            iniciarGPS();
-            obtenerBateria();
-            cargarUsuariosActivos();
-            iniciarActualizacionPresencia();
-        }
-
-        function iniciarGPS() {
-            if (!navigator.geolocation) return;
-            watchId = navigator.geolocation.watchPosition(
-                (pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    ubicacionActual = { lat: latitude, lng: longitude };
-                    document.getElementById('gps-status').innerHTML = `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-                    if (!marcador) {
-                        marcador = L.circleMarker([latitude, longitude], {
-                            radius: 12, color: '#00f2ff', weight: 3,
-                            fillColor: '#00f2ff', fillOpacity: 0.3,
-                            className: 'simple-marker'
-                        }).addTo(mapa);
-                        mapa.setView([latitude, longitude], 17);
-                    } else {
-                        marcador.setLatLng([latitude, longitude]);
-                    }
-                    actualizarPresencia();
-                },
-                null,
-                { enableHighAccuracy: true }
-            );
-        }
-
-        function obtenerBateria() {
-            if ('getBattery' in navigator) {
-                navigator.getBattery().then(bateria => {
-                    actualizarBateria(bateria.level * 100);
-                    bateria.addEventListener('levelchange', () => actualizarBateria(bateria.level * 100));
-                });
-            } else {
-                let nivel = 85;
-                setInterval(() => {
-                    nivel = Math.max(10, nivel - Math.floor(Math.random() * 5));
-                    actualizarBateria(nivel);
-                }, 30000);
-            }
-        }
-
-        function actualizarBateria(nivel) {
-            document.getElementById('battery').textContent = `${Math.floor(nivel)}%`;
-        }
-
-        function actualizarTerminal(mensaje) {
-            const terminal = document.getElementById('terminal');
-            if (!terminal) return;
-            const lineas = terminal.children;
-            if (lineas.length > 6) terminal.removeChild(lineas[0]);
-            const nuevaLinea = document.createElement('div');
-            nuevaLinea.className = 'console-line';
-            nuevaLinea.innerHTML = `<span class="console-prompt">></span> <span>${mensaje}</span>`;
-            terminal.appendChild(nuevaLinea);
-        }
-
-        function mostrarToast(titulo, mensaje, tipo = 'alert') {
-            const toast = document.getElementById('toast-notificacion');
-            document.getElementById('toast-titulo').textContent = titulo;
-            document.getElementById('toast-mensaje').textContent = mensaje;
-            toast.style.borderLeftColor = tipo === 'alert' ? 'var(--neon-red)' : 'var(--neon-cyan)';
-            toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 3000);
-        }
-
-        function cargarUsuariosActivos() {
-            _supabase
-                .from('usuarios_activos')
-                .select('*')
-                .then(({ data, error }) => {
-                    if (error) {
-                        console.error("Error cargando usuarios activos:", error);
-                        return;
-                    }
-                    if (data) {
-                        console.log(`👥 ${data.length} usuarios activos cargados`);
-                        document.getElementById('contador-usuarios').textContent = data.length;
-                        data.forEach(usuario => {
-                            if (usuario.usuario_id !== usuarioActual?.id_usuario) {
-                                agregarPuntoAnonimo(usuario);
-                            }
-                        });
-                    }
-                });
-            
-            _supabase
-                .channel('usuarios-activos')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'usuarios_activos' }, (payload) => {
-                    if (payload.new.usuario_id !== usuarioActual?.id_usuario) {
-                        agregarPuntoAnonimo(payload.new);
-                        actualizarContadorUsuarios();
-                    }
-                })
-                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'usuarios_activos' }, (payload) => {
-                    removerPuntoAnonimo(payload.old.id);
-                    actualizarContadorUsuarios();
-                })
-                .subscribe();
-        }
-
-        function agregarPuntoAnonimo(usuario) {
-            const punto = L.circleMarker([usuario.lat, usuario.lng], {
-                radius: 5, color: '#888888', weight: 1,
-                fillColor: '#aaaaaa', fillOpacity: 0.3,
-                className: 'punto-anonimo'
-            }).addTo(mapa);
-            punto.bindPopup('👤 Usuario activo');
-            puntosAnonimos[usuario.id] = punto;
-        }
-
-        function removerPuntoAnonimo(id) {
-            if (puntosAnonimos[id]) {
-                mapa.removeLayer(puntosAnonimos[id]);
-                delete puntosAnonimos[id];
-            }
-        }
-
-        function actualizarContadorUsuarios() {
-            _supabase
-                .from('usuarios_activos')
-                .select('*', { count: 'exact', head: true })
-                .then(({ count, error }) => {
-                    if (!error) document.getElementById('contador-usuarios').textContent = count || 0;
-                });
-        }
-
-        async function actualizarPresencia() {
-            if (!usuarioActual || !ubicacionActual || !usuarioActual.id_usuario) return;
-            try {
-                const { data: existe } = await _supabase
-                    .from('usuarios_activos')
-                    .select('id')
-                    .eq('usuario_id', usuarioActual.id_usuario)
-                    .maybeSingle();
-                if (existe) {
-                    await _supabase
-                        .from('usuarios_activos')
-                        .update({ lat: ubicacionActual.lat, lng: ubicacionActual.lng, ultima_actualizacion: new Date().toISOString() })
-                        .eq('usuario_id', usuarioActual.id_usuario);
+        // --- GEOLOCALIZACIÓN ---
+        function startTracking() {
+            navigator.geolocation.watchPosition(pos => {
+                const { latitude, longitude } = pos.coords;
+                userLocation = { lat: latitude, lng: longitude };
+                
+                if (!userMarker) {
+                    userMarker = L.circleMarker([latitude, longitude], {
+                        radius: 8, color: '#00f2ff', fillColor: '#00f2ff', fillOpacity: 0.5
+                    }).addTo(map);
                 } else {
-                    await _supabase
-                        .from('usuarios_activos')
-                        .insert({ usuario_id: usuarioActual.id_usuario, lat: ubicacionActual.lat, lng: ubicacionActual.lng, ultima_actualizacion: new Date().toISOString() });
+                    userMarker.setLatLng([latitude, longitude]);
                 }
-            } catch (error) {
-                console.error("Error actualizando presencia:", error);
-            }
+                map.panTo([latitude, longitude]);
+
+                if (isAlertActive) updateLiveLocation(latitude, longitude);
+
+            }, null, { enableHighAccuracy: true });
         }
 
-        function iniciarActualizacionPresencia() {
-            setInterval(actualizarPresencia, 30000);
+        // --- SISTEMA DE ALERTAS ---
+        async function prepararAlerta(tipo) {
+            if (isAlertActive) return;
+            log(`SOLICITANDO AUXILIO: ${tipo}...`);
+            await activarAlerta(tipo);
         }
 
-        function toggleModoSigiloso() {
-            modoSigiloso = !modoSigiloso;
-            const btn = document.getElementById('btn-sigiloso');
-            if (btn) {
-                btn.classList.toggle('active', modoSigiloso);
-                btn.style.backgroundColor = modoSigiloso ? 'rgba(255, 49, 49, 0.3)' : '';
-            }
-            if (modoSigiloso) {
-                actualizarTerminal('🔇 MODO SIGILOSO ACTIVADO');
-                document.getElementById('btn-alerta').style.opacity = '0.7';
-            } else {
-                actualizarTerminal('🔊 MODO SIGILOSO DESACTIVADO');
-                document.getElementById('btn-alerta').style.opacity = '1';
-            }
+        async function lanzarAlertaCritica() {
+            log("ACTIVANDO PROTOCOLO DE PÁNICO TOTAL...");
+            await activarAlerta("PANICO_ABS");
         }
 
-        function seleccionarTipoAlerta(tipo) {
-            tipoAlertaSeleccionado = tipo;
-            document.getElementById('tipo-alerta').value = tipo;
-            document.querySelectorAll('.tipo-alerta-btn').forEach(btn => {
-                btn.classList.remove('seleccionado');
-                btn.style.opacity = '0.7';
-                btn.style.borderWidth = '2px';
-            });
-            const btnSeleccionado = document.querySelector(`.tipo-alerta-btn[data-tipo="${tipo}"]`);
-            if (btnSeleccionado) {
-                btnSeleccionado.classList.add('seleccionado');
-                btnSeleccionado.style.opacity = '1';
-                btnSeleccionado.style.borderWidth = '3px';
-            }
-        }
-
-        function mostrarModalAlerta() {
-            seleccionarTipoAlerta('ROBO');
-            document.getElementById('alert-modal').style.display = 'flex';
-        }
-
-        // ==============================================
-        // ACTIVAR CÁMARA
-        // ==============================================
-        async function activarCamara() {
-            console.log("🎥 Iniciando sistema de captura de video...");
+        async function activarAlerta(tipo) {
+            isAlertActive = true;
+            document.getElementById('panic-master').textContent = "ENVIANDO...";
+            
+            // 1. Activar Cámara
             try {
-                const permissionStatus = await navigator.permissions.query({ name: 'camera' });
-                if (permissionStatus.state === 'denied') {
-                    actualizarTerminal('❌ PERMISO DE CÁMARA DENEGADO');
-                    mostrarToast('❌ PERMISO DENEGADO', 'Active la cámara en la configuración', 'alert');
-                    return false;
-                }
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true });
+                document.getElementById('video-feed').srcObject = stream;
+                document.getElementById('camera-preview').style.display = 'block';
+            } catch (err) {
+                log("ERROR CAMARA: DENEGADA");
+            }
 
-                streamCamara = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    }, 
-                    audio: true 
+            // 2. Insertar en Supabase (Esto dispara War Room y Patrullas)
+            const { data, error } = await _supabase.from('alertas').insert({
+                tipo: tipo,
+                lat: userLocation.lat,
+                lng: userLocation.lng,
+                estado: 'CRITICO',
+                timestamp: new Date().toISOString()
+            }).select();
+
+            if (data) {
+                lastAlertId = data[0].id;
+                log(`ALERTA CONFIRMADA ID: ${lastAlertId}`);
+                iniciarTransmisionFrames(lastAlertId);
+            }
+        }
+
+        // --- TRANSMISIÓN (Para que el War Room vea la cámara) ---
+        function iniciarTransmisionFrames(id) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 160; canvas.height = 120;
+            const ctx = canvas.getContext('2d');
+            const video = document.getElementById('video-feed');
+            const canal = _supabase.channel(`feed_${id}`);
+
+            setInterval(() => {
+                if (!isAlertActive) return;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const frame = canvas.toDataURL('image/jpeg', 0.2);
+                canal.send({
+                    type: 'broadcast',
+                    event: 'video-frame',
+                    payload: { img: frame }
                 });
-                
-                const video = document.getElementById('video-feed');
-                const placeholder = document.getElementById('camera-placeholder');
-                const recIndicator = document.getElementById('rec-indicator');
-                
-                if (video) {
-                    video.srcObject = streamCamara;
-                    video.style.display = 'block';
-                }
-                if (placeholder) placeholder.style.display = 'none';
-                if (!modoSigiloso) {
-                    if (recIndicator) recIndicator.classList.remove('hidden');
-                }
-                
-                console.log("✅ Cámara activada correctamente");
-                return true;
-                
-            } catch (error) {
-                console.error('❌ Error crítico en activarCamara:', error);
-                actualizarTerminal('❌ ERROR CÁMARA');
-                mostrarToast('❌ ERROR DE CÁMARA', 'No se pudo acceder a la cámara', 'alert');
-                return false;
-            }
+            }, 500); // 2 FPS para no saturar datos
         }
 
-        // ==============================================
-        // TRANSMISIÓN EN VIVO (60fps)
-        // ==============================================
-        async function iniciarTransmisionViva(idAlerta) {
-            try {
-                if (!streamCamara) {
-                    console.warn("No hay stream de cámara");
-                    return;
-                }
-
-                const video = document.createElement('video');
-                video.srcObject = streamCamara;
-                video.style.display = 'none';
-                document.body.appendChild(video);
-                await video.play();
-
-                const canvas = document.createElement('canvas');
-                canvas.width = 160;
-                canvas.height = 120;
-                const ctx = canvas.getContext('2d');
-
-                canalVideo = _supabase.channel(`alerta-${idAlerta}`);
-                transmitiendo = true;
-
-                function enviarFrame() {
-                    if (!transmitiendo || !alertaActiva) return;
-                    
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const frameData = canvas.toDataURL('image/jpeg', 0.3);
-                    
-                    canalVideo.send({
-                        type: 'broadcast',
-                        event: 'video-frame',
-                        payload: { frame: frameData }
-                    });
-                    
-                    requestAnimationFrame(enviarFrame);
-                }
-
-                enviarFrame();
-                actualizarTerminal('📹 TRANSMISIÓN 60fps');
-
-            } catch (error) {
-                console.error("Error iniciando transmisión:", error);
-                actualizarTerminal('❌ ERROR EN TRANSMISIÓN');
-            }
+        async function updateLiveLocation(lat, lng) {
+            if (!lastAlertId) return;
+            await _supabase.from('alertas').update({ lat, lng }).eq('id', lastAlertId);
         }
 
-        function detenerTransmision() {
-            transmitiendo = false;
-            if (canalVideo) {
-                _supabase.removeChannel(canalVideo);
-                canalVideo = null;
-            }
+        // --- UTILIDADES ---
+        function log(msg) {
+            const consoleDiv = document.getElementById('console');
+            consoleDiv.innerHTML = `> ${msg}<br>` + consoleDiv.innerHTML;
         }
 
-        // ==============================================
-        // NOTIFICAR A PATRULLA
-        // ==============================================
-        async function notificarPatrullaMasCercana(idAlerta, lat, lng) {
-            try {
-                const { data: unidades, error } = await _supabase
-                    .from('unidades_respuesta')
-                    .select('*')
-                    .eq('estado', 'disponible');
-                if (error) throw error;
-                if (!unidades || unidades.length === 0) return;
-
-                let unidadCercana = unidades[0];
-                let minDist = Math.hypot(unidades[0].lat - lat, unidades[0].lng - lng);
-                unidades.forEach(u => {
-                    let dist = Math.hypot(u.lat - lat, u.lng - lng);
-                    if (dist < minDist) {
-                        minDist = dist;
-                        unidadCercana = u;
-                    }
-                });
-
-                await _supabase
-                    .from('alertas')
-                    .update({ 
-                        unidad_asignada: unidadCercana.codigo,
-                        distancia_unidad: minDist.toFixed(2),
-                        estado: 'en_proceso'
-                    })
-                    .eq('id', idAlerta);
-                
-            } catch (error) {
-                console.error('Error notificando a patrulla:', error);
-            }
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toTimeString().split(' ')[0];
         }
 
-        // ==============================================
-        // SEGUIMIENTO GPS
-        // ==============================================
-        function iniciarSeguimientoContinuo(idAlerta) {
-            if (intervaloGPS) clearInterval(intervaloGPS);
-            intervaloGPS = setInterval(async () => {
-                if (!ubicacionActual || !alertaActiva) return;
-                await _supabase
-                    .from('alertas')
-                    .update({ 
-                        lat: ubicacionActual.lat,
-                        lng: ubicacionActual.lng,
-                        ultima_actualizacion: new Date().toISOString()
-                    })
-                    .eq('id', idAlerta);
-            }, 3000);
-        }
-
-        // ==============================================
-        // FUNCIÓN DE ALERTA (ACTUALIZADA)
-        // ==============================================
-        async function activarAlerta() {
-    if (alertaActiva || !ubicacionActual || !usuarioActual) return;
-    
-    // 1. CERRAR MODAL INMEDIATAMENTE (para que desaparezcan las opciones)
-    cerrarModal();
-    
-    // 2. Activar cámara
-    console.log("🎥 Activando cámara...");
-    const camaraActivada = await activarCamara();
-    
-    if (!camaraActivada) {
-        actualizarTerminal('❌ ERROR: NO SE PUDO ACTIVAR LA CÁMARA');
-        return;
-    }
-
-    const alerta = {
-        unidad_id: usuarioActual.id_unico,
-        nombre: usuarioActual.nombre,
-        dni: usuarioActual.dni,
-        telefono: usuarioActual.telefono,
-        rol: usuarioActual.rol,
-        lat: ubicacionActual.lat,
-        lng: ubicacionActual.lng,
-        timestamp: new Date().toISOString(),
-        bateria: document.getElementById('battery').textContent,
-        activa: true,
-        modo_sigiloso: modoSigiloso || false,
-        tipo: tipoAlertaSeleccionado
-    };
-
-    try {
-        const { data, error } = await _supabase
-            .from('alertas')
-            .insert(alerta)
-            .select();
-        if (error) throw error;
-        
-        if (data && data[0]) {
-            alertaId = data[0].id;
-            alertaActiva = true;
-            
-            // Iniciar transmisión en vivo
-            await iniciarTransmisionViva(alertaId);
-            
-            // Configurar grabación para evidencia
-            fragmentosVideo = [];
-            mediaRecorder = new MediaRecorder(streamCamara, { 
-                mimeType: 'video/webm;codecs=vp8' 
+        function getBattery() {
+            navigator.getBattery?.().then(b => {
+                const up = () => document.getElementById('battery').textContent = `${Math.round(b.level * 100)}%`;
+                up(); b.onlevelchange = up;
             });
-            
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) fragmentosVideo.push(e.data);
-            };
-            
-            mediaRecorder.onstop = async () => {
-                if (fragmentosVideo.length === 0 || !alertaId) return;
-                
-                actualizarTerminal('📤 SUBIENDO EVIDENCIA...');
-                
-                const videoBlob = new Blob(fragmentosVideo, { type: 'video/webm' });
-                const nombre = `evidencia_${alertaId}_${Date.now()}.webm`;
-                
-                try {
-                    const { error } = await _supabase.storage
-                        .from('videos-alertas')
-                        .upload(nombre, videoBlob);
-                    
-                    if (error) throw error;
-                    
-                    const { data: urlData } = _supabase.storage
-                        .from('videos-alertas')
-                        .getPublicUrl(nombre);
-                    
-                    await _supabase
-                        .from('alertas')
-                        .update({ video_evidencia_url: urlData.publicUrl })
-                        .eq('id', alertaId);
-                    
-                    actualizarTerminal('✅ EVIDENCIA ASEGURADA');
-                    
-                } catch (error) {
-                    console.error("Error subiendo evidencia:", error);
-                    actualizarTerminal('❌ ERROR SUBIENDO EVIDENCIA');
-                }
-            };
-            
-            mediaRecorder.start();
-            
-            mostrarOpcionCancelar(alertaId);
-            await notificarPatrullaMasCercana(alertaId, ubicacionActual.lat, ubicacionActual.lng);
-            iniciarSeguimientoContinuo(alertaId);
-            
-            document.getElementById('modal-text').innerHTML = '🚨 ALERTA ENVIADA<br>UNIDADES NOTIFICADAS<br>TRANSMITIENDO EN VIVO';
-            // No volvemos a abrir el modal
-            actualizarTerminal(`🚨 ALERTA ${tipoAlertaSeleccionado} ENVIADA`);
-        }
-    } catch (error) {
-        console.log('Error:', error);
-        actualizarTerminal('❌ ERROR AL ENVIAR');
-    }
-}
-
-        function mostrarOpcionCancelar(idAlerta) {
-            const cancelOverlay = document.getElementById('cancelar-overlay');
-            let tiempoRestante = 10;
-            cancelOverlay.style.display = 'block';
-            document.getElementById('btn-cancelar-alerta').onclick = () => cancelarAlertaEmergencia(idAlerta);
-            const intervalo = setInterval(() => {
-                tiempoRestante--;
-                document.getElementById('contador-cancelar').textContent = `${tiempoRestante} segundos restantes`;
-                if (tiempoRestante <= 0) {
-                    clearInterval(intervalo);
-                    cancelOverlay.style.display = 'none';
-                }
-            }, 1000);
-            timeoutCancelacion = setTimeout(() => {
-                clearInterval(intervalo);
-                cancelOverlay.style.display = 'none';
-            }, 10000);
         }
 
-        async function cancelarAlertaEmergencia(idAlerta) {
-            if (!idAlerta) return;
-            
-            document.getElementById('cancelar-overlay').style.display = 'none';
-            if (timeoutCancelacion) clearTimeout(timeoutCancelacion);
-            
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
-            detenerTransmision();
-            
-            if (intervaloGPS) clearInterval(intervaloGPS);
-            
-            await _supabase
-                .from('alertas')
-                .update({ activa: false, cancelada: true, motivo_cancelacion: 'usuario' })
-                .eq('id', idAlerta);
-            
-            alertaActiva = false;
-            
-            if (streamCamara) {
-                streamCamara.getTracks().forEach(t => t.stop());
-                streamCamara = null;
-            }
-            
-            mostrarToast('✅ ALERTA CANCELADA', 'La alerta ha sido cancelada correctamente', 'success');
-            actualizarTerminal('✅ ALERTA CANCELADA POR USUARIO');
-        }
-
-        function cerrarModal() {
-            document.getElementById('alert-modal').style.display = 'none';
-        }
-
-        function cancelarAlerta() {
-            if (confirm('¿CANCELAR ALERTA?')) {
-                alertaActiva = false;
-                if (mediaRecorder && mediaRecorder.state === 'recording') {
-                    mediaRecorder.stop();
-                }
-                detenerTransmision();
-                if (intervaloGPS) clearInterval(intervaloGPS);
-                cerrarModal();
-                document.getElementById('cancelar-overlay').style.display = 'none';
-                if (alertaId) {
-                    _supabase.from('alertas').update({ activa: false, cancelada: true }).eq('id', alertaId);
-                }
-            }
-        }
-
-        verificarSesion();
+        window.onload = init;
     </script>
 </body>
 </html>
